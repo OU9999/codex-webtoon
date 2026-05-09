@@ -9,6 +9,7 @@ import {
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { config } from './config.js';
+import { projectsRouter } from './routes/projects.js';
 import type { HealthResponse, ServerAdvertisement } from '../shared/types.js';
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -54,6 +55,8 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
     };
     res.json(body);
   });
+
+  app.use('/api/projects', projectsRouter);
 
   const distDir = join(rootDir, 'dist');
   if (!existsSync(distDir)) return app;
