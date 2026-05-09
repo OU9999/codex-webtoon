@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
-import { StatusBar } from './components/status-bar';
-import { TitleBar } from './components/title-bar';
+import { StatusBar } from './_components/status-bar';
+import { TitleBar } from './_components/title-bar';
 
-interface StudioShellProps {
+interface ShellProps {
   children: ReactNode;
 }
 
-const StudioShell = ({ children }: StudioShellProps) => {
+const Shell = ({ children }: ShellProps) => {
   return (
     <section className="flex h-screen flex-col bg-background text-foreground">
       <TitleBar />
@@ -16,4 +16,4 @@ const StudioShell = ({ children }: StudioShellProps) => {
   );
 };
 
-export { StudioShell };
+export { Shell };
