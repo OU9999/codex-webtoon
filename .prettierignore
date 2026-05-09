@@ -1,0 +1,15 @@
+.idea/*
+.DS_Store
+node_modules/*
+logs/*
+.vscode/*
+.husky/*
+.turbo/*
+.agents/*
+.claude/*
+dist/*
+build/*
+package-lock.json
+.gitignore
+README.md
+pnpm-lock.yaml
