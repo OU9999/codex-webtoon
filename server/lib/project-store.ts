@@ -8,9 +8,14 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { config } from '../config.js';
-import type { ProjectMeta, ProjectSummary } from '../../shared/types.js';
+import type {
+  ProjectMeta,
+  ProjectState,
+  ProjectSummary,
+} from '../../shared/types.js';
 
 const PROJECT_FILE = 'project.json';
+const STATE_FILE = 'state.json';
 const NAME_PATTERN = /^[\p{L}\p{N}_\-. ]{1,64}$/u;
 
 class ProjectError extends Error {
@@ -70,14 +75,13 @@ const createProject = (rawName: string): ProjectSummary => {
     );
   }
 
-  mkdirSync(join(dir, 'episodes'), { recursive: true });
+  mkdirSync(dir, { recursive: true });
   const now = Date.now();
   const meta: ProjectMeta = {
     name,
     version: 1,
     createdAt: now,
     updatedAt: now,
-    sharedPrompt: '',
   };
   writeProjectMeta(dir, meta);
 
@@ -125,4 +129,69 @@ const getProject = (name: string): ProjectMeta => {
   return meta;
 };
 
-export { ProjectError, createProject, getProject, listProjects };
+const isProjectState = (value: unknown): value is ProjectState => {
+  if (!value || typeof value !== 'object') return false;
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.commonPrompt === 'string' &&
+    Array.isArray(obj.panels) &&
+    typeof obj.selectedPanelId === 'string' &&
+    (obj.selectedBubbleId === null ||
+      typeof obj.selectedBubbleId === 'string') &&
+    typeof obj.panelGap === 'number'
+  );
+};
+
+const loadState = (name: string): ProjectState | null => {
+  validateName(name);
+  const dir = projectPath(name.trim());
+  if (!readProjectMeta(dir)) {
+    throw new ProjectError('project_not_found', `Project "${name}" not found.`);
+  }
+
+  const file = join(dir, STATE_FILE);
+  if (!existsSync(file)) return null;
+
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf-8')) as unknown;
+    if (!isProjectState(parsed)) {
+      throw new ProjectError(
+        'invalid_state',
+        `Project "${name}" has corrupted state.`,
+      );
+    }
+    return parsed;
+  } catch (err) {
+    if (err instanceof ProjectError) throw err;
+    throw new ProjectError(
+      'invalid_state',
+      `Failed to read state for "${name}".`,
+    );
+  }
+};
+
+const saveState = (name: string, state: unknown): void => {
+  validateName(name);
+  if (!isProjectState(state)) {
+    throw new ProjectError('invalid_state', 'Project state shape is invalid.');
+  }
+
+  const dir = projectPath(name.trim());
+  const meta = readProjectMeta(dir);
+  if (!meta) {
+    throw new ProjectError('project_not_found', `Project "${name}" not found.`);
+  }
+
+  writeFileSync(join(dir, STATE_FILE), JSON.stringify(state, null, 2));
+  meta.updatedAt = Date.now();
+  writeProjectMeta(dir, meta);
+};
+
+export {
+  ProjectError,
+  createProject,
+  getProject,
+  listProjects,
+  loadState,
+  saveState,
+};

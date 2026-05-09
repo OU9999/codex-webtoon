@@ -4,11 +4,14 @@ import {
   createProject,
   getProject,
   listProjects,
+  loadState,
+  saveState,
 } from '../lib/project-store.js';
 import type { ApiError, CreateProjectRequest } from '../../shared/types.js';
 
 const errorStatus: Record<string, number> = {
   invalid_name: 400,
+  invalid_state: 400,
   project_exists: 409,
   project_not_found: 404,
 };
@@ -57,6 +60,28 @@ projectsRouter.post('/', (req, res) => {
 projectsRouter.get('/:name', (req, res) => {
   try {
     res.json(getProject(req.params.name));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+projectsRouter.get('/:name/state', (req, res) => {
+  try {
+    const state = loadState(req.params.name);
+    if (!state) {
+      res.status(204).end();
+      return;
+    }
+    res.json(state);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+projectsRouter.put('/:name/state', (req, res) => {
+  try {
+    saveState(req.params.name, req.body);
+    res.status(204).end();
   } catch (err) {
     sendError(res, err);
   }
