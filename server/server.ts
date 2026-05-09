@@ -3,33 +3,36 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { config } from "./config.js";
-import type { ServerAdvertisement, HealthResponse } from "../shared/types.js";
+import type { HealthResponse, ServerAdvertisement } from "../shared/types.js";
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
 
-function readVersion(): string {
+const readVersion = (): string => {
   try {
-    const pkg = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf-8"));
+    const pkg = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf-8")) as { version?: string };
     return pkg.version ?? "0.0.0";
   } catch {
     return "0.0.0";
   }
-}
+};
 
-function advertise(ad: ServerAdvertisement) {
+const advertise = (ad: ServerAdvertisement): void => {
   mkdirSync(dirname(config.storage.advertiseFile), { recursive: true });
   writeFileSync(config.storage.advertiseFile, JSON.stringify(ad, null, 2));
-}
+};
 
-function unadvertise() {
+const unadvertise = (): void => {
   try {
     if (!existsSync(config.storage.advertiseFile)) return;
-    const cur = JSON.parse(readFileSync(config.storage.advertiseFile, "utf-8")) as { pid?: number };
-    if (cur.pid === process.pid) unlinkSync(config.storage.advertiseFile);
-  } catch {}
-}
 
-export function buildApp(opts: { startedAt: number; version: string }) {
+    const cur = JSON.parse(readFileSync(config.storage.advertiseFile, "utf-8")) as { pid?: number };
+    if (cur.pid === process.pid) {
+      unlinkSync(config.storage.advertiseFile);
+    }
+  } catch {}
+};
+
+const buildApp = (opts: { startedAt: number; version: string }) => {
   const app = express();
   app.use(express.json({ limit: "20mb" }));
 
@@ -39,17 +42,17 @@ export function buildApp(opts: { startedAt: number; version: string }) {
   });
 
   const distDir = join(rootDir, "dist");
-  if (existsSync(distDir)) {
-    app.use(express.static(distDir));
-    app.get(/^\/(?!api\/).*/, (_req, res) => {
-      res.sendFile(join(distDir, "index.html"));
-    });
-  }
+  if (!existsSync(distDir)) return app;
+
+  app.use(express.static(distDir));
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(join(distDir, "index.html"));
+  });
 
   return app;
-}
+};
 
-export async function startServer() {
+const startServer = async () => {
   const startedAt = Date.now();
   const version = readVersion();
   const app = buildApp({ startedAt, version });
@@ -60,21 +63,24 @@ export async function startServer() {
     console.log(`[wps] server listening at ${url}`);
   });
 
-  const shutdown = () => {
+  const shutdown = (): void => {
     unadvertise();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(0), 1000).unref();
   };
+
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
   process.on("exit", unadvertise);
 
   return { app, server };
-}
+};
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  startServer().catch((err) => {
+  startServer().catch((err: unknown) => {
     console.error("[wps] failed to start:", err);
     process.exit(1);
   });
 }
+
+export { buildApp, startServer };

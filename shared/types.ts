@@ -1,4 +1,4 @@
-export interface ServerAdvertisement {
+interface ServerAdvertisement {
   port: number;
   url: string;
   pid: number;
@@ -6,8 +6,10 @@ export interface ServerAdvertisement {
   version: string;
 }
 
-export interface HealthResponse {
+interface HealthResponse {
   ok: true;
   version: string;
   startedAt: number;
 }
+
+export type { HealthResponse, ServerAdvertisement };

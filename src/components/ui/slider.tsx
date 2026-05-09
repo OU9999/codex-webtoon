@@ -3,7 +3,14 @@ import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }: React.ComponentProps<typeof SliderPrimitive.Root>) {
+const Slider = ({
+  className,
+  defaultValue,
+  value,
+  min = 0,
+  max = 100,
+  ...props
+}: React.ComponentProps<typeof SliderPrimitive.Root>) => {
   const values = value ?? defaultValue ?? [min, max];
 
   return (
@@ -31,6 +38,6 @@ function Slider({ className, defaultValue, value, min = 0, max = 100, ...props }
       ))}
     </SliderPrimitive.Root>
   );
-}
+};
 
 export { Slider };
