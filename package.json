@@ -16,6 +16,8 @@
     "build:ui": "vite build --config vite-config.ts",
     "build:server": "tsc -p tsconfig-server.json",
     "build": "pnpm build:ui && pnpm build:server",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "start": "node build/server/server.js",
     "wps": "tsx bin/wps.ts",
     "preview": "vite preview --config vite-config.ts --host 127.0.0.1"
@@ -44,6 +46,8 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.1.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
