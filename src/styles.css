@@ -3,7 +3,74 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * DESIGN.md §1 — White Hawk light + sapphire palette.
+ * Tokens are renamed where they would collide with shadcn names:
+ *   DESIGN.md `--accent` (sapphire) → `--brand`
+ *   DESIGN.md `--border` → `--rim`
+ * shadcn aliases below re-route shadcn tokens onto these so existing
+ * shadcn primitives pick up the new palette without rewrites.
+ */
+:root {
+  /* Surfaces */
+  --bg: #f4f7fb;
+  --bg-canvas: #e6edf6;
+  --bg-elevated: #ffffff;
+  --bg-panel: #eef3f9;
+  --bg-input: #ffffff;
+  --bg-hover: #e2eaf4;
+  --bg-active: #cfdbeb;
+
+  /* Borders */
+  --rim: #d4dfee;
+  --rim-strong: #a8b8d0;
+  --rim-subtle: #e3eaf4;
+
+  /* Foreground ladder */
+  --fg: #16335c;
+  --fg-secondary: #3a5680;
+  --fg-muted: #6b7e9a;
+  --fg-faint: #a8b3c4;
+
+  /* Sapphire brand */
+  --brand: #2860c8;
+  --brand-hover: #3a73dc;
+  --brand-soft: rgb(40 96 200 / 0.1);
+  --on-brand: #f5f2e8;
+
+  /* Status */
+  --status-blue: #2860c8;
+  --status-green: #4f9a7a;
+  --status-red: #c25a78;
+  --status-yellow: #c79b3a;
+
+  /* Geometry */
+  --radius: 4px;
+  --radius-lg: 6px;
+
+  /* shadcn aliases — DO NOT use these in new CSS, prefer the raw tokens above. */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg-elevated);
+  --card-foreground: var(--fg);
+  --popover: var(--bg-elevated);
+  --popover-foreground: var(--fg);
+  --primary: var(--brand);
+  --primary-foreground: var(--on-brand);
+  --secondary: var(--bg-panel);
+  --secondary-foreground: var(--fg-secondary);
+  --muted: var(--bg-panel);
+  --muted-foreground: var(--fg-muted);
+  --accent: var(--bg-hover);
+  --accent-foreground: var(--brand);
+  --destructive: var(--status-red);
+  --border: var(--rim);
+  --input: var(--rim);
+  --ring: var(--brand);
+}
+
 @theme inline {
+  /* shadcn → Tailwind utilities (existing primitives keep working). */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -22,32 +89,47 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
 
-:root {
-  --radius: 0.5rem;
-  --background: oklch(0.955 0.017 106.8);
-  --foreground: oklch(0.208 0.018 209.2);
-  --card: oklch(0.985 0.007 106.4);
-  --card-foreground: var(--foreground);
-  --popover: var(--card);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(0.585 0.124 27.6);
-  --primary-foreground: oklch(0.985 0.006 106.5);
-  --secondary: oklch(0.915 0.029 173.4);
-  --secondary-foreground: oklch(0.27 0.04 189.2);
-  --muted: oklch(0.905 0.013 103.8);
-  --muted-foreground: oklch(0.455 0.024 204.3);
-  --accent: oklch(0.9 0.034 163.3);
-  --accent-foreground: oklch(0.245 0.033 194.4);
-  --destructive: oklch(0.56 0.186 28.6);
-  --border: oklch(0.835 0.018 106.3);
-  --input: oklch(0.835 0.018 106.3);
-  --ring: oklch(0.585 0.124 27.6);
+  /* DESIGN.md surfaces — utility-friendly names (avoid bg-bg-* awkwardness). */
+  --color-canvas: var(--bg-canvas);
+  --color-elevated: var(--bg-elevated);
+  --color-panel: var(--bg-panel);
+  --color-hover: var(--bg-hover);
+  --color-active: var(--bg-active);
+
+  /* DESIGN.md borders. */
+  --color-rim: var(--rim);
+  --color-rim-strong: var(--rim-strong);
+  --color-rim-subtle: var(--rim-subtle);
+
+  /* DESIGN.md fg ladder. */
+  --color-fg-secondary: var(--fg-secondary);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+
+  /* Sapphire brand. */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+
+  /* Status colors. */
+  --color-status-blue: var(--status-blue);
+  --color-status-green: var(--status-green);
+  --color-status-red: var(--status-red);
+  --color-status-yellow: var(--status-yellow);
+
+  /* Radii (DESIGN.md §1: tight, 4 / 6). */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  /* Type families (DESIGN.md §1). */
+  --font-sans:
+    'Inter Tight', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-display: 'Bagel Fat One', 'Inter Tight', ui-sans-serif, sans-serif;
 }
 
 @layer base {
@@ -64,22 +146,14 @@
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
-    font-family:
-      Inter,
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      'Segoe UI',
-      sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.4;
     font-synthesis: none;
     text-rendering: geometricPrecision;
-    background:
-      linear-gradient(90deg, rgba(32, 36, 39, 0.04) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(32, 36, 39, 0.04) 1px, transparent 1px),
-      var(--background);
-    background-size: 32px 32px;
-    @apply text-foreground;
+    -webkit-font-smoothing: antialiased;
   }
 
   button {
@@ -92,12 +166,22 @@
 }
 
 @layer components {
+  /*
+   * Existing MVP component classes — kept so the current app.tsx body
+   * keeps rendering during the visual port. They will be re-styled or
+   * removed in later steps (panel cells / balloon overlays per DESIGN.md
+   * §3 + §6).
+   */
   .panel-frame {
-    @apply relative isolate w-full overflow-hidden border-2 border-foreground bg-card shadow-xl;
+    @apply relative isolate w-full overflow-hidden border border-rim bg-card;
+    box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
   }
 
   .panel-frame.selected {
-    @apply border-primary;
+    @apply border-brand;
+    box-shadow:
+      0 0 0 1px var(--brand),
+      0 1px 0 rgb(22 51 92 / 0.06);
   }
 
   .panel-frame img {
@@ -106,11 +190,13 @@
   }
 
   .selected-rim {
-    @apply pointer-events-none absolute inset-[7px] border-2 border-primary/90;
+    @apply pointer-events-none absolute inset-[7px] border border-brand/90;
   }
 
   .panel-number {
-    @apply absolute top-3 left-3 grid size-[34px] place-items-center border border-foreground/25 bg-background/90 text-sm font-black text-foreground;
+    @apply absolute top-2 left-2 grid size-[28px] place-items-center rounded-[2px] font-mono text-[11px] font-semibold text-white;
+    background: rgb(26 31 48 / 0.65);
+    backdrop-filter: blur(4px);
   }
 
   .empty-panel {
@@ -119,19 +205,28 @@
     display: grid;
     place-content: center;
     gap: 0.625rem;
-    color: var(--muted-foreground);
+    color: var(--fg-muted);
     background:
-      linear-gradient(135deg, rgba(28, 35, 34, 0.06) 25%, transparent 25%) 0 0 /
-        26px 26px,
-      linear-gradient(315deg, rgba(28, 35, 34, 0.06) 25%, transparent 25%) 0 0 /
-        26px 26px,
-      var(--muted);
+      repeating-linear-gradient(
+        45deg,
+        transparent 0,
+        transparent 8px,
+        rgb(22 51 92 / 0.035) 8px,
+        rgb(22 51 92 / 0.035) 9px
+      ),
+      var(--bg-panel);
     text-align: center;
-    font-weight: 800;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   .bubble-layer {
-    @apply absolute z-10 grid touch-none place-items-center px-3 py-1.5 text-center leading-none font-black text-[#111417] select-none;
+    @apply absolute z-10 grid touch-none place-items-center px-3 py-1.5 text-center leading-none font-medium select-none;
+    color: #1a1f30;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
   }
 
   .bubble-layer span {
@@ -140,69 +235,78 @@
 
   .bubble-layer.speech,
   .bubble-layer.thought {
-    border: 2px solid #161a1c;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid #1a1f30;
+    border-radius: 14px;
+    background: #fbf9f0;
   }
 
   .bubble-layer.speech::after {
     content: '';
     position: absolute;
     right: 25%;
-    bottom: -17px;
-    width: 30px;
-    height: 26px;
+    bottom: -14px;
+    width: 26px;
+    height: 22px;
     background: inherit;
-    border-right: 2px solid #161a1c;
-    border-bottom: 2px solid #161a1c;
+    border-right: 1.5px solid #1a1f30;
+    border-bottom: 1.5px solid #1a1f30;
     transform: skew(18deg) rotate(24deg);
+  }
+
+  .bubble-layer.thought {
+    border-style: dashed;
+    border-radius: 18px;
   }
 
   .bubble-layer.thought::before,
   .bubble-layer.thought::after {
     content: '';
     position: absolute;
-    border: 2px solid #161a1c;
+    border: 1.5px solid #1a1f30;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.95);
+    background: #fbf9f0;
   }
 
   .bubble-layer.thought::before {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     right: 18%;
-    bottom: -20px;
+    bottom: -18px;
   }
 
   .bubble-layer.thought::after {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     right: 11%;
-    bottom: -34px;
+    bottom: -30px;
   }
 
   .bubble-layer.monologue {
-    border: 2px solid #161a1c;
-    border-radius: 6px;
-    background: rgba(255, 246, 210, 0.95);
+    border: 1.5px solid #1a1f30;
+    border-radius: 2px;
+    background: #e6eef6;
+    font-style: italic;
   }
 
   .bubble-layer.sfx {
-    color: #111417;
+    color: #1a1f30;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 28px;
     text-shadow:
-      -2px -2px 0 #fff,
-      2px -2px 0 #fff,
-      -2px 2px 0 #fff,
-      2px 2px 0 #fff;
+      -2px -2px 0 #fbf9f0,
+      2px -2px 0 #fbf9f0,
+      -2px 2px 0 #fbf9f0,
+      2px 2px 0 #fbf9f0;
     transform: rotate(-8deg);
   }
 
   .bubble-layer.active {
-    outline: 2px solid oklch(0.53 0.1 177);
+    outline: 2px solid var(--brand);
     outline-offset: 3px;
   }
 
   .resize-handle {
-    @apply absolute right-[-7px] bottom-[-7px] size-4 rounded-full border-2 border-white bg-accent-foreground shadow-md;
+    @apply absolute right-[-7px] bottom-[-7px] size-4 rounded-full border-2 border-white bg-brand shadow-md;
   }
 }
