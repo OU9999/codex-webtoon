@@ -8,39 +8,39 @@ A vertical-scroll comic editor with AI panel generation. Tone: a calm local inst
 
 ### Color (light mode)
 
-| Token | Hex | Use |
-|---|---|---|
-| `--bg` | `#f4f7fb` | App base |
-| `--bg-canvas` | `#e6edf6` | Center canvas (where comic lives) |
-| `--bg-elevated` | `#ffffff` | Sidebars, title bar, toolbars |
-| `--bg-panel` | `#eef3f9` | Sub-panel chrome (rail headers, inspector head) |
-| `--bg-input` | `#ffffff` | Inputs, candidate cards, panel cells |
-| `--bg-hover` | `#e2eaf4` | Hover surface |
-| `--bg-active` | `#cfdbeb` | Pressed / active surface |
-| `--border` | `#d4dfee` | Default 1px borders |
-| `--border-strong` | `#a8b8d0` | Hairline emphasis |
-| `--border-subtle` | `#e3eaf4` | Internal dividers |
-| `--fg` | `#16335c` | Primary text (deep cobalt navy) |
-| `--fg-secondary` | `#3a5680` | Secondary text |
-| `--fg-muted` | `#6b7e9a` | Labels, mono captions |
-| `--fg-faint` | `#a8b3c4` | Disabled / placeholder |
-| `--accent` | `#2860c8` | **Sapphire** — selection, primary CTA, active step |
-| `--accent-hover` | `#3a73dc` | Accent hover |
-| `--accent-soft` | `rgba(40,96,200,.10)` | Selected row tint |
-| `--blue` | `#2860c8` | Status: prompt-only |
-| `--green` | `#4f9a7a` | Status: done |
-| `--red` | `#c25a78` | Status: error |
-| `--yellow` | `#c79b3a` | Status: caution |
+| Token             | Hex                   | Use                                                |
+| ----------------- | --------------------- | -------------------------------------------------- |
+| `--bg`            | `#f4f7fb`             | App base                                           |
+| `--bg-canvas`     | `#e6edf6`             | Center canvas (where comic lives)                  |
+| `--bg-elevated`   | `#ffffff`             | Sidebars, title bar, toolbars                      |
+| `--bg-panel`      | `#eef3f9`             | Sub-panel chrome (rail headers, inspector head)    |
+| `--bg-input`      | `#ffffff`             | Inputs, candidate cards, panel cells               |
+| `--bg-hover`      | `#e2eaf4`             | Hover surface                                      |
+| `--bg-active`     | `#cfdbeb`             | Pressed / active surface                           |
+| `--border`        | `#d4dfee`             | Default 1px borders                                |
+| `--border-strong` | `#a8b8d0`             | Hairline emphasis                                  |
+| `--border-subtle` | `#e3eaf4`             | Internal dividers                                  |
+| `--fg`            | `#16335c`             | Primary text (deep cobalt navy)                    |
+| `--fg-secondary`  | `#3a5680`             | Secondary text                                     |
+| `--fg-muted`      | `#6b7e9a`             | Labels, mono captions                              |
+| `--fg-faint`      | `#a8b3c4`             | Disabled / placeholder                             |
+| `--accent`        | `#2860c8`             | **Sapphire** — selection, primary CTA, active step |
+| `--accent-hover`  | `#3a73dc`             | Accent hover                                       |
+| `--accent-soft`   | `rgba(40,96,200,.10)` | Selected row tint                                  |
+| `--blue`          | `#2860c8`             | Status: prompt-only                                |
+| `--green`         | `#4f9a7a`             | Status: done                                       |
+| `--red`           | `#c25a78`             | Status: error                                      |
+| `--yellow`        | `#c79b3a`             | Status: caution                                    |
 
 Status dots: `empty` faint, `prompt-only` blue, `generating` accent + pulse + glow, `done` green, `error` red.
 
 ### Type
 
-| Family | Use |
-|---|---|
-| **Inter Tight** | All UI |
-| **IBM Plex Mono** | Labels, prompts, file paths, numeric meta — anything "instrument chrome" |
-| **Bagel Fat One** (italic) | SFX only |
+| Family                     | Use                                                                      |
+| -------------------------- | ------------------------------------------------------------------------ |
+| **Inter Tight**            | All UI                                                                   |
+| **IBM Plex Mono**          | Labels, prompts, file paths, numeric meta — anything "instrument chrome" |
+| **Bagel Fat One** (italic) | SFX only                                                                 |
 
 Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for inspector titles. Letter-spacing `0.06–0.08em` on uppercase mono labels; `-0.01em` on titles.
 
@@ -92,13 +92,13 @@ A panel is a vertical-aspect rectangle with `border-radius: 1px`. Overlays are a
 
 Each panel renders exactly one of:
 
-| State | Treatment |
-|---|---|
-| `empty` | Diagonal hatch (45°, 1px every 9px, 3.5% navy). Dashed circular icon + uppercase mono label. Use when neither prompt nor image exists. |
-| `prompt-only` | Soft blue surface `#dde5ee` + 45° hatch overlay. Centered prompt text in mono. Floating "Generate" CTA pinned bottom-center. |
-| `generating` | Blurred preview behind a diagonal shimmer sweep (`shim` keyframe, 1.6s). Foreground: a frosted ivory chip with spinner + step text. Bottom 2px progress bar in accent with glow. |
-| `done` | Final image. Number/meta overlays only. Selection adds glow per Tweak. |
-| `error` | (red status dot in list; in cell, treat as `prompt-only` styling with red CTA). |
+| State         | Treatment                                                                                                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `empty`       | Diagonal hatch (45°, 1px every 9px, 3.5% navy). Dashed circular icon + uppercase mono label. Use when neither prompt nor image exists.                                           |
+| `prompt-only` | Soft blue surface `#dde5ee` + 45° hatch overlay. Centered prompt text in mono. Floating "Generate" CTA pinned bottom-center.                                                     |
+| `generating`  | Blurred preview behind a diagonal shimmer sweep (`shim` keyframe, 1.6s). Foreground: a frosted ivory chip with spinner + step text. Bottom 2px progress bar in accent with glow. |
+| `done`        | Final image. Number/meta overlays only. Selection adds glow per Tweak.                                                                                                           |
+| `error`       | (red status dot in list; in cell, treat as `prompt-only` styling with red CTA).                                                                                                  |
 
 ### Selection (Tweak: `selection_style`)
 
@@ -123,6 +123,7 @@ Three sections, each with a 26px header (`--bg-panel`, mono uppercase title `9.5
 ## 5. Right inspector — the prompt → candidates → balloons flow
 
 Header (`--bg-panel`):
+
 - Mono eyebrow `PANEL 03 / 12` in **accent** uppercase
 - Bold 14px title
 - Right-side icon buttons (duplicate, delete)
@@ -131,17 +132,21 @@ Header (`--bg-panel`):
 Sections divide by `--border` and dim to 0.55 opacity until their step is reachable.
 
 ### Section 1 — Prompt
+
 Mono textarea on white, character/token meta below. Three sliders (label width 56px, 4px track, accent fill): `style strength`, `seed`, `aspect`. Bottom row: full-width `Generate 4` primary + ghost `Reuse seed`.
 
 ### Section 2 — Candidates
+
 2×2 grid of candidate cards, 4:3 thumbnails. Selected card: 2px accent border + soft accent shadow + small accent check disc top-right. Empty state: dashed input panel with centered mono message.
 
 ### Section 3 — Balloons & SFX
+
 Layer toolbar (2-col grid of ghost buttons: `+ Speech`, `+ Narration`, `+ Thought`, `+ SFX`).
 Layer list rows: type icon · uppercase mono type · text preview · row actions. Capped at 200px scroll.
 Balloon style switcher (Tweak `balloon_style`): mono pills `classic / sharp / rough`, active pill in `accent-soft` + accent text.
 
 ### Empty inspector
+
 When no panel is selected: muted icon + 12px center text. No CTA.
 
 ---
@@ -149,11 +154,13 @@ When no panel is selected: muted icon + 12px center text. No CTA.
 ## 6. Balloons & SFX (rendered into the panel)
 
 All balloons:
+
 - Body: warm cream `#fbf9f0`, **1.5px navy `#1a1f30` border**, `border-radius: 14px`
 - Text: Inter Tight 12.5px, `#1a1f30`
 - Tail: SVG arrow with double drop-shadow stroke (mimics ink overlap)
 
 Variants:
+
 - **Speech** — solid border, rounded
 - **Narration** — `#e6eef6` pale-blue rectangle, italic, near-square corners, no tail
 - **Thought** — dashed border, larger radius; small detached cream circles for the trail
@@ -168,13 +175,13 @@ Variants:
 
 ## 7. Buttons
 
-| Variant | Style |
-|---|---|
-| `primary` | Solid `--accent`, ivory `#f5f2e8` text, 30px tall, 12px padding, weight 600 |
-| `ghost` | White surface, `--fg-secondary`, 1px `--border`. Hover: `--bg-hover` + `--fg` + `--border-strong` |
-| `iconbtn` | 20×20 transparent square, hover `--bg-hover` |
-| `iconbtn-tb` | Toolbar version: 22px tall, 8px padding, white surface + border |
-| `titlebar primary` | Soft accent (`--accent-soft`) chip with accent text |
+| Variant            | Style                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `primary`          | Solid `--accent`, ivory `#f5f2e8` text, 30px tall, 12px padding, weight 600                       |
+| `ghost`            | White surface, `--fg-secondary`, 1px `--border`. Hover: `--bg-hover` + `--fg` + `--border-strong` |
+| `iconbtn`          | 20×20 transparent square, hover `--bg-hover`                                                      |
+| `iconbtn-tb`       | Toolbar version: 22px tall, 8px padding, white surface + border                                   |
+| `titlebar primary` | Soft accent (`--accent-soft`) chip with accent text                                               |
 
 All transitions: `120ms` on `background, color, border-color`. No motion beyond this except shimmer (1.6s) and pulse (1.2s) on generation states.
 
@@ -184,12 +191,12 @@ All transitions: `120ms` on `background, color, border-color`. No motion beyond 
 
 Title the panel **Tweaks** (lower-right floating). Persisted via `__edit_mode_set_keys`.
 
-| Key | Type | Options | Default |
-|---|---|---|---|
-| `selection_style` | radio | `border` / `offset` / `label` | `border` |
-| `canvas_width` | radio | `640` / `720` / `800` | `720` |
-| `right_pane_width` | slider | 280–400 px | 320 |
-| `balloon_style` | radio | `classic` / `sharp` / `rough` | `classic` |
+| Key                | Type   | Options                       | Default   |
+| ------------------ | ------ | ----------------------------- | --------- |
+| `selection_style`  | radio  | `border` / `offset` / `label` | `border`  |
+| `canvas_width`     | radio  | `640` / `720` / `800`         | `720`     |
+| `right_pane_width` | slider | 280–400 px                    | 320       |
+| `balloon_style`    | radio  | `classic` / `sharp` / `rough` | `classic` |
 
 ---
 

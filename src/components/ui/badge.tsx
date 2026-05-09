@@ -21,10 +21,17 @@ const badgeVariants = cva(
   },
 );
 
-interface BadgeProps extends React.ComponentProps<'span'>, VariantProps<typeof badgeVariants> {}
+interface BadgeProps
+  extends React.ComponentProps<'span'>, VariantProps<typeof badgeVariants> {}
 
 const Badge = ({ className, variant, ...props }: BadgeProps) => {
-  return <span data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />;
+  return (
+    <span
+      data-slot="badge"
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
+  );
 };
 
 export { Badge, badgeVariants };

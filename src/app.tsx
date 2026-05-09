@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 import type {
   ChangeEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
-} from "react";
+} from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -22,28 +22,28 @@ import {
   SquarePen,
   Trash2,
   Type,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const CANVAS_WIDTH = 720;
-const STORAGE_KEY = "webtoon-panel-studio:v1";
-const DYNAMIC_STYLE_ELEMENT_ID = "webtoon-panel-studio-dynamic-styles";
+const STORAGE_KEY = 'webtoon-panel-studio:v1';
+const DYNAMIC_STYLE_ELEMENT_ID = 'webtoon-panel-studio-dynamic-styles';
 
 const defaultCommonPrompt = [
-  "현대 한국 로맨스 웹툰, 부드러운 선화, 세미 리얼 캐릭터, 따뜻하지만 선명한 색감.",
-  "캐릭터: 민지, 20대 초반 여성, 짧은 흑발 단발, 베이지 니트, 차분하지만 예민한 표정.",
-  "공통 금지사항: 이미지 안에 읽을 수 있는 텍스트, 말풍선, 워터마크를 만들지 말 것.",
-].join("\n");
+  '현대 한국 로맨스 웹툰, 부드러운 선화, 세미 리얼 캐릭터, 따뜻하지만 선명한 색감.',
+  '캐릭터: 민지, 20대 초반 여성, 짧은 흑발 단발, 베이지 니트, 차분하지만 예민한 표정.',
+  '공통 금지사항: 이미지 안에 읽을 수 있는 텍스트, 말풍선, 워터마크를 만들지 말 것.',
+].join('\n');
 
-type BubbleType = "speech" | "monologue" | "thought" | "sfx";
-type BubbleDragMode = "move" | "resize";
+type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
+type BubbleDragMode = 'move' | 'resize';
 
 interface Candidate {
   id: string;
@@ -51,7 +51,7 @@ interface Candidate {
   createdAt: string;
   promptSnapshot: string;
   height: number;
-  provider: "local-mock";
+  provider: 'local-mock';
 }
 
 interface Bubble {
@@ -87,12 +87,12 @@ interface StudioState {
 interface CreatePanelOverrides extends Partial<
   Pick<
     Panel,
-    | "title"
-    | "height"
-    | "prompt"
-    | "candidates"
-    | "selectedCandidateId"
-    | "bubbles"
+    | 'title'
+    | 'height'
+    | 'prompt'
+    | 'candidates'
+    | 'selectedCandidateId'
+    | 'bubbles'
   >
 > {}
 
@@ -134,9 +134,9 @@ const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
 
   return {
     id,
-    title: overrides.title ?? "New panel",
+    title: overrides.title ?? 'New panel',
     height: overrides.height ?? 420,
-    prompt: overrides.prompt ?? "",
+    prompt: overrides.prompt ?? '',
     candidates: overrides.candidates ?? [],
     selectedCandidateId: overrides.selectedCandidateId ?? null,
     deletedCandidates: [],
@@ -146,39 +146,39 @@ const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
 
 const starterPanels: Panel[] = [
   createPanel({
-    title: "Opening beat",
+    title: 'Opening beat',
     height: 420,
     prompt:
-      "비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.",
+      '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
   }),
   createPanel({
-    title: "Reaction close-up",
+    title: 'Reaction close-up',
     height: 330,
     prompt:
-      "민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.",
+      '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
   }),
   createPanel({
-    title: "Long pause",
+    title: 'Long pause',
     height: 560,
-    prompt: "",
+    prompt: '',
   }),
 ];
 
 const layerActions: LayerAction[] = [
   {
-    type: "speech",
-    label: "Speech",
+    type: 'speech',
+    label: 'Speech',
     icon: <MessageCircle className="size-4" />,
   },
-  { type: "monologue", label: "Box", icon: <SquarePen className="size-4" /> },
-  { type: "thought", label: "Thought", icon: <Bot className="size-4" /> },
-  { type: "sfx", label: "SFX", icon: <Type className="size-4" /> },
+  { type: 'monologue', label: 'Box', icon: <SquarePen className="size-4" /> },
+  { type: 'thought', label: 'Thought', icon: <Bot className="size-4" /> },
+  { type: 'sfx', label: 'SFX', icon: <Type className="size-4" /> },
 ];
 
 const createBubble = (type: BubbleType): Bubble => {
-  const defaults: Record<BubbleType, Omit<Bubble, "id" | "type">> = {
+  const defaults: Record<BubbleType, Omit<Bubble, 'id' | 'type'>> = {
     speech: {
-      text: "대사",
+      text: '대사',
       x: 58,
       y: 40,
       width: 210,
@@ -186,7 +186,7 @@ const createBubble = (type: BubbleType): Bubble => {
       fontSize: 24,
     },
     monologue: {
-      text: "독백",
+      text: '독백',
       x: 46,
       y: 56,
       width: 250,
@@ -194,14 +194,14 @@ const createBubble = (type: BubbleType): Bubble => {
       fontSize: 22,
     },
     thought: {
-      text: "생각",
+      text: '생각',
       x: 390,
       y: 54,
       width: 210,
       height: 76,
       fontSize: 22,
     },
-    sfx: { text: "탁", x: 420, y: 170, width: 150, height: 82, fontSize: 48 },
+    sfx: { text: '탁', x: 420, y: 170, width: 150, height: 82, fontSize: 48 },
   };
 
   return {
@@ -228,7 +228,7 @@ const normalizeLoadedState = (value: unknown): StudioState | null => {
     selectedPanelId: loaded.selectedPanelId ?? loaded.panels[0].id,
     selectedBubbleId: loaded.selectedBubbleId ?? null,
     panelGap:
-      typeof loaded.panelGap === "number" && Number.isFinite(loaded.panelGap)
+      typeof loaded.panelGap === 'number' && Number.isFinite(loaded.panelGap)
         ? loaded.panelGap
         : 28,
   };
@@ -263,7 +263,7 @@ const getInitialState = (): StudioState => {
 };
 
 const safeClassSegment = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9_-]/g, "-");
+  value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
 const getStripGapClassName = (gap: number): string => `wps-strip-gap-${gap}`;
 
@@ -288,7 +288,7 @@ const buildFinalPrompt = ({
     `Panel spec: vertical webtoon panel, output width ${CANVAS_WIDTH}px, panel height ${panel.height}px, no readable text in image.`,
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join('\n\n');
 };
 
 const buildDynamicStyles = (state: StudioState): string => {
@@ -316,13 +316,13 @@ const buildDynamicStyles = (state: StudioState): string => {
           `width:${width}%;`,
           `height:${height}%;`,
           `font-size:clamp(12px,${viewportSize}vw,${bubble.fontSize}px);`,
-          "}",
-        ].join(""),
+          '}',
+        ].join(''),
       );
     });
   });
 
-  return rules.join("\n");
+  return rules.join('\n');
 };
 
 const generatePanelImage = ({
@@ -332,12 +332,12 @@ const generatePanelImage = ({
   panel: Panel;
   commonPrompt: string;
 }): string => {
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement('canvas');
   canvas.width = CANVAS_WIDTH;
   canvas.height = panel.height;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
   if (!ctx) {
-    throw new Error("Canvas 2D context is not available.");
+    throw new Error('Canvas 2D context is not available.');
   }
 
   const seed = hashString(`${commonPrompt}|${panel.prompt}|${Date.now()}`);
@@ -381,7 +381,7 @@ const generatePanelImage = ({
   ctx.strokeStyle = withAlpha(palette.ink, 0.58);
   ctx.strokeRect(18, 18, CANVAS_WIDTH - 36, panel.height - 36);
 
-  return canvas.toDataURL("image/png");
+  return canvas.toDataURL('image/png');
 };
 
 const drawSpeedLines = (
@@ -506,40 +506,40 @@ const hashString = (value: string): number => {
 const pickPalette = (seed: number): Palette => {
   const palettes: Palette[] = [
     {
-      sky: "#f7d9c4",
-      mid: "#9cc7bf",
-      ground: "#4b6f68",
-      accent: "#ef775f",
-      skin: "#f4c9a8",
-      hair: "#2d2a2c",
-      ink: "#202427",
+      sky: '#f7d9c4',
+      mid: '#9cc7bf',
+      ground: '#4b6f68',
+      accent: '#ef775f',
+      skin: '#f4c9a8',
+      hair: '#2d2a2c',
+      ink: '#202427',
     },
     {
-      sky: "#c9e6e0",
-      mid: "#f0c96f",
-      ground: "#6e8063",
-      accent: "#3f7f93",
-      skin: "#ecc09d",
-      hair: "#31313a",
-      ink: "#1f2828",
+      sky: '#c9e6e0',
+      mid: '#f0c96f',
+      ground: '#6e8063',
+      accent: '#3f7f93',
+      skin: '#ecc09d',
+      hair: '#31313a',
+      ink: '#1f2828',
     },
     {
-      sky: "#efc7bd",
-      mid: "#e9e0a9",
-      ground: "#58717b",
-      accent: "#b75e69",
-      skin: "#f1c7ad",
-      hair: "#29272b",
-      ink: "#242629",
+      sky: '#efc7bd',
+      mid: '#e9e0a9',
+      ground: '#58717b',
+      accent: '#b75e69',
+      skin: '#f1c7ad',
+      hair: '#29272b',
+      ink: '#242629',
     },
     {
-      sky: "#d6d5ef",
-      mid: "#9fcbbb",
-      ground: "#67755f",
-      accent: "#d98745",
-      skin: "#eec3a4",
-      hair: "#23282e",
-      ink: "#20252a",
+      sky: '#d6d5ef',
+      mid: '#9fcbbb',
+      ground: '#67755f',
+      accent: '#d98745',
+      skin: '#eec3a4',
+      hair: '#23282e',
+      ink: '#20252a',
     },
   ];
 
@@ -547,7 +547,7 @@ const pickPalette = (seed: number): Palette => {
 };
 
 const withAlpha = (hex: string, alpha: number): string => {
-  const normalized = hex.replace("#", "");
+  const normalized = hex.replace('#', '');
   const r = Number.parseInt(normalized.slice(0, 2), 16);
   const g = Number.parseInt(normalized.slice(2, 4), 16);
   const b = Number.parseInt(normalized.slice(4, 6), 16);
@@ -559,13 +559,13 @@ const wrapText = (
   text: string,
   maxWidth: number,
 ): string[] => {
-  const words = String(text || "")
+  const words = String(text || '')
     .split(/\s+/)
     .filter(Boolean);
-  if (words.length === 0) return [""];
+  if (words.length === 0) return [''];
 
   const lines: string[] = [];
-  let line = "";
+  let line = '';
 
   words.forEach((word) => {
     const next = line ? `${line} ${word}` : word;
@@ -591,7 +591,7 @@ const loadImage = async (src: string): Promise<HTMLImageElement> =>
 
 const downloadBlob = (blob: Blob, filename: string): void => {
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
+  const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
@@ -603,9 +603,9 @@ const drawEmptyPanel = (
   y: number,
   height: number,
 ): void => {
-  ctx.fillStyle = "#eceee8";
+  ctx.fillStyle = '#eceee8';
   ctx.fillRect(0, y, CANVAS_WIDTH, height);
-  ctx.strokeStyle = "#ced4cb";
+  ctx.strokeStyle = '#ced4cb';
   ctx.lineWidth = 2;
   for (let i = -height; i < CANVAS_WIDTH; i += 28) {
     ctx.beginPath();
@@ -622,12 +622,12 @@ const drawBubbleToCanvas = (
 ): void => {
   ctx.save();
   ctx.font = `700 ${bubble.fontSize}px Inter, Arial, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  if (bubble.type === "sfx") {
-    ctx.fillStyle = "#111417";
-    ctx.strokeStyle = "#ffffff";
+  if (bubble.type === 'sfx') {
+    ctx.fillStyle = '#111417';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 8;
     ctx.font = `900 ${bubble.fontSize}px Inter, Arial, sans-serif`;
     ctx.strokeText(
@@ -644,8 +644,8 @@ const drawBubbleToCanvas = (
     return;
   }
 
-  ctx.fillStyle = bubble.type === "monologue" ? "#fff4cf" : "#ffffff";
-  ctx.strokeStyle = "#1e2225";
+  ctx.fillStyle = bubble.type === 'monologue' ? '#fff4cf' : '#ffffff';
+  ctx.strokeStyle = '#1e2225';
   ctx.lineWidth = 4;
   roundedRect(
     ctx,
@@ -653,12 +653,12 @@ const drawBubbleToCanvas = (
     offsetY + bubble.y,
     bubble.width,
     bubble.height,
-    bubble.type === "monologue" ? 6 : 34,
+    bubble.type === 'monologue' ? 6 : 34,
   );
   ctx.fill();
   ctx.stroke();
 
-  if (bubble.type === "speech") {
+  if (bubble.type === 'speech') {
     ctx.beginPath();
     ctx.moveTo(
       bubble.x + bubble.width * 0.62,
@@ -677,7 +677,7 @@ const drawBubbleToCanvas = (
   }
 
   const lines = wrapText(ctx, bubble.text, bubble.width - 28).slice(0, 4);
-  ctx.fillStyle = "#111417";
+  ctx.fillStyle = '#111417';
   lines.forEach((line, index) => {
     const lineHeight = bubble.fontSize * 1.15;
     const lineY =
@@ -854,7 +854,7 @@ const App = () => {
 
   const handlePanelGapChange = (value: number[]): void => {
     const panelGap = value[0];
-    if (typeof panelGap !== "number") return;
+    if (typeof panelGap !== 'number') return;
 
     setState((current) => ({ ...current, panelGap }));
   };
@@ -875,7 +875,7 @@ const App = () => {
 
   const handleSelectedPanelHeightChange = (value: number[]): void => {
     const height = value[0];
-    if (typeof height !== "number") return;
+    if (typeof height !== 'number') return;
 
     patchSelectedPanel({ height });
   };
@@ -903,7 +903,7 @@ const App = () => {
       createdAt: new Date().toISOString(),
       promptSnapshot: finalPrompt,
       height: selectedPanel.height,
-      provider: "local-mock",
+      provider: 'local-mock',
     };
 
     setState((current) => ({
@@ -993,7 +993,7 @@ const App = () => {
 
   const handleBubbleFontSizeChange = (value: number[]): void => {
     const fontSize = value[0];
-    if (typeof fontSize !== "number") return;
+    if (typeof fontSize !== 'number') return;
 
     patchSelectedBubble({ fontSize });
   };
@@ -1024,7 +1024,7 @@ const App = () => {
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
 
-    const frame = event.currentTarget.closest<HTMLElement>(".panel-frame");
+    const frame = event.currentTarget.closest<HTMLElement>('.panel-frame');
     if (!frame) return;
 
     const rect = frame.getBoundingClientRect();
@@ -1052,16 +1052,16 @@ const App = () => {
     const totalHeight =
       state.panels.reduce((sum, panel) => sum + panel.height, 0) +
       state.panelGap * (state.panels.length - 1);
-    const canvas = document.createElement("canvas");
+    const canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = totalHeight;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) {
       setIsExporting(false);
       return;
     }
 
-    ctx.fillStyle = "#f7f7f4";
+    ctx.fillStyle = '#f7f7f4';
     ctx.fillRect(0, 0, CANVAS_WIDTH, totalHeight);
 
     let y = 0;
@@ -1080,7 +1080,7 @@ const App = () => {
         drawEmptyPanel(ctx, y, panel.height);
       }
 
-      ctx.strokeStyle = "#1f2326";
+      ctx.strokeStyle = '#1f2326';
       ctx.lineWidth = 3;
       ctx.strokeRect(1.5, y + 1.5, CANVAS_WIDTH - 3, panel.height - 3);
       panel.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble, y));
@@ -1090,12 +1090,12 @@ const App = () => {
     canvas.toBlob((blob) => {
       if (blob) downloadBlob(blob, `webtoon-panel-${Date.now()}.png`);
       setIsExporting(false);
-    }, "image/png");
+    }, 'image/png');
   };
 
   const handleProjectJsonExport = (): void => {
     const blob = new Blob([JSON.stringify(state, null, 2)], {
-      type: "application/json",
+      type: 'application/json',
     });
     downloadBlob(blob, `webtoon-panel-project-${Date.now()}.json`);
   };
@@ -1116,7 +1116,7 @@ const App = () => {
       if (existingElement instanceof HTMLStyleElement) {
         styleElementRef.current = existingElement;
       } else {
-        const styleElement = document.createElement("style");
+        const styleElement = document.createElement('style');
         styleElement.id = DYNAMIC_STYLE_ELEMENT_ID;
         document.head.appendChild(styleElement);
         styleElementRef.current = styleElement;
@@ -1154,7 +1154,7 @@ const App = () => {
             ...panel,
             bubbles: panel.bubbles.map((bubble) => {
               if (bubble.id !== drag.bubbleId) return bubble;
-              if (drag.mode === "move") {
+              if (drag.mode === 'move') {
                 return {
                   ...bubble,
                   x: clamp(x - drag.offsetX, 0, CANVAS_WIDTH - bubble.width),
@@ -1177,11 +1177,11 @@ const App = () => {
       dragRef.current = null;
     };
 
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
     return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, []);
 
@@ -1221,7 +1221,7 @@ const App = () => {
             disabled={isExporting}
           >
             <Download className="size-4" />
-            {isExporting ? "Exporting" : "PNG"}
+            {isExporting ? 'Exporting' : 'PNG'}
           </Button>
         </nav>
       </header>
@@ -1330,7 +1330,7 @@ const App = () => {
 
           <section
             className={cn(
-              "mx-auto flex w-full max-w-[720px] flex-col",
+              'mx-auto flex w-full max-w-[720px] flex-col',
               getStripGapClassName(state.panelGap),
             )}
             aria-label="Panel strip"
@@ -1394,10 +1394,10 @@ const App = () => {
                     <Sparkles className="size-4" />
                   )}
                   {isGenerating
-                    ? "Generating"
+                    ? 'Generating'
                     : selectedCandidate
-                      ? "Regenerate cut"
-                      : "Generate cut"}
+                      ? 'Regenerate cut'
+                      : 'Generate cut'}
                 </Button>
                 <details className="overflow-hidden rounded-md border bg-background">
                   <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-muted-foreground">
@@ -1514,7 +1514,7 @@ const SectionTitle = ({
 }) => (
   <header
     className={cn(
-      "mb-3 mt-1 flex items-center gap-2 text-foreground",
+      'mt-1 mb-3 flex items-center gap-2 text-foreground',
       className,
     )}
   >
@@ -1532,7 +1532,7 @@ const FieldBlock = ({
   children: ReactNode;
   compact?: boolean;
 }) => (
-  <section className={cn("grid gap-2", compact ? "mb-3" : "mb-4")}>
+  <section className={cn('grid gap-2', compact ? 'mb-3' : 'mb-4')}>
     <Label className="text-xs font-black text-muted-foreground">{label}</Label>
     {children}
   </section>
@@ -1599,13 +1599,13 @@ const PanelListItem = ({
       <button
         type="button"
         className={cn(
-          "grid w-full grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border bg-background p-2.5 text-left text-sm transition-colors hover:bg-accent",
-          isActive && "border-primary bg-primary/10 hover:bg-primary/10",
+          'grid w-full grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-2 rounded-md border bg-background p-2.5 text-left text-sm transition-colors hover:bg-accent',
+          isActive && 'border-primary bg-primary/10 hover:bg-primary/10',
         )}
         onClick={handleSelect}
       >
         <span className="font-black text-primary">
-          {String(index + 1).padStart(2, "0")}
+          {String(index + 1).padStart(2, '0')}
         </span>
         <strong className="truncate">{panel.title}</strong>
         <small className="font-bold text-muted-foreground">
@@ -1642,9 +1642,9 @@ const PanelCanvasItem = ({
   return (
     <article
       className={cn(
-        "panel-frame",
+        'panel-frame',
         getPanelClassName(panel),
-        isSelected && "selected",
+        isSelected && 'selected',
       )}
       onClick={handleSelect}
     >
@@ -1689,22 +1689,22 @@ const BubbleLayer = ({
   const handlePointerDown = (
     event: ReactPointerEvent<HTMLDivElement>,
   ): void => {
-    onDragStart({ event, bubble, panel, mode: "move" });
+    onDragStart({ event, bubble, panel, mode: 'move' });
   };
 
   const handleResizePointerDown = (
     event: ReactPointerEvent<HTMLElement>,
   ): void => {
-    onDragStart({ event, bubble, panel, mode: "resize" });
+    onDragStart({ event, bubble, panel, mode: 'resize' });
   };
 
   return (
     <section
       className={cn(
-        "bubble-layer",
+        'bubble-layer',
         bubble.type,
         getBubbleClassName(panel, bubble),
-        isSelected && "active",
+        isSelected && 'active',
       )}
       onPointerDown={handlePointerDown}
       role="button"
@@ -1740,8 +1740,8 @@ const CandidateCard = ({
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-md border-2 border-transparent bg-background",
-        isActive && "border-primary",
+        'relative overflow-hidden rounded-md border-2 border-transparent bg-background',
+        isActive && 'border-primary',
       )}
     >
       <button
