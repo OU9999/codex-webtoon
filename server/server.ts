@@ -9,7 +9,17 @@ import {
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { config } from './config.js';
+import { detectCodexAuth } from './lib/auth/codex-detect.js';
+import {
+  disabledHandle,
+  startOAuthProxy,
+} from './lib/auth/oauth-launcher.js';
+import type { OAuthHandle } from './lib/auth/oauth-launcher.js';
+import { projectsStaticRoot } from './lib/image-store.js';
+import { authRouter } from './routes/auth.js';
+import { generateRouter } from './routes/generate.js';
 import { projectsRouter } from './routes/projects.js';
+import { setOAuthHandle } from './runtime-context.js';
 import type { HealthResponse, ServerAdvertisement } from '../shared/types.js';
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -57,6 +67,12 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
   });
 
   app.use('/api/projects', projectsRouter);
+  app.use('/api/auth', authRouter);
+  app.use('/api/generate', generateRouter);
+  app.use(
+    '/projects',
+    express.static(projectsStaticRoot(), { fallthrough: false }),
+  );
 
   const distDir = join(rootDir, 'dist');
   if (!existsSync(distDir)) return app;
@@ -69,9 +85,49 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
   return app;
 };
 
+const initOAuth = (): OAuthHandle => {
+  const mode = config.oauth.mode;
+  if (mode === 'off') {
+    return disabledHandle('OAuth disabled via WPS_OAUTH=off.');
+  }
+
+  if (mode === 'auto') {
+    const codex = detectCodexAuth();
+    if (!codex.authed) {
+      return disabledHandle(
+        codex.probe === 'missing'
+          ? 'Codex CLI not found. Install with: npm i -g @openai/codex'
+          : 'Codex not authenticated. Run: npx @openai/codex login',
+      );
+    }
+  }
+
+  return startOAuthProxy({
+    port: config.oauth.proxyPort,
+    restartDelayMs: config.oauth.restartDelayMs,
+    maxRestarts: config.oauth.maxRestarts,
+  });
+};
+
 const startServer = async () => {
   const startedAt = Date.now();
   const version = readVersion();
+
+  const oauthHandle = initOAuth();
+  setOAuthHandle(oauthHandle);
+  if (oauthHandle.state === 'disabled') {
+    console.log(`[wps] oauth: disabled — ${oauthHandle.lastError}`);
+  } else {
+    oauthHandle.readyPromise
+      .then(() =>
+        console.log(`[wps] oauth: ready at ${oauthHandle.url}`),
+      )
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[wps] oauth: failed — ${msg}`);
+      });
+  }
+
   const app = buildApp({ startedAt, version });
 
   const server = app.listen(config.server.port, config.server.host, () => {
@@ -88,6 +144,7 @@ const startServer = async () => {
 
   const shutdown = (): void => {
     unadvertise();
+    oauthHandle.stop();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(0), 1000).unref();
   };

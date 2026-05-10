@@ -1,52 +1,81 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { generatePanelImage } from '../_lib/panel-renderer';
+import { ApiClientError, generateCandidate } from '@/api/client';
+import type { Candidate as ApiCandidate } from '../../../../shared/types';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
+const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
+  id: candidate.id,
+  imageUrl: candidate.imageUrl,
+  createdAt: candidate.createdAt,
+  promptSnapshot: candidate.promptSnapshot,
+  height: candidate.height,
+  provider: candidate.provider === 'openai' ? 'openai' : 'local-mock',
+});
+
 const useGeneratePanel = (
-  state: StudioState,
+  _state: StudioState,
   setState: Dispatch<SetStateAction<StudioState>>,
   selectedPanel: Panel | undefined,
   finalPrompt: string,
+  projectName: string,
 ) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   const handleGenerateSelectedPanel = async (): Promise<void> => {
     if (!selectedPanel) return;
     if (isGenerating) return;
+    if (!finalPrompt.trim()) {
+      setGenerationError('프롬프트를 입력하세요.');
+      return;
+    }
 
     setIsGenerating(true);
+    setGenerationError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    const imageUrl = generatePanelImage({
-      panel: selectedPanel,
-      commonPrompt: state.commonPrompt,
-    });
-    const candidate: Candidate = {
-      id: crypto.randomUUID(),
-      imageUrl,
-      createdAt: new Date().toISOString(),
-      promptSnapshot: finalPrompt,
-      height: selectedPanel.height,
-      provider: 'local-mock',
-    };
+    try {
+      const apiCandidate = await generateCandidate({
+        projectName,
+        panelId: selectedPanel.id,
+        prompt: finalPrompt,
+        height: selectedPanel.height,
+      });
+      const candidate = toLocalCandidate(apiCandidate);
 
-    setState((current) => ({
-      ...current,
-      panels: current.panels.map((panel) =>
-        panel.id === current.selectedPanelId
-          ? {
-              ...panel,
-              candidates: [candidate, ...panel.candidates],
-              selectedCandidateId: candidate.id,
-            }
-          : panel,
-      ),
-    }));
-    setIsGenerating(false);
+      setState((current) => ({
+        ...current,
+        panels: current.panels.map((panel) =>
+          panel.id === current.selectedPanelId
+            ? {
+                ...panel,
+                candidates: [candidate, ...panel.candidates],
+                selectedCandidateId: candidate.id,
+              }
+            : panel,
+        ),
+      }));
+    } catch (err) {
+      const message =
+        err instanceof ApiClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : '이미지 생성에 실패했습니다.';
+      setGenerationError(message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  return { handleGenerateSelectedPanel, isGenerating };
+  const dismissGenerationError = (): void => setGenerationError(null);
+
+  return {
+    handleGenerateSelectedPanel,
+    isGenerating,
+    generationError,
+    dismissGenerationError,
+  };
 };
 
 export { useGeneratePanel };

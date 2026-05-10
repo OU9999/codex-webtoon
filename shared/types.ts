@@ -35,6 +35,27 @@ interface ApiError {
   message: string;
 }
 
+type CodexProbe = 'authed' | 'unauthed' | 'missing';
+type OAuthState = 'disabled' | 'pending' | 'ready' | 'failed';
+type AuthProviderRecommendation = 'oauth' | 'openai' | null;
+
+interface AuthStatus {
+  codex: {
+    authed: boolean;
+    probe: CodexProbe;
+    platform: string;
+  };
+  oauth: {
+    state: OAuthState;
+    url: string | null;
+    port: number | null;
+    lastError: string | null;
+  };
+  apiKey: { available: boolean };
+  recommendedProvider: AuthProviderRecommendation;
+  loginCommand: string;
+}
+
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 
 interface Bubble {
@@ -78,11 +99,15 @@ interface ProjectState {
 
 export type {
   ApiError,
+  AuthProviderRecommendation,
+  AuthStatus,
   Bubble,
   BubbleType,
   Candidate,
+  CodexProbe,
   CreateProjectRequest,
   HealthResponse,
+  OAuthState,
   Panel,
   ProjectMeta,
   ProjectState,

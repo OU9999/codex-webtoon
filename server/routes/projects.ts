@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   ProjectError,
   createProject,
+  deleteProject,
   getProject,
   listProjects,
   loadState,
@@ -81,6 +82,15 @@ projectsRouter.get('/:name/state', (req, res) => {
 projectsRouter.put('/:name/state', (req, res) => {
   try {
     saveState(req.params.name, req.body);
+    res.status(204).end();
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+projectsRouter.delete('/:name', (req, res) => {
+  try {
+    deleteProject(req.params.name);
     res.status(204).end();
   } catch (err) {
     sendError(res, err);

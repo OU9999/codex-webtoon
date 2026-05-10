@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { useStudio } from './_hooks/use-studio';
+import type { StudioState } from './_lib/types';
 
 type StudioApi = ReturnType<typeof useStudio>;
 
@@ -15,11 +16,19 @@ const useStudioContext = (): StudioApi => {
 };
 
 interface StudioProviderProps {
+  projectName: string;
+  initialState: StudioState;
+  onBack: () => void;
   children: ReactNode;
 }
 
-const StudioProvider = ({ children }: StudioProviderProps) => {
-  const studio = useStudio();
+const StudioProvider = ({
+  projectName,
+  initialState,
+  onBack,
+  children,
+}: StudioProviderProps) => {
+  const studio = useStudio({ projectName, initialState, onBack });
   return (
     <StudioContext.Provider value={studio}>{children}</StudioContext.Provider>
   );

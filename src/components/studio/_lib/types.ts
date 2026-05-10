@@ -3,13 +3,15 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize';
 
+type CandidateProvider = 'local-mock' | 'openai';
+
 interface Candidate {
   id: string;
   imageUrl: string;
   createdAt: string;
   promptSnapshot: string;
   height: number;
-  provider: 'local-mock';
+  provider: CandidateProvider;
 }
 
 interface Bubble {
@@ -71,16 +73,6 @@ interface BubbleDragStartPayload {
   mode: BubbleDragMode;
 }
 
-interface Palette {
-  sky: string;
-  mid: string;
-  ground: string;
-  accent: string;
-  skin: string;
-  hair: string;
-  ink: string;
-}
-
 interface LayerAction {
   type: BubbleType;
   label: string;
@@ -94,9 +86,9 @@ export type {
   BubbleDragStartPayload,
   BubbleType,
   Candidate,
+  CandidateProvider,
   CreatePanelOverrides,
   LayerAction,
-  Palette,
   Panel,
   StudioState,
 };

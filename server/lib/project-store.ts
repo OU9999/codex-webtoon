@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
@@ -129,6 +130,32 @@ const getProject = (name: string): ProjectMeta => {
   return meta;
 };
 
+const getProjectDir = (name: string): string => {
+  validateName(name);
+  const dir = projectPath(name.trim());
+  if (!readProjectMeta(dir)) {
+    throw new ProjectError('project_not_found', `Project "${name}" not found.`);
+  }
+  return dir;
+};
+
+const touchProject = (name: string): void => {
+  const dir = projectPath(name.trim());
+  const meta = readProjectMeta(dir);
+  if (!meta) return;
+  meta.updatedAt = Date.now();
+  writeProjectMeta(dir, meta);
+};
+
+const deleteProject = (name: string): void => {
+  validateName(name);
+  const dir = projectPath(name.trim());
+  if (!readProjectMeta(dir)) {
+    throw new ProjectError('project_not_found', `Project "${name}" not found.`);
+  }
+  rmSync(dir, { recursive: true, force: true });
+};
+
 const isProjectState = (value: unknown): value is ProjectState => {
   if (!value || typeof value !== 'object') return false;
   const obj = value as Record<string, unknown>;
@@ -190,8 +217,11 @@ const saveState = (name: string, state: unknown): void => {
 export {
   ProjectError,
   createProject,
+  deleteProject,
   getProject,
+  getProjectDir,
   listProjects,
   loadState,
   saveState,
+  touchProject,
 };
