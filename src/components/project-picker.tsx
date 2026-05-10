@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent, MouseEvent } from 'react';
-import { FolderPlus, Loader2 } from 'lucide-react';
+import { FolderPlus, Loader2, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { ApiClientError, createProject, listProjects } from '@/api/client';
+import {
+  ApiClientError,
+  createProject,
+  deleteProject,
+  listProjects,
+} from '@/api/client';
 import type { ProjectSummary } from '../../shared/types';
 
 interface ProjectPickerProps {
@@ -26,6 +31,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [deletingName, setDeletingName] = useState<string | null>(null);
 
   const refresh = async (): Promise<void> => {
     setLoading(true);
@@ -75,6 +81,36 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   const handleProjectClick = (event: MouseEvent<HTMLButtonElement>): void => {
     const target = event.currentTarget.dataset.projectName;
     if (target) onPick(target);
+  };
+
+  const handleDeleteClick = async (
+    event: MouseEvent<HTMLButtonElement>,
+  ): Promise<void> => {
+    event.stopPropagation();
+    const target = event.currentTarget.dataset.projectName;
+    if (!target) return;
+
+    const confirmed = window.confirm(
+      `"${target}" 프로젝트를 삭제할까요? 모든 패널, 후보, 이미지가 함께 사라집니다.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingName(target);
+    setError(null);
+    try {
+      await deleteProject(target);
+      setProjects((current) => current.filter((p) => p.name !== target));
+    } catch (err) {
+      const message =
+        err instanceof ApiClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : '프로젝트 삭제에 실패했습니다.';
+      setError(message);
+    } finally {
+      setDeletingName(null);
+    }
   };
 
   /**
@@ -137,26 +173,52 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
             </p>
           ) : (
             <ul className="space-y-2">
-              {projects.map((project) => (
-                <li key={project.path}>
-                  <button
-                    type="button"
-                    data-project-name={project.name}
-                    onClick={handleProjectClick}
+              {projects.map((project) => {
+                const isDeleting = deletingName === project.name;
+                return (
+                  <li
+                    key={project.path}
                     className={cn(
-                      'w-full rounded-md border border-slate-800 bg-slate-900 px-4 py-3 text-left',
+                      'group flex items-stretch gap-2 rounded-md border border-slate-800 bg-slate-900',
                       'transition hover:border-slate-600 hover:bg-slate-800',
+                      isDeleting && 'opacity-60',
                     )}
                   >
-                    <p className="text-sm font-medium text-slate-100">
-                      {project.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      수정 {formatTime(project.updatedAt)}
-                    </p>
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      data-project-name={project.name}
+                      onClick={handleProjectClick}
+                      disabled={isDeleting}
+                      className="flex-1 rounded-l-md px-4 py-3 text-left"
+                    >
+                      <p className="text-sm font-medium text-slate-100">
+                        {project.name}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        수정 {formatTime(project.updatedAt)}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`${project.name} 삭제`}
+                      data-project-name={project.name}
+                      onClick={handleDeleteClick}
+                      disabled={isDeleting}
+                      className={cn(
+                        'flex w-12 items-center justify-center rounded-r-md text-slate-500',
+                        'transition hover:bg-red-950/40 hover:text-red-300',
+                        'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                      )}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

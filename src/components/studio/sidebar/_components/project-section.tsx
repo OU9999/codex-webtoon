@@ -17,7 +17,7 @@ const ProjectSection = () => {
         <Textarea
           value={state.commonPrompt}
           onChange={handleCommonPromptChange}
-          rows={11}
+          rows={5}
           className="resize-y bg-background leading-relaxed"
         />
       </FieldBlock>

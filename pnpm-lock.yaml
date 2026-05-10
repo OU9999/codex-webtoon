@@ -8,6 +8,16 @@ importers:
 
   .:
     dependencies:
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
+      openai:
+        specifier: ^5.8.2
+        version: 5.23.2
+      ulid:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
       '@radix-ui/react-label':
         specifier: ^2.1.8
         version: 2.1.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -17,40 +27,6 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.14)(react@19.2.6)
-      class-variance-authority:
-        specifier: ^0.7.1
-        version: 0.7.1
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
-      express:
-        specifier: ^5.1.0
-        version: 5.2.1
-      lucide-react:
-        specifier: ^1.14.0
-        version: 1.14.0(react@19.2.6)
-      openai:
-        specifier: ^5.8.2
-        version: 5.23.2
-      react:
-        specifier: ^19.2.6
-        version: 19.2.6
-      react-dom:
-        specifier: ^19.2.6
-        version: 19.2.6(react@19.2.6)
-      tailwind-merge:
-        specifier: ^3.5.0
-        version: 3.5.0
-      tw-animate-css:
-        specifier: ^1.4.0
-        version: 1.4.0
-      ulid:
-        specifier: ^3.0.2
-        version: 3.0.2
-    devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.0(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0))
@@ -69,21 +45,42 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.1
         version: 6.0.1(vite@8.0.11(@types/node@25.6.2)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.21.0))
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       concurrently:
         specifier: ^9.1.0
         version: 9.2.1
+      lucide-react:
+        specifier: ^1.14.0
+        version: 1.14.0(react@19.2.6)
       prettier:
         specifier: ^3.8.3
         version: 3.8.3
       prettier-plugin-tailwindcss:
         specifier: ^0.8.0
         version: 0.8.0(prettier@3.8.3)
+      react:
+        specifier: ^19.2.6
+        version: 19.2.6
+      react-dom:
+        specifier: ^19.2.6
+        version: 19.2.6(react@19.2.6)
+      tailwind-merge:
+        specifier: ^3.5.0
+        version: 3.5.0
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -783,10 +780,6 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
-
-  dotenv@17.4.2:
-    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
-    engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -1884,8 +1877,6 @@ snapshots:
   depd@2.0.0: {}
 
   detect-libc@2.1.2: {}
-
-  dotenv@17.4.2: {}
 
   dunder-proto@1.0.1:
     dependencies:

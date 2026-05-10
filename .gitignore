@@ -10,11 +10,13 @@ ui/dist/
 coverage/
 .vite/
 *.local
+.tmp/
 
 # docs
 .docs/
 
 # plugin
 .omc/
-
-.tmp/
+.playwright-cli/
+.progress/
+scheduled_tasks.lock

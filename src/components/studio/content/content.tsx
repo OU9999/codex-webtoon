@@ -11,7 +11,7 @@ const Content = () => {
 
   return (
     <section
-      className="min-w-0 overflow-auto px-3 py-4 md:px-7 md:py-5"
+      className="min-h-0 min-w-0 overscroll-contain overflow-y-auto px-3 py-4 md:px-7 md:py-5"
       aria-label="Webtoon canvas"
     >
       <header className="mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-4 text-xs text-muted-foreground">

@@ -131,6 +131,13 @@ const usePanelActions = (
     setState((current) => ({ ...current, panelGap }));
   };
 
+  const handleVariantCountChange = (value: number[]): void => {
+    const raw = value[0];
+    if (typeof raw !== 'number') return;
+    const variantCount = Math.min(4, Math.max(1, Math.trunc(raw)));
+    setState((current) => ({ ...current, variantCount }));
+  };
+
   const handlePanelSelect = (panelId: string): void => {
     setState((current) => ({
       ...current,
@@ -169,6 +176,7 @@ const usePanelActions = (
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
+    handleVariantCountChange,
     patchSelectedPanel,
   };
 };

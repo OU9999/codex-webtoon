@@ -16,23 +16,6 @@ const roundedRect = (
   ctx.closePath();
 };
 
-const hashString = (value: string): number => {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-};
-
-const withAlpha = (hex: string, alpha: number): string => {
-  const normalized = hex.replace('#', '');
-  const r = Number.parseInt(normalized.slice(0, 2), 16);
-  const g = Number.parseInt(normalized.slice(2, 4), 16);
-  const b = Number.parseInt(normalized.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
 const wrapText = (
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -63,4 +46,4 @@ const wrapText = (
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
-export { clamp, hashString, roundedRect, withAlpha, wrapText };
+export { clamp, roundedRect, wrapText };

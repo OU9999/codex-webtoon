@@ -1,9 +1,20 @@
 import type {
   ApiError,
+  AuthStatus,
+  Candidate,
   ProjectMeta,
   ProjectState,
   ProjectSummary,
 } from '../../shared/types';
+
+interface GenerateCandidateRequest {
+  projectName: string;
+  panelId: string;
+  prompt: string;
+  height: number;
+  count?: number;
+  provider?: 'auto' | 'openai' | 'oauth';
+}
 
 class ApiClientError extends Error {
   constructor(
@@ -75,11 +86,32 @@ const saveProjectState = (name: string, state: ProjectState): Promise<void> =>
     body: JSON.stringify(state),
   });
 
+const generateCandidates = (
+  request: GenerateCandidateRequest,
+): Promise<Candidate[]> =>
+  requestJson<Candidate[]>('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+
+const deleteProject = (name: string): Promise<void> =>
+  requestVoid(`/api/projects/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+
+const getAuthStatus = (): Promise<AuthStatus> =>
+  requestJson<AuthStatus>('/api/auth/status');
+
 export {
   ApiClientError,
   createProject,
+  deleteProject,
+  generateCandidates,
+  getAuthStatus,
   getProject,
   listProjects,
   loadProjectState,
   saveProjectState,
 };
+export type { GenerateCandidateRequest };

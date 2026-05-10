@@ -10,7 +10,9 @@ const Shell = ({ children }: ShellProps) => {
   return (
     <section className="flex h-screen flex-col bg-background text-foreground">
       <TitleBar />
-      <article className="min-h-0 flex-1 overflow-auto">{children}</article>
+      <article className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {children}
+      </article>
       <StatusBar />
     </section>
   );

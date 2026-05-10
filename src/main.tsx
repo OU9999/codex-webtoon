@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Studio } from './components/studio/studio';
+import { ProjectShell } from './components/project-shell';
 import './styles.css';
 
 const rootElement = document.getElementById('root');
@@ -11,6 +11,6 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <React.StrictMode>
-    <Studio />
+    <ProjectShell />
   </React.StrictMode>,
 );

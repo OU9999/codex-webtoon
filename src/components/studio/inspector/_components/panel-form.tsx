@@ -1,4 +1,4 @@
-import { ChevronLeft, RefreshCcw, Sparkles } from 'lucide-react';
+import { ChevronLeft, RefreshCcw, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,14 +9,18 @@ import { useStudioContext } from '../../studio-context';
 
 const PanelForm = () => {
   const {
+    dismissGenerationError,
     finalPrompt,
+    generationError,
     handleGenerateSelectedPanel,
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
+    handleVariantCountChange,
     isGenerating,
     selectedCandidate,
     selectedPanel,
+    state,
   } = useStudioContext();
 
   if (!selectedPanel) return null;
@@ -51,6 +55,15 @@ const PanelForm = () => {
           className="resize-y bg-background leading-relaxed"
         />
       </FieldBlock>
+      <RangeField
+        label="변형 수"
+        value={state.variantCount}
+        suffix="개"
+        min={1}
+        max={4}
+        step={1}
+        onValueChange={handleVariantCountChange}
+      />
 
       <section className="mb-5 grid gap-2">
         <Button
@@ -69,7 +82,27 @@ const PanelForm = () => {
             : selectedCandidate
               ? 'Regenerate cut'
               : 'Generate cut'}
+          <kbd className="ml-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide opacity-80">
+            ⌘↵
+          </kbd>
         </Button>
+        {generationError && (
+          <aside
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive"
+          >
+            <span className="flex-1 leading-relaxed">{generationError}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-5 text-destructive hover:bg-destructive/10"
+              onClick={dismissGenerationError}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </aside>
+        )}
         <details className="overflow-hidden rounded-md border bg-background">
           <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-muted-foreground">
             최종 생성 조건

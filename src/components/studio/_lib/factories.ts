@@ -49,24 +49,4 @@ const createBubble = (type: BubbleType): Bubble => {
   };
 };
 
-const starterPanels: Panel[] = [
-  createPanel({
-    title: 'Opening beat',
-    height: 420,
-    prompt:
-      '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
-  }),
-  createPanel({
-    title: 'Reaction close-up',
-    height: 330,
-    prompt:
-      '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
-  }),
-  createPanel({
-    title: 'Long pause',
-    height: 560,
-    prompt: '',
-  }),
-];
-
-export { createBubble, createPanel, starterPanels };
+export { createBubble, createPanel };

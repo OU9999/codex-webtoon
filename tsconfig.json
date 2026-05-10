@@ -12,7 +12,8 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared/*": ["./shared/*"]
     },
     "resolveJsonModule": true,
     "isolatedModules": true,
