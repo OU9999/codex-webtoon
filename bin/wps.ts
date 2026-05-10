@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { config } from '../server/config.js';
+import { rootFromMetaUrl } from '../server/lib/find-root.js';
 
-const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
+const rootDir = rootFromMetaUrl(import.meta.url);
 
 const readVersion = (): string => {
   try {
@@ -32,12 +32,22 @@ const status = (): void => {
 };
 
 const serve = (): void => {
-  const serverEntry = join(rootDir, 'build', 'server', 'server.js');
-  const useBuilt = existsSync(serverEntry);
-  const cmd = useBuilt ? 'node' : 'pnpm';
-  const args = useBuilt
-    ? [serverEntry]
-    : ['tsx', join(rootDir, 'server', 'server.ts')];
+  const builtEntry = join(rootDir, 'build', 'server', 'server.js');
+  const sourceEntry = join(rootDir, 'server', 'server.ts');
+  let cmd: string;
+  let args: string[];
+
+  if (existsSync(builtEntry)) {
+    cmd = 'node';
+    args = [builtEntry];
+  } else if (existsSync(sourceEntry)) {
+    cmd = 'pnpm';
+    args = ['tsx', sourceEntry];
+  } else {
+    console.error(`could not locate server entry under ${rootDir}`);
+    process.exit(1);
+  }
+
   const child = spawn(cmd, args, { stdio: 'inherit', cwd: rootDir });
 
   child.on('exit', (code) => process.exit(code ?? 0));

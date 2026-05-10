@@ -7,9 +7,10 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { config } from './config.js';
 import { detectCodexAuth } from './lib/auth/codex-detect.js';
+import { rootFromMetaUrl } from './lib/find-root.js';
 import {
   disabledHandle,
   startOAuthProxy,
@@ -22,7 +23,7 @@ import { projectsRouter } from './routes/projects.js';
 import { setOAuthHandle } from './runtime-context.js';
 import type { HealthResponse, ServerAdvertisement } from '../shared/types.js';
 
-const rootDir = dirname(dirname(fileURLToPath(import.meta.url)));
+const rootDir = rootFromMetaUrl(import.meta.url);
 
 const readVersion = (): string => {
   try {
