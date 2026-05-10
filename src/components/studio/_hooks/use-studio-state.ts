@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { ApiClientError, saveProjectState } from '@/api/client';
-import type { ProjectState } from '../../../../shared/types';
+import type { ProjectState } from '@shared/types';
 import type { StudioState } from '../_lib/types';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';

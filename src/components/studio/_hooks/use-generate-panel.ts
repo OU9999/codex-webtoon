@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { ApiClientError, generateCandidates } from '@/api/client';
-import type { Candidate as ApiCandidate } from '../../../../shared/types';
+import type { Candidate as ApiCandidate } from '@shared/types';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
 const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
