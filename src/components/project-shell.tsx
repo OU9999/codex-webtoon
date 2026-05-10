@@ -36,8 +36,17 @@ const createDefaultState = (): StudioState => {
     selectedPanelId: panels[0].id,
     selectedBubbleId: null,
     panelGap: 28,
+    variantCount: 1,
   };
 };
+
+const normalizeLoadedState = (loaded: StudioState): StudioState => ({
+  ...loaded,
+  variantCount:
+    typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
+      ? Math.min(4, Math.trunc(loaded.variantCount))
+      : 1,
+});
 
 const ProjectShell = () => {
   const [projectName, setProjectName] = useState<string | null>(null);
@@ -82,7 +91,7 @@ const ProjectShell = () => {
         if (gen !== loadGenRef.current) return;
         setInitialState(
           loaded
-            ? (loaded as unknown as StudioState)
+            ? normalizeLoadedState(loaded as unknown as StudioState)
             : createDefaultState(),
         );
       } catch (err) {

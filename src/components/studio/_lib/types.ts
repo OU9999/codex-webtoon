@@ -42,6 +42,7 @@ interface StudioState {
   selectedPanelId: string;
   selectedBubbleId: string | null;
   panelGap: number;
+  variantCount: number;
 }
 
 interface CreatePanelOverrides extends Partial<

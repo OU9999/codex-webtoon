@@ -95,6 +95,7 @@ interface ProjectState {
   selectedPanelId: string;
   selectedBubbleId: string | null;
   panelGap: number;
+  variantCount: number;
 }
 
 export type {

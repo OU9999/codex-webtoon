@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import { ApiClientError, generateCandidate } from '@/api/client';
+import { ApiClientError, generateCandidates } from '@/api/client';
 import type { Candidate as ApiCandidate } from '../../../../shared/types';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
@@ -14,7 +14,7 @@ const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
 });
 
 const useGeneratePanel = (
-  _state: StudioState,
+  state: StudioState,
   setState: Dispatch<SetStateAction<StudioState>>,
   selectedPanel: Panel | undefined,
   finalPrompt: string,
@@ -35,13 +35,18 @@ const useGeneratePanel = (
     setGenerationError(null);
 
     try {
-      const apiCandidate = await generateCandidate({
+      const apiCandidates = await generateCandidates({
         projectName,
         panelId: selectedPanel.id,
         prompt: finalPrompt,
         height: selectedPanel.height,
+        count: state.variantCount,
       });
-      const candidate = toLocalCandidate(apiCandidate);
+      const newCandidates = apiCandidates.map(toLocalCandidate);
+      if (newCandidates.length === 0) {
+        setGenerationError('이미지 생성 결과가 비어 있습니다.');
+        return;
+      }
 
       setState((current) => ({
         ...current,
@@ -49,8 +54,8 @@ const useGeneratePanel = (
           panel.id === current.selectedPanelId
             ? {
                 ...panel,
-                candidates: [candidate, ...panel.candidates],
-                selectedCandidateId: candidate.id,
+                candidates: [...newCandidates, ...panel.candidates],
+                selectedCandidateId: newCandidates[0].id,
               }
             : panel,
         ),

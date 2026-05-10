@@ -16,9 +16,11 @@ const PanelForm = () => {
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
+    handleVariantCountChange,
     isGenerating,
     selectedCandidate,
     selectedPanel,
+    state,
   } = useStudioContext();
 
   if (!selectedPanel) return null;
@@ -53,6 +55,15 @@ const PanelForm = () => {
           className="resize-y bg-background leading-relaxed"
         />
       </FieldBlock>
+      <RangeField
+        label="변형 수"
+        value={state.variantCount}
+        suffix="개"
+        min={1}
+        max={4}
+        step={1}
+        onValueChange={handleVariantCountChange}
+      />
 
       <section className="mb-5 grid gap-2">
         <Button

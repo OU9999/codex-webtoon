@@ -12,6 +12,7 @@ interface GenerateCandidateRequest {
   panelId: string;
   prompt: string;
   height: number;
+  count?: number;
   provider?: 'auto' | 'openai' | 'oauth';
 }
 
@@ -85,10 +86,10 @@ const saveProjectState = (name: string, state: ProjectState): Promise<void> =>
     body: JSON.stringify(state),
   });
 
-const generateCandidate = (
+const generateCandidates = (
   request: GenerateCandidateRequest,
-): Promise<Candidate> =>
-  requestJson<Candidate>('/api/generate', {
+): Promise<Candidate[]> =>
+  requestJson<Candidate[]>('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
@@ -106,7 +107,7 @@ export {
   ApiClientError,
   createProject,
   deleteProject,
-  generateCandidate,
+  generateCandidates,
   getAuthStatus,
   getProject,
   listProjects,

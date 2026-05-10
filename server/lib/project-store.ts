@@ -165,9 +165,18 @@ const isProjectState = (value: unknown): value is ProjectState => {
     typeof obj.selectedPanelId === 'string' &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
-    typeof obj.panelGap === 'number'
+    typeof obj.panelGap === 'number' &&
+    (obj.variantCount === undefined || typeof obj.variantCount === 'number')
   );
 };
+
+const normalizeProjectState = (state: ProjectState): ProjectState => ({
+  ...state,
+  variantCount:
+    typeof state.variantCount === 'number' && state.variantCount >= 1
+      ? Math.min(4, Math.trunc(state.variantCount))
+      : 1,
+});
 
 const loadState = (name: string): ProjectState | null => {
   validateName(name);
@@ -187,7 +196,7 @@ const loadState = (name: string): ProjectState | null => {
         `Project "${name}" has corrupted state.`,
       );
     }
-    return parsed;
+    return normalizeProjectState(parsed);
   } catch (err) {
     if (err instanceof ProjectError) throw err;
     throw new ProjectError(

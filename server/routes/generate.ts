@@ -23,6 +23,7 @@ interface GenerateRequestBody {
   prompt?: unknown;
   height?: unknown;
   provider?: unknown;
+  count?: unknown;
 }
 
 interface ParsedRequest {
@@ -31,7 +32,10 @@ interface ParsedRequest {
   prompt: string;
   height: number;
   provider: ProviderRequest;
+  count: number;
 }
+
+const MAX_COUNT = 4;
 
 class GenerateValidationError extends Error {
   constructor(
@@ -85,12 +89,29 @@ const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
     }
   }
 
+  let count = 1;
+  if (body.count !== undefined) {
+    if (
+      typeof body.count !== 'number' ||
+      !Number.isInteger(body.count) ||
+      body.count < 1 ||
+      body.count > MAX_COUNT
+    ) {
+      throw new GenerateValidationError(
+        'count',
+        `count must be an integer between 1 and ${MAX_COUNT}.`,
+      );
+    }
+    count = body.count;
+  }
+
   return {
     projectName: body.projectName.trim(),
     panelId: body.panelId.trim(),
     prompt: body.prompt.trim(),
     height: body.height,
     provider,
+    count,
   };
 };
 
@@ -214,21 +235,27 @@ generateRouter.post('/', async (req, res) => {
   const size = pickSize(parsed.height);
 
   try {
-    const { buffer, model } = await generatePng(resolved, parsed.prompt, size);
+    const generated = await Promise.all(
+      Array.from({ length: parsed.count }, () =>
+        generatePng(resolved, parsed.prompt, size),
+      ),
+    );
 
-    const saved = saveCandidate({
-      projectName: parsed.projectName,
-      projectDir,
-      panelId: parsed.panelId,
-      pngBuffer: buffer,
-      metadata: {
-        promptSnapshot: parsed.prompt,
-        height: parsed.height,
-        provider: resolved.provider,
-        model,
-        size,
-      },
-    });
+    const saved = generated.map(({ buffer, model }) =>
+      saveCandidate({
+        projectName: parsed.projectName,
+        projectDir,
+        panelId: parsed.panelId,
+        pngBuffer: buffer,
+        metadata: {
+          promptSnapshot: parsed.prompt,
+          height: parsed.height,
+          provider: resolved.provider,
+          model,
+          size,
+        },
+      }),
+    );
 
     touchProject(parsed.projectName);
     res.status(201).json(saved);
