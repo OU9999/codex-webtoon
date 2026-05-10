@@ -19,3 +19,4 @@ coverage/
 .omc/
 .playwright-cli/
 .progress/
+scheduled_tasks.lock
