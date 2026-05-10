@@ -17,4 +17,5 @@ coverage/
 
 # plugin
 .omc/
-.playwright-cli
+.playwright-cli/
+.progress/
