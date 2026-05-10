@@ -47,7 +47,7 @@ const Header = () => {
   const auth = useAuthStatus();
 
   return (
-    <header className="sticky top-0 z-20 flex h-auto flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:h-[68px] md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
+    <header className="z-20 flex h-auto shrink-0 flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:h-[68px] md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
       <h1 className="flex items-center gap-3">
         <PanelTop className="size-6 text-primary" />
         <span>

@@ -3,7 +3,7 @@ import { ProjectSection } from './_components/project-section';
 
 const Sidebar = () => {
   return (
-    <aside className="border-b bg-card/85 p-4 lg:border-r lg:border-b-0 xl:p-[18px]">
+    <aside className="flex min-h-0 flex-col overflow-y-auto border-b bg-card/85 p-3 lg:border-r lg:border-b-0 xl:p-4">
       <ProjectSection />
       <PanelList />
     </aside>
