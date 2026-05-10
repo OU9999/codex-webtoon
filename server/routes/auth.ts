@@ -11,8 +11,6 @@ interface AuthStatusBody {
   };
   oauth: {
     state: 'disabled' | 'pending' | 'ready' | 'failed';
-    url: string | null;
-    port: number | null;
     lastError: string | null;
   };
   apiKey: {
@@ -50,8 +48,6 @@ authRouter.get('/status', (_req, res) => {
     },
     oauth: {
       state: handle?.state ?? 'disabled',
-      url: handle?.url ?? null,
-      port: handle?.port ?? null,
       lastError: handle?.lastError ?? null,
     },
     apiKey: { available: apiKeyAvailable },

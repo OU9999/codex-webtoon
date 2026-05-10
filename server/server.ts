@@ -17,6 +17,7 @@ import {
 } from './lib/auth/oauth-launcher.js';
 import type { OAuthHandle } from './lib/auth/oauth-launcher.js';
 import { projectsStaticRoot } from './lib/image-store.js';
+import { createRateLimiter, requireJsonBody } from './lib/middleware.js';
 import { authRouter } from './routes/auth.js';
 import { generateRouter } from './routes/generate.js';
 import { projectsRouter } from './routes/projects.js';
@@ -56,7 +57,9 @@ const unadvertise = (): void => {
 
 const buildApp = (opts: { startedAt: number; version: string }) => {
   const app = express();
-  app.use(express.json({ limit: '20mb' }));
+  app.disable('x-powered-by');
+  app.use('/api', requireJsonBody);
+  app.use(express.json({ limit: '1mb' }));
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -67,9 +70,11 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
     res.json(body);
   });
 
+  const generateLimiter = createRateLimiter({ windowMs: 60_000, max: 30 });
+
   app.use('/api/projects', projectsRouter);
   app.use('/api/auth', authRouter);
-  app.use('/api/generate', generateRouter);
+  app.use('/api/generate', generateLimiter, generateRouter);
   app.use(
     '/projects',
     express.static(projectsStaticRoot(), { fallthrough: false }),

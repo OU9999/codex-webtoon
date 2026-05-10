@@ -7,7 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { config } from '../config.js';
 import type {
   ProjectMeta,
@@ -35,12 +35,29 @@ const ensureProjectsRoot = (): string => {
   return root;
 };
 
-const projectPath = (name: string): string => join(ensureProjectsRoot(), name);
+const projectPath = (name: string): string => {
+  validateName(name);
+  const root = resolve(ensureProjectsRoot());
+  const candidate = resolve(root, name.trim());
+  if (dirname(candidate) !== root) {
+    throw new ProjectError(
+      'invalid_name',
+      'Project name resolves outside the projects directory.',
+    );
+  }
+  return candidate;
+};
 
 const validateName = (name: string): void => {
   const trimmed = name.trim();
   if (!trimmed)
     throw new ProjectError('invalid_name', 'Project name is empty.');
+  if (trimmed === '.' || trimmed === '..') {
+    throw new ProjectError(
+      'invalid_name',
+      'Project name cannot be "." or "..".',
+    );
+  }
   if (!NAME_PATTERN.test(trimmed)) {
     throw new ProjectError(
       'invalid_name',
@@ -156,12 +173,60 @@ const deleteProject = (name: string): void => {
   rmSync(dir, { recursive: true, force: true });
 };
 
+const isBubble = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  const b = value as Record<string, unknown>;
+  return (
+    typeof b.id === 'string' &&
+    typeof b.type === 'string' &&
+    typeof b.text === 'string' &&
+    typeof b.x === 'number' &&
+    typeof b.y === 'number' &&
+    typeof b.width === 'number' &&
+    typeof b.height === 'number' &&
+    typeof b.fontSize === 'number'
+  );
+};
+
+const isCandidate = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  const c = value as Record<string, unknown>;
+  return (
+    typeof c.id === 'string' &&
+    typeof c.imageUrl === 'string' &&
+    typeof c.createdAt === 'string' &&
+    typeof c.promptSnapshot === 'string' &&
+    typeof c.height === 'number' &&
+    typeof c.provider === 'string'
+  );
+};
+
+const isPanel = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  const p = value as Record<string, unknown>;
+  return (
+    typeof p.id === 'string' &&
+    typeof p.title === 'string' &&
+    typeof p.height === 'number' &&
+    typeof p.prompt === 'string' &&
+    Array.isArray(p.candidates) &&
+    p.candidates.every(isCandidate) &&
+    (p.selectedCandidateId === null ||
+      typeof p.selectedCandidateId === 'string') &&
+    Array.isArray(p.deletedCandidates) &&
+    p.deletedCandidates.every(isCandidate) &&
+    Array.isArray(p.bubbles) &&
+    p.bubbles.every(isBubble)
+  );
+};
+
 const isProjectState = (value: unknown): value is ProjectState => {
   if (!value || typeof value !== 'object') return false;
   const obj = value as Record<string, unknown>;
   return (
     typeof obj.commonPrompt === 'string' &&
     Array.isArray(obj.panels) &&
+    obj.panels.every(isPanel) &&
     typeof obj.selectedPanelId === 'string' &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&

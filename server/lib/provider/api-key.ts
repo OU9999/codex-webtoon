@@ -4,8 +4,7 @@ import { config as appConfig } from '../../config.js';
 class MissingApiKeyError extends Error {
   constructor() {
     super(
-      'OPENAI_API_KEY is not set. Provide it via environment variable or "openaiApiKey" in ' +
-        appConfig.storage.configFile,
+      'OPENAI_API_KEY is not set. Provide it via environment variable or config file.',
     );
     this.name = 'MissingApiKeyError';
   }
@@ -33,6 +32,9 @@ const resolveOpenAiApiKey = (): string => {
   const fromConfig = readApiKeyFromConfig();
   if (fromConfig) return fromConfig;
 
+  console.info(
+    `[wps] no OPENAI_API_KEY in env or ${appConfig.storage.configFile}`,
+  );
   throw new MissingApiKeyError();
 };
 

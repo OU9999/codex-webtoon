@@ -97,11 +97,7 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
           )}
           {status && (
             <dl className="space-y-1 leading-relaxed">
-              <Row
-                label="OAuth"
-                value={status.oauth.state}
-                hint={status.oauth.url}
-              />
+              <Row label="OAuth" value={status.oauth.state} />
               <Row
                 label="Codex"
                 value={

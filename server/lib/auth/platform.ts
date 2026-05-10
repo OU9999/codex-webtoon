@@ -25,12 +25,24 @@ const isWsl = (): boolean => {
 
 const resolveBin = (name: string): string => (isWin ? `${name}.cmd` : name);
 
+const SHELL_SAFE_TOKEN = /^[A-Za-z0-9._\/\\:=+-]+$/;
+
+const assertShellSafeToken = (token: string, label: string): void => {
+  if (!SHELL_SAFE_TOKEN.test(token)) {
+    throw new Error(
+      `spawnBin refused unsafe ${label} for cmd.exe path: ${token}`,
+    );
+  }
+};
+
 const spawnBin = (
   name: string,
   args: string[],
   opts: SpawnOptions = {},
 ): ChildProcess => {
   if (isWin) {
+    assertShellSafeToken(name, 'command');
+    args.forEach((arg, idx) => assertShellSafeToken(arg, `arg[${idx}]`));
     return spawn('cmd.exe', ['/d', '/s', '/c', `${name} ${args.join(' ')}`], {
       windowsHide: true,
       ...opts,

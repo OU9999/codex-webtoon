@@ -47,8 +47,6 @@ interface AuthStatus {
   };
   oauth: {
     state: OAuthState;
-    url: string | null;
-    port: number | null;
     lastError: string | null;
   };
   apiKey: { available: boolean };
