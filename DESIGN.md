@@ -50,10 +50,10 @@ Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for ins
 
 ---
 
-## 2. Layout — three panes + chrome
+## 2. Layout — header + three panes + chrome
 
 ```
-┌─ titlebar  (38px, --bg-elevated) ─────────────────────────────┐
+┌─ header  (68px desktop, --bg-elevated / --bg) ────────────────┐
 ├──────────┬─────────────────────────────────┬─────────────────┤
 │  LEFT    │   CENTER (canvas)               │  RIGHT          │
 │  280px   │   flex                          │  320px          │
@@ -68,7 +68,7 @@ Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for ins
 └─ statusbar (22px, mono) ──────────────────────────────────────┘
 ```
 
-- **Title bar** mimics a desktop app: traffic lights, app name, `mono` doc path, right-side ghost buttons, one primary `Export`.
+- **Header** contains project identity, navigation back to projects, auth/save state, export actions, and the primary selected-panel generation action. Do not include decorative desktop traffic lights.
 - **Status bar** is mono, low-contrast meta only (cursor coords, token count, save state).
 - **Center** is the only scrolling region for the comic itself; ruler stays pinned to the left of the column.
 

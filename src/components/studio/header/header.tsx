@@ -6,6 +6,7 @@ import {
   Loader2,
   PanelTop,
   Save,
+  Sparkles,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AuthBadge } from '@/components/auth-badge';
@@ -35,16 +36,20 @@ const saveBadge = (status: SaveStatus): SaveBadgeContent | null => {
 
 const Header = () => {
   const {
+    handleGenerateSelectedPanel,
     handleProjectJsonExport,
     handleWebtoonPngExport,
     isExporting,
+    isGenerating,
     projectName,
     saveStatus,
+    selectedPanel,
     onBack,
   } = useStudioContext();
 
   const badge = saveBadge(saveStatus);
   const auth = useAuthStatus();
+  const generateDisabled = !selectedPanel || isGenerating;
 
   return (
     <header className="z-20 flex h-auto shrink-0 flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:h-[68px] md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
@@ -92,11 +97,24 @@ const Header = () => {
         </Button>
         <Button
           type="button"
+          variant="outline"
           onClick={handleWebtoonPngExport}
           disabled={isExporting}
         >
           <Download className="size-4" />
           {isExporting ? 'Exporting' : 'PNG'}
+        </Button>
+        <Button
+          type="button"
+          onClick={handleGenerateSelectedPanel}
+          disabled={generateDisabled}
+        >
+          {isGenerating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Sparkles className="size-4" />
+          )}
+          {isGenerating ? 'Generating' : 'Generate'}
         </Button>
       </nav>
     </header>
