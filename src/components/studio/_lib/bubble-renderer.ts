@@ -1,6 +1,206 @@
-import { roundedRect, wrapText } from './canvas-primitives';
+import { wrapText } from './canvas-primitives';
+import { getBubbleTailPoints, resolveBubbleStyle } from './bubble-style';
 import { CANVAS_WIDTH } from './constants';
-import type { Bubble } from './types';
+import type { Bubble, BubbleTailSide } from './types';
+import type { BubbleTailPoint } from './bubble-style';
+
+interface CanvasCornerRadii {
+  topLeft: number;
+  topRight: number;
+  bottomRight: number;
+  bottomLeft: number;
+}
+
+const roundedRectWithCorners = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radii: CanvasCornerRadii,
+): void => {
+  const maxRadius = Math.min(width / 2, height / 2);
+  const topLeft = Math.min(radii.topLeft, maxRadius);
+  const topRight = Math.min(radii.topRight, maxRadius);
+  const bottomRight = Math.min(radii.bottomRight, maxRadius);
+  const bottomLeft = Math.min(radii.bottomLeft, maxRadius);
+
+  ctx.beginPath();
+  ctx.moveTo(x + topLeft, y);
+  ctx.lineTo(x + width - topRight, y);
+  ctx.arcTo(x + width, y, x + width, y + topRight, topRight);
+  ctx.lineTo(x + width, y + height - bottomRight);
+  ctx.arcTo(
+    x + width,
+    y + height,
+    x + width - bottomRight,
+    y + height,
+    bottomRight,
+  );
+  ctx.lineTo(x + bottomLeft, y + height);
+  ctx.arcTo(x, y + height, x, y + height - bottomLeft, bottomLeft);
+  ctx.lineTo(x, y + topLeft);
+  ctx.arcTo(x, y, x + topLeft, y, topLeft);
+  ctx.closePath();
+};
+
+const pointToCanvas = (
+  bubble: Bubble,
+  offsetY: number,
+  point: BubbleTailPoint,
+): { x: number; y: number } => {
+  return {
+    x: bubble.x + (point.x / 100) * bubble.width,
+    y: offsetY + bubble.y + (point.y / 100) * bubble.height,
+  };
+};
+
+const appendSpeechTail = (
+  ctx: CanvasRenderingContext2D,
+  bubble: Bubble,
+  offsetY: number,
+  first: BubbleTailPoint,
+  second: BubbleTailPoint,
+  tip: BubbleTailPoint,
+  side: BubbleTailSide,
+): void => {
+  const firstPoint = pointToCanvas(bubble, offsetY, first);
+  const secondPoint = pointToCanvas(bubble, offsetY, second);
+  const tipPoint = pointToCanvas(bubble, offsetY, tip);
+  const baseSpan = Math.hypot(
+    secondPoint.x - firstPoint.x,
+    secondPoint.y - firstPoint.y,
+  );
+  const blend = Math.min(18, Math.max(5, baseSpan * 0.24));
+  const tipPull = 0.28;
+  let firstControl: { x: number; y: number };
+  let firstTipControl: { x: number; y: number };
+  let secondTipControl: { x: number; y: number };
+  let secondControl: { x: number; y: number };
+
+  if (side === 'top') {
+    firstControl = { x: firstPoint.x + blend, y: firstPoint.y };
+    firstTipControl = {
+      x: tipPoint.x + (firstPoint.x - tipPoint.x) * tipPull,
+      y: tipPoint.y + 6,
+    };
+    secondTipControl = {
+      x: tipPoint.x + (secondPoint.x - tipPoint.x) * tipPull,
+      y: tipPoint.y + 6,
+    };
+    secondControl = { x: secondPoint.x - blend, y: secondPoint.y };
+  } else if (side === 'right') {
+    firstControl = { x: firstPoint.x, y: firstPoint.y + blend };
+    firstTipControl = {
+      x: tipPoint.x - 6,
+      y: tipPoint.y + (firstPoint.y - tipPoint.y) * tipPull,
+    };
+    secondTipControl = {
+      x: tipPoint.x - 6,
+      y: tipPoint.y + (secondPoint.y - tipPoint.y) * tipPull,
+    };
+    secondControl = { x: secondPoint.x, y: secondPoint.y - blend };
+  } else if (side === 'left') {
+    firstControl = { x: firstPoint.x, y: firstPoint.y - blend };
+    firstTipControl = {
+      x: tipPoint.x + 6,
+      y: tipPoint.y + (firstPoint.y - tipPoint.y) * tipPull,
+    };
+    secondTipControl = {
+      x: tipPoint.x + 6,
+      y: tipPoint.y + (secondPoint.y - tipPoint.y) * tipPull,
+    };
+    secondControl = { x: secondPoint.x, y: secondPoint.y + blend };
+  } else {
+    firstControl = { x: firstPoint.x - blend, y: firstPoint.y };
+    firstTipControl = {
+      x: tipPoint.x + (firstPoint.x - tipPoint.x) * tipPull,
+      y: tipPoint.y - 6,
+    };
+    secondTipControl = {
+      x: tipPoint.x + (secondPoint.x - tipPoint.x) * tipPull,
+      y: tipPoint.y - 6,
+    };
+    secondControl = { x: secondPoint.x + blend, y: secondPoint.y };
+  }
+
+  ctx.lineTo(firstPoint.x, firstPoint.y);
+  ctx.bezierCurveTo(
+    firstControl.x,
+    firstControl.y,
+    firstTipControl.x,
+    firstTipControl.y,
+    tipPoint.x,
+    tipPoint.y,
+  );
+  ctx.bezierCurveTo(
+    secondTipControl.x,
+    secondTipControl.y,
+    secondControl.x,
+    secondControl.y,
+    secondPoint.x,
+    secondPoint.y,
+  );
+};
+
+const speechBubblePathWithTail = (
+  ctx: CanvasRenderingContext2D,
+  bubble: Bubble,
+  offsetY: number,
+  radii: CanvasCornerRadii,
+  points: BubbleTailPoint[] | null,
+  tailSide: BubbleTailSide,
+): void => {
+  const maxRadius = Math.min(bubble.width / 2, bubble.height / 2);
+  const topLeft = Math.min(radii.topLeft, maxRadius);
+  const topRight = Math.min(radii.topRight, maxRadius);
+  const bottomRight = Math.min(radii.bottomRight, maxRadius);
+  const bottomLeft = Math.min(radii.bottomLeft, maxRadius);
+  const [first, second, tip] = points ?? [];
+  const hasTail = Boolean(first && second && tip);
+  const x = bubble.x;
+  const y = offsetY + bubble.y;
+  const width = bubble.width;
+  const height = bubble.height;
+
+  ctx.beginPath();
+  ctx.moveTo(x + topLeft, y);
+
+  if (hasTail && tailSide === 'top') {
+    appendSpeechTail(ctx, bubble, offsetY, first, second, tip, tailSide);
+  }
+
+  ctx.lineTo(x + width - topRight, y);
+  ctx.arcTo(x + width, y, x + width, y + topRight, topRight);
+
+  if (hasTail && tailSide === 'right') {
+    appendSpeechTail(ctx, bubble, offsetY, first, second, tip, tailSide);
+  }
+
+  ctx.lineTo(x + width, y + height - bottomRight);
+  ctx.arcTo(
+    x + width,
+    y + height,
+    x + width - bottomRight,
+    y + height,
+    bottomRight,
+  );
+
+  if (hasTail && tailSide === 'bottom') {
+    appendSpeechTail(ctx, bubble, offsetY, second, first, tip, tailSide);
+  }
+
+  ctx.lineTo(x + bottomLeft, y + height);
+  ctx.arcTo(x, y + height, x, y + height - bottomLeft, bottomLeft);
+
+  if (hasTail && tailSide === 'left') {
+    appendSpeechTail(ctx, bubble, offsetY, second, first, tip, tailSide);
+  }
+
+  ctx.lineTo(x, y + topLeft);
+  ctx.arcTo(x, y, x + topLeft, y, topLeft);
+  ctx.closePath();
+};
 
 const drawEmptyPanel = (
   ctx: CanvasRenderingContext2D,
@@ -25,15 +225,17 @@ const drawBubbleToCanvas = (
   offsetY: number,
 ): void => {
   ctx.save();
-  ctx.font = `700 ${bubble.fontSize}px Inter, Arial, sans-serif`;
+  const style = resolveBubbleStyle(bubble);
+  const fontStyle =
+    bubble.type === 'sfx' || bubble.type === 'monologue' ? 'italic ' : '';
+  ctx.font = `${fontStyle}${style.cssFontWeight} ${bubble.fontSize}px ${style.canvasFontFamily}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   if (bubble.type === 'sfx') {
-    ctx.fillStyle = '#111417';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 8;
-    ctx.font = `900 ${bubble.fontSize}px Inter, Arial, sans-serif`;
+    ctx.fillStyle = style.textColor;
+    ctx.strokeStyle = style.fillColor;
+    ctx.lineWidth = Math.max(4, style.borderWidth * 2);
     ctx.strokeText(
       bubble.text,
       bubble.x + bubble.width / 2,
@@ -48,40 +250,45 @@ const drawBubbleToCanvas = (
     return;
   }
 
-  ctx.fillStyle = bubble.type === 'monologue' ? '#fff4cf' : '#ffffff';
-  ctx.strokeStyle = '#1e2225';
-  ctx.lineWidth = 4;
-  roundedRect(
-    ctx,
-    bubble.x,
-    offsetY + bubble.y,
-    bubble.width,
-    bubble.height,
-    bubble.type === 'monologue' ? 6 : 34,
-  );
-  ctx.fill();
-  ctx.stroke();
+  ctx.fillStyle = style.fillColor;
+  ctx.strokeStyle = style.borderColor;
+  ctx.lineWidth = style.borderWidth;
+  if (style.borderStyle === 'dashed') ctx.setLineDash([10, 7]);
+  if (style.borderStyle === 'dotted') ctx.setLineDash([2, 6]);
+
+  const cornerRadii = {
+    topLeft: style.radiusTopLeft,
+    topRight: style.radiusTopRight,
+    bottomRight: style.radiusBottomRight,
+    bottomLeft: style.radiusBottomLeft,
+  };
 
   if (bubble.type === 'speech') {
-    ctx.beginPath();
-    ctx.moveTo(
-      bubble.x + bubble.width * 0.62,
-      offsetY + bubble.y + bubble.height - 2,
+    speechBubblePathWithTail(
+      ctx,
+      bubble,
+      offsetY,
+      cornerRadii,
+      getBubbleTailPoints(bubble),
+      style.tailSide,
     );
-    ctx.lineTo(
-      bubble.x + bubble.width * 0.72,
-      offsetY + bubble.y + bubble.height + 34,
+  } else {
+    roundedRectWithCorners(
+      ctx,
+      bubble.x,
+      offsetY + bubble.y,
+      bubble.width,
+      bubble.height,
+      cornerRadii,
     );
-    ctx.lineTo(
-      bubble.x + bubble.width * 0.49,
-      offsetY + bubble.y + bubble.height - 6,
-    );
-    ctx.fill();
-    ctx.stroke();
   }
 
+  ctx.fill();
+  if (style.borderWidth > 0) ctx.stroke();
+
+  ctx.setLineDash([]);
   const lines = wrapText(ctx, bubble.text, bubble.width - 28).slice(0, 4);
-  ctx.fillStyle = '#111417';
+  ctx.fillStyle = style.textColor;
   lines.forEach((line, index) => {
     const lineHeight = bubble.fontSize * 1.15;
     const lineY =

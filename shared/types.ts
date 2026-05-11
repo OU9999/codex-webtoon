@@ -55,6 +55,19 @@ interface AuthStatus {
 }
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
+type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
+type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
+type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
+type BubbleShape =
+  | 'rounded'
+  | 'pill'
+  | 'cloud'
+  | 'square'
+  | 'sharp'
+  | 'rough'
+  | 'burst'
+  | 'custom';
+type BubbleTailSide = 'none' | 'top' | 'right' | 'bottom' | 'left';
 
 interface Bubble {
   id: string;
@@ -65,6 +78,25 @@ interface Bubble {
   width: number;
   height: number;
   fontSize: number;
+  fillColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderStyle?: BubbleBorderStyle;
+  fontFamily?: BubbleFontFamily;
+  fontWeight?: BubbleFontWeight;
+  shape?: BubbleShape;
+  radiusTopLeft?: number;
+  radiusTopRight?: number;
+  radiusBottomRight?: number;
+  radiusBottomLeft?: number;
+  tailSide?: BubbleTailSide;
+  tailPosition?: number;
+  tailWidth?: number;
+  tailHeight?: number;
+  tailSkew?: number;
+  tailTipX?: number;
+  tailTipY?: number;
 }
 
 interface Candidate {
@@ -101,6 +133,11 @@ export type {
   AuthProviderRecommendation,
   AuthStatus,
   Bubble,
+  BubbleBorderStyle,
+  BubbleFontFamily,
+  BubbleFontWeight,
+  BubbleShape,
+  BubbleTailSide,
   BubbleType,
   Candidate,
   CodexProbe,

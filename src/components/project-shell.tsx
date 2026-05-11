@@ -8,6 +8,7 @@ import { Studio } from '@/components/studio/studio';
 import type { StudioState } from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import { createPanel } from '@/components/studio/_lib/factories';
+import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
 
 const createDefaultState = (): StudioState => {
   const panels = [
@@ -42,6 +43,10 @@ const createDefaultState = (): StudioState => {
 
 const normalizeLoadedState = (loaded: StudioState): StudioState => ({
   ...loaded,
+  panels: loaded.panels.map((panel) => ({
+    ...panel,
+    bubbles: panel.bubbles.map(withDefaultBubbleStyle),
+  })),
   variantCount:
     typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
       ? Math.min(4, Math.trunc(loaded.variantCount))

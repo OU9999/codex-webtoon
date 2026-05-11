@@ -41,18 +41,20 @@ const PanelCanvasItem = ({
       )}
       onClick={handleSelect}
     >
-      {selectedCandidate ? (
-        <img
-          src={selectedCandidate.imageUrl}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <p className="empty-panel">
-          <ImagePlus className="size-9" />
-          <span>빈 패널</span>
-        </p>
-      )}
+      <figure className="panel-visual">
+        {selectedCandidate ? (
+          <img
+            src={selectedCandidate.imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <p className="empty-panel">
+            <ImagePlus className="size-9" />
+            <span>빈 패널</span>
+          </p>
+        )}
+      </figure>
       <span className="panel-number">{index + 1}</span>
       {isSelected && <span className="selected-rim" />}
       {panel.bubbles.map((bubble) => (
