@@ -3,13 +3,18 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { config } from '../config.js';
-import { normalizePanelGapColor } from '../../shared/project-state.js';
+import {
+  normalizeCanvasHeight,
+  normalizePanelGapColor,
+  normalizePanelGeometry,
+} from '../../shared/project-state.js';
 import type {
   ProjectMeta,
   ProjectState,
@@ -68,6 +73,34 @@ const validateName = (name: string): void => {
   }
 };
 
+/**
+ * Writes `data` to `file` atomically: write to a sibling temp file first, then
+ * rename it over the target. A crash mid-write leaves the original intact.
+ */
+const atomicWriteFileSync = (file: string, data: string): void => {
+  const tmp = `${file}.${process.pid}.tmp`;
+  try {
+    writeFileSync(tmp, data);
+    renameSync(tmp, file);
+  } catch (err) {
+    try {
+      rmSync(tmp, { force: true });
+    } catch {}
+    throw err;
+  }
+};
+
+const quarantineCorruptFile = (file: string): void => {
+  try {
+    const target = `${file}.corrupt-${Date.now()}`;
+    renameSync(file, target);
+    console.warn(`[wps] quarantined corrupt file -> ${target}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[wps] failed to quarantine ${file}: ${message}`);
+  }
+};
+
 const readProjectMeta = (dir: string): ProjectMeta | null => {
   const file = join(dir, PROJECT_FILE);
   if (!existsSync(file)) return null;
@@ -80,7 +113,7 @@ const readProjectMeta = (dir: string): ProjectMeta | null => {
 };
 
 const writeProjectMeta = (dir: string, meta: ProjectMeta): void => {
-  writeFileSync(join(dir, PROJECT_FILE), JSON.stringify(meta, null, 2));
+  atomicWriteFileSync(join(dir, PROJECT_FILE), JSON.stringify(meta, null, 2));
 };
 
 const createProject = (rawName: string): ProjectSummary => {
@@ -215,6 +248,9 @@ const isPanel = (value: unknown): boolean => {
   return (
     typeof p.id === 'string' &&
     typeof p.title === 'string' &&
+    (p.x === undefined || typeof p.x === 'number') &&
+    (p.y === undefined || typeof p.y === 'number') &&
+    (p.width === undefined || typeof p.width === 'number') &&
     typeof p.height === 'number' &&
     typeof p.prompt === 'string' &&
     Array.isArray(p.candidates) &&
@@ -241,6 +277,7 @@ const isProjectState = (value: unknown): value is ProjectState => {
     typeof obj.selectedPanelId === 'string' &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
+    (obj.canvasHeight === undefined || typeof obj.canvasHeight === 'number') &&
     typeof obj.panelGap === 'number' &&
     (obj.panelGapColor === undefined ||
       typeof obj.panelGapColor === 'string') &&
@@ -258,6 +295,12 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
       candidateKeys.add(`${panel.id}:${candidate.id}`);
     }
   }
+  const canvasHeight = normalizeCanvasHeight(
+    (state as { canvasHeight?: unknown }).canvasHeight,
+    state.panels,
+    state.panelGap,
+  );
+  let fallbackY = 0;
 
   return {
     ...state,
@@ -269,9 +312,12 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
             .filter(isReferenceImageRef)
             .filter((reference) => candidateKeys.has(referenceKey(reference)))
         : [];
+      const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
+      fallbackY += geometry.height + state.panelGap;
 
-      return { ...panel, referenceImages };
+      return { ...panel, ...geometry, referenceImages };
     }),
+    canvasHeight,
     panelGapColor: normalizePanelGapColor(
       (state as { panelGapColor?: unknown }).panelGapColor,
     ),
@@ -292,22 +338,20 @@ const loadState = (name: string): ProjectState | null => {
   const file = join(dir, STATE_FILE);
   if (!existsSync(file)) return null;
 
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(readFileSync(file, 'utf-8')) as unknown;
-    if (!isProjectState(parsed)) {
-      throw new ProjectError(
-        'invalid_state',
-        `Project "${name}" has corrupted state.`,
-      );
-    }
-    return normalizeProjectState(parsed);
-  } catch (err) {
-    if (err instanceof ProjectError) throw err;
-    throw new ProjectError(
-      'invalid_state',
-      `Failed to read state for "${name}".`,
-    );
+    parsed = JSON.parse(readFileSync(file, 'utf-8')) as unknown;
+  } catch {
+    quarantineCorruptFile(file);
+    return null;
   }
+
+  if (!isProjectState(parsed)) {
+    quarantineCorruptFile(file);
+    return null;
+  }
+
+  return normalizeProjectState(parsed);
 };
 
 const saveState = (name: string, state: unknown): void => {
@@ -322,7 +366,7 @@ const saveState = (name: string, state: unknown): void => {
     throw new ProjectError('project_not_found', `Project "${name}" not found.`);
   }
 
-  writeFileSync(
+  atomicWriteFileSync(
     join(dir, STATE_FILE),
     JSON.stringify(normalizeProjectState(state), null, 2),
   );

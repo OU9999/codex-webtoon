@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker';
 import { Studio } from '@/components/studio/studio';
 import {
+  DEFAULT_CANVAS_HEIGHT,
   DEFAULT_PANEL_GAP_COLOR,
+  normalizeCanvasHeight,
   normalizePanelGapColor,
+  normalizePanelGeometry,
 } from '@shared/project-state';
 import type {
   ReferenceImageRef,
@@ -17,21 +20,25 @@ import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import { createPanel } from '@/components/studio/_lib/factories';
 
 const createDefaultState = (): StudioState => {
+  const panelGap = 28;
   const panels = [
     createPanel({
       title: 'Opening beat',
+      y: 0,
       height: 420,
       prompt:
         '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
     }),
     createPanel({
       title: 'Reaction close-up',
+      y: 420 + panelGap,
       height: 330,
       prompt:
         '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
     }),
     createPanel({
       title: 'Long pause',
+      y: 420 + panelGap + 330 + panelGap,
       height: 560,
       prompt: '',
     }),
@@ -42,7 +49,8 @@ const createDefaultState = (): StudioState => {
     panels,
     selectedPanelId: panels[0].id,
     selectedBubbleId: null,
-    panelGap: 28,
+    canvasHeight: DEFAULT_CANVAS_HEIGHT,
+    panelGap,
     panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
   };
@@ -64,6 +72,12 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
       candidateKeys.add(`${panel.id}:${candidate.id}`);
     }
   }
+  const canvasHeight = normalizeCanvasHeight(
+    (loaded as { canvasHeight?: unknown }).canvasHeight,
+    loaded.panels,
+    loaded.panelGap,
+  );
+  let fallbackY = 0;
 
   return {
     ...loaded,
@@ -75,9 +89,12 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
             .filter(isReferenceImageRef)
             .filter((reference) => candidateKeys.has(referenceKey(reference)))
         : [];
+      const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
+      fallbackY += geometry.height + loaded.panelGap;
 
-      return { ...panel, referenceImages };
+      return { ...panel, ...geometry, referenceImages };
     }),
+    canvasHeight,
     panelGapColor: normalizePanelGapColor(
       (loaded as { panelGapColor?: unknown }).panelGapColor,
     ),

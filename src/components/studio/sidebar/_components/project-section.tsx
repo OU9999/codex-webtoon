@@ -1,5 +1,6 @@
 import { SquarePen } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { MIN_CANVAS_HEIGHT } from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
 import { RangeField } from '../../_components/range-field';
 import { SectionTitle } from '../../_components/section-title';
@@ -9,6 +10,7 @@ import { PanelActions } from './panel-actions';
 const ProjectSection = () => {
   const {
     state,
+    handleCanvasHeightChange,
     handleCommonPromptChange,
     handlePanelGapChange,
     handlePanelGapColorChange,
@@ -26,6 +28,15 @@ const ProjectSection = () => {
         />
       </FieldBlock>
       <PanelActions />
+      <RangeField
+        label="웹툰 배경 높이"
+        value={state.canvasHeight}
+        suffix="px"
+        min={MIN_CANVAS_HEIGHT}
+        max={3600}
+        step={10}
+        onValueChange={handleCanvasHeightChange}
+      />
       <RangeField
         label="컷 사이 여백"
         value={state.panelGap}

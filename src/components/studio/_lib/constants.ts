@@ -1,4 +1,6 @@
-const CANVAS_WIDTH = 720;
+import { WEBTOON_CANVAS_WIDTH } from '@shared/project-state';
+
+const CANVAS_WIDTH = WEBTOON_CANVAS_WIDTH;
 const DYNAMIC_STYLE_ELEMENT_ID = 'webtoon-panel-studio-dynamic-styles';
 const MAX_REFERENCE_IMAGES = 4;
 

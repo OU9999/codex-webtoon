@@ -1,6 +1,7 @@
 import {
   getBubbleClassName,
   getPanelClassName,
+  getStageClassName,
   getStripGapClassName,
 } from './class-names';
 import { normalizePanelGapColor } from '@shared/project-state';
@@ -11,16 +12,29 @@ const buildDynamicStyles = (state: StudioState): string => {
   const panelGapColor = normalizePanelGapColor(state.panelGapColor);
   const rules = [
     [
-      `.${getStripGapClassName(state.panelGap)}{`,
-      `gap:${state.panelGap}px;`,
+      `.${getStageClassName()}{`,
+      `aspect-ratio:${CANVAS_WIDTH}/${state.canvasHeight};`,
       `background-color:${panelGapColor};`,
       '}',
     ].join(''),
+    `.${getStripGapClassName(state.panelGap)}{gap:${state.panelGap}px}`,
   ];
 
   state.panels.forEach((panel) => {
+    const left = (panel.x / CANVAS_WIDTH) * 100;
+    const top = (panel.y / state.canvasHeight) * 100;
+    const width = (panel.width / CANVAS_WIDTH) * 100;
+    const height = (panel.height / state.canvasHeight) * 100;
+
     rules.push(
-      `.${getPanelClassName(panel)}{aspect-ratio:${CANVAS_WIDTH}/${panel.height}}`,
+      [
+        `.${getPanelClassName(panel)}{`,
+        `left:${left}%;`,
+        `top:${top}%;`,
+        `width:${width}%;`,
+        `height:${height}%;`,
+        '}',
+      ].join(''),
     );
 
     panel.bubbles.forEach((bubble) => {

@@ -2,6 +2,8 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize';
+type PanelTransformMode = 'move' | 'resize';
+type PanelResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 
 type CandidateProvider = 'local-mock' | 'oauth' | 'openai';
 
@@ -33,6 +35,9 @@ interface Bubble {
 interface Panel {
   id: string;
   title: string;
+  x: number;
+  y: number;
+  width: number;
   height: number;
   prompt: string;
   candidates: Candidate[];
@@ -47,6 +52,7 @@ interface StudioState {
   panels: Panel[];
   selectedPanelId: string;
   selectedBubbleId: string | null;
+  canvasHeight: number;
   panelGap: number;
   panelGapColor: string;
   variantCount: number;
@@ -56,6 +62,9 @@ interface CreatePanelOverrides extends Partial<
   Pick<
     Panel,
     | 'title'
+    | 'x'
+    | 'y'
+    | 'width'
     | 'height'
     | 'prompt'
     | 'candidates'
@@ -82,6 +91,28 @@ interface BubbleDragStartPayload {
   mode: BubbleDragMode;
 }
 
+interface PanelTransform {
+  mode: PanelTransformMode;
+  panelId: string;
+  resizeHandle: PanelResizeHandle | null;
+  rect: DOMRect;
+  canvasHeight: number;
+  offsetX: number;
+  offsetY: number;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  startHeight: number;
+}
+
+interface PanelTransformStartPayload {
+  event: ReactPointerEvent<HTMLElement>;
+  panel: Panel;
+  mode: PanelTransformMode;
+  resizeHandle?: PanelResizeHandle;
+  canvasHeight: number;
+}
+
 interface LayerAction {
   type: BubbleType;
   label: string;
@@ -99,6 +130,10 @@ export type {
   CreatePanelOverrides,
   LayerAction,
   Panel,
+  PanelResizeHandle,
+  PanelTransform,
+  PanelTransformMode,
+  PanelTransformStartPayload,
   ReferenceImageRef,
   StudioState,
 };

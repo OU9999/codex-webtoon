@@ -58,7 +58,7 @@ Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for ins
 │  LEFT    │   CENTER (canvas)               │  RIGHT          │
 │  280px   │   flex                          │  320px          │
 │ rail     │   ┌ toolbar (32px) ────────────┐│  inspector      │
-│ sections │   │ ruler 60px │ vertical strip ││                 │
+│ sections │   │ ruler 60px │ free stage     ││                 │
 │          │   │            │  panels        ││                 │
 │ • Project│   │            │  720px wide    ││                 │
 │ • Story  │   │            │  (default)     ││                 │
@@ -70,13 +70,13 @@ Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for ins
 
 - **Header** contains project identity, navigation back to projects, auth/save state, export actions, and the primary selected-panel generation action. Do not include decorative desktop traffic lights.
 - **Status bar** is mono, low-contrast meta only (cursor coords, token count, save state).
-- **Center** is the only scrolling region for the comic itself; ruler stays pinned to the left of the column.
+- **Center** is the only scrolling region for the comic itself; panels are positioned as free assets inside the webtoon stage.
 
 ### Canvas
 
 - Background `--bg-canvas` with a subtle 24px dot grid (`rgba(26,31,48,0.07)`) — visual texture, never decorative.
-- Panel column width ∈ {640, 720, 800} (Tweak). Default **720px**, ≈10–14px gap between panels.
-- Panel gaps use an editable episode background color. Default **#ffffff** to match published webtoon gutters; the same color must render in the editor strip and exported PNG.
+- Webtoon stage width is **720px**. Stage height is editable; panels can move and resize freely inside this background.
+- Panel gaps use an editable episode background color. Default **#ffffff** to match published webtoon gutters; the same color must render in the editor stage and exported PNG.
 - Ruler: dashed right edge, mono ticks every 100px, height labels in `--fg-muted`.
 
 ---
@@ -195,7 +195,7 @@ Title the panel **Tweaks** (lower-right floating). Persisted via `__edit_mode_se
 | Key                | Type   | Options                       | Default   |
 | ------------------ | ------ | ----------------------------- | --------- |
 | `selection_style`  | radio  | `border` / `offset` / `label` | `border`  |
-| `canvas_width`     | radio  | `640` / `720` / `800`         | `720`     |
+| `canvas_height`    | slider | 360–3600 px                   | `1440`    |
 | `right_pane_width` | slider | 280–400 px                    | 320       |
 | `panel_gap_color`  | color  | Hex color                     | `#ffffff` |
 | `balloon_style`    | radio  | `classic` / `sharp` / `rough` | `classic` |
