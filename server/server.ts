@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type ErrorRequestHandler } from 'express';
 import {
   existsSync,
   mkdirSync,
@@ -22,7 +22,11 @@ import { authRouter } from './routes/auth.js';
 import { generateRouter } from './routes/generate.js';
 import { projectsRouter } from './routes/projects.js';
 import { setOAuthHandle } from './runtime-context.js';
-import type { HealthResponse, ServerAdvertisement } from '../shared/types.js';
+import type {
+  ApiError,
+  HealthResponse,
+  ServerAdvertisement,
+} from '../shared/types.js';
 
 const rootDir = rootFromMetaUrl(import.meta.url);
 
@@ -55,11 +59,48 @@ const unadvertise = (): void => {
   } catch {}
 };
 
+const jsonErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  const detail = (err ?? {}) as { type?: unknown };
+
+  if (detail.type === 'entity.too.large') {
+    const body: ApiError = {
+      error: 'payload_too_large',
+      message: 'Request body is too large.',
+    };
+    res.status(413).json(body);
+    return;
+  }
+
+  if (
+    detail.type === 'entity.parse.failed' ||
+    (err instanceof SyntaxError && 'body' in err)
+  ) {
+    const body: ApiError = {
+      error: 'invalid_json',
+      message: 'Request body is not valid JSON.',
+    };
+    res.status(400).json(body);
+    return;
+  }
+
+  console.error('[wps] unhandled error:', err);
+  const body: ApiError = {
+    error: 'internal',
+    message: err instanceof Error ? err.message : 'Internal server error.',
+  };
+  res.status(500).json(body);
+};
+
 const buildApp = (opts: { startedAt: number; version: string }) => {
   const app = express();
   app.disable('x-powered-by');
   app.use('/api', requireJsonBody);
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '10mb' }));
 
   app.get('/api/health', (_req, res) => {
     const body: HealthResponse = {
@@ -81,24 +122,26 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
   );
 
   const distDir = join(rootDir, 'dist');
-  if (!existsSync(distDir)) return app;
+  if (existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.get(/^\/(?!api\/).*/, (_req, res) => {
+      res.sendFile(join(distDir, 'index.html'));
+    });
+  }
 
-  app.use(express.static(distDir));
-  app.get(/^\/(?!api\/).*/, (_req, res) => {
-    res.sendFile(join(distDir, 'index.html'));
-  });
+  app.use(jsonErrorHandler);
 
   return app;
 };
 
-const initOAuth = (): OAuthHandle => {
+const initOAuth = async (): Promise<OAuthHandle> => {
   const mode = config.oauth.mode;
   if (mode === 'off') {
     return disabledHandle('OAuth disabled via WPS_OAUTH=off.');
   }
 
   if (mode === 'auto') {
-    const codex = detectCodexAuth();
+    const codex = await detectCodexAuth();
     if (!codex.authed) {
       return disabledHandle(
         codex.probe === 'missing'
@@ -112,6 +155,7 @@ const initOAuth = (): OAuthHandle => {
     port: config.oauth.proxyPort,
     restartDelayMs: config.oauth.restartDelayMs,
     maxRestarts: config.oauth.maxRestarts,
+    startupTimeoutMs: config.oauth.startupTimeoutMs,
   });
 };
 
@@ -119,7 +163,7 @@ const startServer = async () => {
   const startedAt = Date.now();
   const version = readVersion();
 
-  const oauthHandle = initOAuth();
+  const oauthHandle = await initOAuth();
   setOAuthHandle(oauthHandle);
   if (oauthHandle.state === 'disabled') {
     console.log(`[wps] oauth: disabled — ${oauthHandle.lastError}`);

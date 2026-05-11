@@ -1,5 +1,3 @@
-import type { OAuthHandle } from './oauth-launcher.js';
-
 interface GenerateViaOAuthInput {
   oauthUrl: string;
   prompt: string;
@@ -35,42 +33,6 @@ class OAuthGenerateError extends Error {
     this.name = 'OAuthGenerateError';
   }
 }
-
-const waitForReady = async (
-  handle: OAuthHandle,
-  timeoutMs = 8000,
-): Promise<void> => {
-  if (handle.state === 'ready') return;
-  if (handle.state === 'failed' || handle.state === 'disabled') {
-    throw new OAuthGenerateError(
-      'oauth_unavailable',
-      503,
-      handle.lastError ?? 'OAuth proxy is unavailable.',
-    );
-  }
-  await Promise.race([
-    handle.readyPromise.catch((err: unknown) => {
-      throw new OAuthGenerateError(
-        'oauth_unavailable',
-        503,
-        err instanceof Error ? err.message : 'OAuth proxy failed to start.',
-      );
-    }),
-    new Promise<void>((_, reject) =>
-      setTimeout(
-        () =>
-          reject(
-            new OAuthGenerateError(
-              'oauth_timeout',
-              504,
-              `OAuth proxy did not become ready within ${timeoutMs}ms.`,
-            ),
-          ),
-        timeoutMs,
-      ),
-    ),
-  ]);
-};
 
 interface ResponsesImageGenerationCall {
   type: string;
@@ -309,5 +271,5 @@ const generateImageViaOAuth = async (
   };
 };
 
-export { OAuthGenerateError, generateImageViaOAuth, waitForReady };
+export { OAuthGenerateError, generateImageViaOAuth };
 export type { GenerateViaOAuthInput, OAuthGenerateResult };

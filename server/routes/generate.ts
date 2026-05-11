@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import OpenAI, { toFile } from 'openai';
 import {
   generateImageViaOAuth,
@@ -330,6 +330,27 @@ const generatePng = async (
     return { buffer: Buffer.from(b64, 'base64'), model };
   });
 
+const sendGenerationError = (res: Response, err: unknown): void => {
+  if (err instanceof ImageStoreError) {
+    const body: ApiError = { error: err.code, message: err.message };
+    res.status(400).json(body);
+    return;
+  }
+  if (err instanceof OAuthGenerateError) {
+    const body: ApiError = { error: err.code, message: err.message };
+    res.status(err.status).json(body);
+    return;
+  }
+  if (err instanceof GenerationTimeoutError) {
+    const body: ApiError = { error: 'generation_timeout', message: err.message };
+    res.status(504).json(body);
+    return;
+  }
+  const message = err instanceof Error ? err.message : 'Generation failed.';
+  const body: ApiError = { error: 'generation_failed', message };
+  res.status(502).json(body);
+};
+
 const generateRouter = Router();
 
 generateRouter.post('/', async (req, res) => {
@@ -382,18 +403,44 @@ generateRouter.post('/', async (req, res) => {
 
   const size = pickSize(parsed.height);
 
+  let referenceImages: ReferenceImageBuffer[];
   try {
-    const referenceImages = readReferenceImages(
-      projectDir,
-      parsed.referenceImages,
-    );
-    const generated = await Promise.all(
-      Array.from({ length: parsed.count }, () =>
-        generatePng(resolved, parsed.prompt, size, referenceImages),
-      ),
-    );
+    referenceImages = readReferenceImages(projectDir, parsed.referenceImages);
+  } catch (err) {
+    sendGenerationError(res, err);
+    return;
+  }
 
-    const saved = generated.map(({ buffer, model }) =>
+  const outcomes = await Promise.allSettled(
+    Array.from({ length: parsed.count }, () =>
+      generatePng(resolved, parsed.prompt, size, referenceImages),
+    ),
+  );
+
+  const fulfilled = outcomes.filter(
+    (outcome): outcome is PromiseFulfilledResult<GeneratedPng> =>
+      outcome.status === 'fulfilled',
+  );
+  const firstRejection = outcomes.find(
+    (outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected',
+  );
+
+  if (fulfilled.length === 0) {
+    sendGenerationError(res, firstRejection?.reason);
+    return;
+  }
+  if (firstRejection) {
+    const reason =
+      firstRejection.reason instanceof Error
+        ? firstRejection.reason.message
+        : String(firstRejection.reason);
+    console.warn(
+      `[wps] generate: ${parsed.count - fulfilled.length}/${parsed.count} variants failed (${reason}); returning ${fulfilled.length}.`,
+    );
+  }
+
+  try {
+    const saved = fulfilled.map(({ value: { buffer, model } }) =>
       saveCandidate({
         projectName: parsed.projectName,
         projectDir,
@@ -413,27 +460,7 @@ generateRouter.post('/', async (req, res) => {
     touchProject(parsed.projectName);
     res.status(201).json(saved);
   } catch (err) {
-    if (err instanceof ImageStoreError) {
-      const body: ApiError = { error: err.code, message: err.message };
-      res.status(400).json(body);
-      return;
-    }
-    if (err instanceof OAuthGenerateError) {
-      const body: ApiError = { error: err.code, message: err.message };
-      res.status(err.status).json(body);
-      return;
-    }
-    if (err instanceof GenerationTimeoutError) {
-      const body: ApiError = {
-        error: 'generation_timeout',
-        message: err.message,
-      };
-      res.status(504).json(body);
-      return;
-    }
-    const message = err instanceof Error ? err.message : 'Generation failed.';
-    const body: ApiError = { error: 'generation_failed', message };
-    res.status(502).json(body);
+    sendGenerationError(res, err);
   }
 });
 

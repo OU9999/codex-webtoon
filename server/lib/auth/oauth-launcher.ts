@@ -16,6 +16,7 @@ interface OAuthLauncherOptions {
   port: number;
   restartDelayMs?: number;
   maxRestarts?: number;
+  startupTimeoutMs?: number;
 }
 
 const READY_REGEX = /https?:\/\/(?:127\.0\.0\.1|localhost):\d+(?:\/v1)?/i;
@@ -40,11 +41,13 @@ const parseLocalhostPort = (url: string): number | null => {
 const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
   const restartDelayMs = options.restartDelayMs ?? 3000;
   const maxRestarts = options.maxRestarts ?? 3;
+  const startupTimeoutMs = options.startupTimeoutMs ?? 20_000;
 
   let child: ChildProcess | null = null;
   let stopping = false;
   let restarts = 0;
   let restartTimer: NodeJS.Timeout | null = null;
+  let startupTimer: NodeJS.Timeout | null = null;
 
   let state: OAuthState = 'pending';
   let url: string | null = null;
@@ -58,7 +61,15 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
     rejectReady = reject;
   });
 
+  const clearStartupTimer = (): void => {
+    if (startupTimer) {
+      clearTimeout(startupTimer);
+      startupTimer = null;
+    }
+  };
+
   const fail = (reason: string): void => {
+    clearStartupTimer();
     state = 'failed';
     lastError = reason;
     rejectReady(new Error(reason));
@@ -72,6 +83,7 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
     port = parseLocalhostPort(detected) ?? options.port;
     if (state !== 'ready') {
       state = 'ready';
+      clearStartupTimer();
       resolveReady();
     }
   };
@@ -106,7 +118,7 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
 
     proc.on('exit', (code) => {
       if (child === proc) child = null;
-      if (stopping) return;
+      if (stopping || state === 'failed') return;
 
       if (state === 'ready') {
         console.log(`[oauth] proxy exited (code ${code}), state degraded.`);
@@ -126,6 +138,24 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
     });
   };
 
+  if (startupTimeoutMs > 0) {
+    startupTimer = setTimeout(() => {
+      startupTimer = null;
+      if (stopping || state === 'ready' || state === 'failed') return;
+      if (restartTimer) {
+        clearTimeout(restartTimer);
+        restartTimer = null;
+      }
+      try {
+        child?.kill('SIGTERM');
+      } catch {}
+      fail(
+        `openai-oauth did not become ready within ${Math.round(startupTimeoutMs / 1000)}s.`,
+      );
+    }, startupTimeoutMs);
+    startupTimer.unref();
+  }
+
   spawnProxy();
 
   return {
@@ -144,6 +174,7 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
     readyPromise,
     stop() {
       stopping = true;
+      clearStartupTimer();
       if (restartTimer) clearTimeout(restartTimer);
       try {
         child?.kill('SIGTERM');
