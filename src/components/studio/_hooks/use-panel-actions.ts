@@ -1,4 +1,5 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { normalizePanelGapColor } from '@shared/project-state';
 import { createPanel } from '../_lib/factories';
 import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
 import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
@@ -152,6 +153,13 @@ const usePanelActions = (
     setState((current) => ({ ...current, panelGap }));
   };
 
+  const handlePanelGapColorChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ): void => {
+    const panelGapColor = normalizePanelGapColor(event.target.value);
+    setState((current) => ({ ...current, panelGapColor }));
+  };
+
   const handleVariantCountChange = (value: number[]): void => {
     const raw = value[0];
     if (typeof raw !== 'number') return;
@@ -256,6 +264,7 @@ const usePanelActions = (
     handleDuplicatePanel,
     handleMovePanelDown,
     handleMovePanelUp,
+    handlePanelGapColorChange,
     handlePanelGapChange,
     handlePanelSelect,
     handleReferenceImageRemove,

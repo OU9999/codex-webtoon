@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { normalizePanelGapColor } from '@shared/project-state';
 import { drawBubbleToCanvas, drawEmptyPanel } from '../_lib/bubble-renderer';
 import { CANVAS_WIDTH } from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
@@ -21,7 +22,7 @@ const useExport = (state: StudioState) => {
       return;
     }
 
-    ctx.fillStyle = '#f7f7f4';
+    ctx.fillStyle = normalizePanelGapColor(state.panelGapColor);
     ctx.fillRect(0, 0, CANVAS_WIDTH, totalHeight);
 
     let y = 0;

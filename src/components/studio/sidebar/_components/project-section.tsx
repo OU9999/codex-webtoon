@@ -7,8 +7,12 @@ import { useStudioContext } from '../../studio-context';
 import { PanelActions } from './panel-actions';
 
 const ProjectSection = () => {
-  const { state, handleCommonPromptChange, handlePanelGapChange } =
-    useStudioContext();
+  const {
+    state,
+    handleCommonPromptChange,
+    handlePanelGapChange,
+    handlePanelGapColorChange,
+  } = useStudioContext();
 
   return (
     <>
@@ -30,6 +34,24 @@ const ProjectSection = () => {
         max={96}
         onValueChange={handlePanelGapChange}
       />
+      <section className="mb-4 grid gap-3">
+        <header className="flex items-center justify-between gap-3 text-xs font-black text-muted-foreground">
+          <span>컷 사이 배경</span>
+          <strong className="font-mono text-foreground">
+            {state.panelGapColor}
+          </strong>
+        </header>
+        <label className="flex items-center gap-3 rounded-md border bg-background px-3 py-2 text-xs text-muted-foreground">
+          <input
+            type="color"
+            aria-label="컷 사이 배경색"
+            value={state.panelGapColor}
+            onChange={handlePanelGapColorChange}
+            className="size-8 cursor-pointer rounded-[4px] border border-rim bg-transparent p-0"
+          />
+          <span>간격 영역 색상</span>
+        </label>
+      </section>
     </>
   );
 };

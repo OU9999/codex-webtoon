@@ -3,12 +3,19 @@ import {
   getPanelClassName,
   getStripGapClassName,
 } from './class-names';
+import { normalizePanelGapColor } from '@shared/project-state';
 import { CANVAS_WIDTH } from './constants';
 import type { StudioState } from './types';
 
 const buildDynamicStyles = (state: StudioState): string => {
+  const panelGapColor = normalizePanelGapColor(state.panelGapColor);
   const rules = [
-    `.${getStripGapClassName(state.panelGap)}{gap:${state.panelGap}px}`,
+    [
+      `.${getStripGapClassName(state.panelGap)}{`,
+      `gap:${state.panelGap}px;`,
+      `background-color:${panelGapColor};`,
+      '}',
+    ].join(''),
   ];
 
   state.panels.forEach((panel) => {

@@ -5,6 +5,10 @@ import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker';
 import { Studio } from '@/components/studio/studio';
+import {
+  DEFAULT_PANEL_GAP_COLOR,
+  normalizePanelGapColor,
+} from '@shared/project-state';
 import type {
   ReferenceImageRef,
   StudioState,
@@ -39,6 +43,7 @@ const createDefaultState = (): StudioState => {
     selectedPanelId: panels[0].id,
     selectedBubbleId: null,
     panelGap: 28,
+    panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
   };
 };
@@ -73,6 +78,9 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
 
       return { ...panel, referenceImages };
     }),
+    panelGapColor: normalizePanelGapColor(
+      (loaded as { panelGapColor?: unknown }).panelGapColor,
+    ),
     variantCount:
       typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
         ? Math.min(4, Math.trunc(loaded.variantCount))

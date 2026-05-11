@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { config } from '../config.js';
+import { normalizePanelGapColor } from '../../shared/project-state.js';
 import type {
   ProjectMeta,
   ProjectState,
@@ -241,6 +242,8 @@ const isProjectState = (value: unknown): value is ProjectState => {
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
     typeof obj.panelGap === 'number' &&
+    (obj.panelGapColor === undefined ||
+      typeof obj.panelGapColor === 'string') &&
     (obj.variantCount === undefined || typeof obj.variantCount === 'number')
   );
 };
@@ -269,6 +272,9 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
 
       return { ...panel, referenceImages };
     }),
+    panelGapColor: normalizePanelGapColor(
+      (state as { panelGapColor?: unknown }).panelGapColor,
+    ),
     variantCount:
       typeof state.variantCount === 'number' && state.variantCount >= 1
         ? Math.min(4, Math.trunc(state.variantCount))

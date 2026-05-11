@@ -76,6 +76,7 @@ Sizes are tight: 9.5–11px for mono labels, 11–12px for body UI, 14px for ins
 
 - Background `--bg-canvas` with a subtle 24px dot grid (`rgba(26,31,48,0.07)`) — visual texture, never decorative.
 - Panel column width ∈ {640, 720, 800} (Tweak). Default **720px**, ≈10–14px gap between panels.
+- Panel gaps use an editable episode background color. Default **#ffffff** to match published webtoon gutters; the same color must render in the editor strip and exported PNG.
 - Ruler: dashed right edge, mono ticks every 100px, height labels in `--fg-muted`.
 
 ---
@@ -196,6 +197,7 @@ Title the panel **Tweaks** (lower-right floating). Persisted via `__edit_mode_se
 | `selection_style`  | radio  | `border` / `offset` / `label` | `border`  |
 | `canvas_width`     | radio  | `640` / `720` / `800`         | `720`     |
 | `right_pane_width` | slider | 280–400 px                    | 320       |
+| `panel_gap_color`  | color  | Hex color                     | `#ffffff` |
 | `balloon_style`    | radio  | `classic` / `sharp` / `rough` | `classic` |
 
 ---

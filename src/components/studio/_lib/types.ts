@@ -48,6 +48,7 @@ interface StudioState {
   selectedPanelId: string;
   selectedBubbleId: string | null;
   panelGap: number;
+  panelGapColor: string;
   variantCount: number;
 }
 
