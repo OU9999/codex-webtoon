@@ -9,6 +9,7 @@ const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
     candidates: overrides.candidates ?? [],
     selectedCandidateId: overrides.selectedCandidateId ?? null,
     deletedCandidates: [],
+    referenceImages: overrides.referenceImages ?? [],
     bubbles: overrides.bubbles ?? [],
   };
 };

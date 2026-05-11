@@ -6,6 +6,7 @@ import { FieldBlock } from '../../_components/field-block';
 import { RangeField } from '../../_components/range-field';
 import { SectionTitle } from '../../_components/section-title';
 import { useStudioContext } from '../../studio-context';
+import { ReferenceImageSection } from './reference-image-section';
 
 const PanelForm = () => {
   const {
@@ -64,6 +65,7 @@ const PanelForm = () => {
         step={1}
         onValueChange={handleVariantCountChange}
       />
+      <ReferenceImageSection />
 
       <section className="mb-5 grid gap-2">
         <Button

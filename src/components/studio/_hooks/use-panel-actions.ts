@@ -1,6 +1,20 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import { createPanel } from '../_lib/factories';
-import type { Panel, StudioState } from '../_lib/types';
+import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
+import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
+
+const isSameReferenceImage = (
+  reference: ReferenceImageRef,
+  target: ReferenceImageRef,
+): boolean =>
+  reference.panelId === target.panelId &&
+  reference.candidateId === target.candidateId;
+
+const removeReferenceImage = (
+  references: ReferenceImageRef[],
+  target: ReferenceImageRef,
+): ReferenceImageRef[] =>
+  references.filter((reference) => !isSameReferenceImage(reference, target));
 
 const usePanelActions = (
   state: StudioState,
@@ -78,6 +92,7 @@ const usePanelActions = (
         prompt: selected.prompt,
         candidates: selected.candidates,
         selectedCandidateId: selected.selectedCandidateId,
+        referenceImages: selected.referenceImages,
         bubbles: selected.bubbles.map((bubble) => ({
           ...bubble,
           id: crypto.randomUUID(),
@@ -111,10 +126,16 @@ const usePanelActions = (
       );
       const nextPanel = panels[Math.min(index, panels.length - 1)];
       if (!nextPanel) return current;
+      const normalizedPanels = panels.map((panel) => ({
+        ...panel,
+        referenceImages: panel.referenceImages.filter(
+          (reference) => reference.panelId !== current.selectedPanelId,
+        ),
+      }));
 
       return {
         ...current,
-        panels,
+        panels: normalizedPanels,
         selectedPanelId: nextPanel.id,
         selectedBubbleId: null,
       };
@@ -164,6 +185,70 @@ const usePanelActions = (
     patchSelectedPanel({ prompt: event.target.value });
   };
 
+  const handleReferenceImageToggle = (reference: ReferenceImageRef): void => {
+    setState((current) => {
+      const selected = current.panels.find(
+        (panel) => panel.id === current.selectedPanelId,
+      );
+      if (!selected) return current;
+
+      const exists = selected.referenceImages.some((item) =>
+        isSameReferenceImage(item, reference),
+      );
+      if (!exists && selected.referenceImages.length >= MAX_REFERENCE_IMAGES) {
+        return current;
+      }
+
+      const referenceImages = exists
+        ? removeReferenceImage(selected.referenceImages, reference)
+        : [...selected.referenceImages, reference];
+
+      return {
+        ...current,
+        panels: current.panels.map((panel) =>
+          panel.id === current.selectedPanelId
+            ? { ...panel, referenceImages }
+            : panel,
+        ),
+      };
+    });
+  };
+
+  const handleReferenceImageRemove = (reference: ReferenceImageRef): void => {
+    setState((current) => ({
+      ...current,
+      panels: current.panels.map((panel) =>
+        panel.id === current.selectedPanelId
+          ? {
+              ...panel,
+              referenceImages: removeReferenceImage(
+                panel.referenceImages,
+                reference,
+              ),
+            }
+          : panel,
+      ),
+    }));
+  };
+
+  const handleReferenceImagesClear = (): void => {
+    setState((current) => {
+      const selected = current.panels.find(
+        (panel) => panel.id === current.selectedPanelId,
+      );
+      if (!selected || selected.referenceImages.length === 0) return current;
+
+      return {
+        ...current,
+        panels: current.panels.map((panel) =>
+          panel.id === current.selectedPanelId
+            ? { ...panel, referenceImages: [] }
+            : panel,
+        ),
+      };
+    });
+  };
+
   return {
     handleAddPanel,
     handleCommonPromptChange,
@@ -173,6 +258,9 @@ const usePanelActions = (
     handleMovePanelUp,
     handlePanelGapChange,
     handlePanelSelect,
+    handleReferenceImageRemove,
+    handleReferenceImageToggle,
+    handleReferenceImagesClear,
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,

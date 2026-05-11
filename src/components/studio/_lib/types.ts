@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize';
 
-type CandidateProvider = 'local-mock' | 'openai';
+type CandidateProvider = 'local-mock' | 'oauth' | 'openai';
 
 interface Candidate {
   id: string;
@@ -12,6 +12,11 @@ interface Candidate {
   promptSnapshot: string;
   height: number;
   provider: CandidateProvider;
+}
+
+interface ReferenceImageRef {
+  panelId: string;
+  candidateId: string;
 }
 
 interface Bubble {
@@ -33,6 +38,7 @@ interface Panel {
   candidates: Candidate[];
   selectedCandidateId: string | null;
   deletedCandidates: Candidate[];
+  referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
 }
 
@@ -53,6 +59,7 @@ interface CreatePanelOverrides extends Partial<
     | 'prompt'
     | 'candidates'
     | 'selectedCandidateId'
+    | 'referenceImages'
     | 'bubbles'
   >
 > {}
@@ -91,5 +98,6 @@ export type {
   CreatePanelOverrides,
   LayerAction,
   Panel,
+  ReferenceImageRef,
   StudioState,
 };

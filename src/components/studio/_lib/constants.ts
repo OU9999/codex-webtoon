@@ -1,5 +1,6 @@
 const CANVAS_WIDTH = 720;
 const DYNAMIC_STYLE_ELEMENT_ID = 'webtoon-panel-studio-dynamic-styles';
+const MAX_REFERENCE_IMAGES = 4;
 
 const defaultCommonPrompt = [
   '현대 한국 로맨스 웹툰, 부드러운 선화, 세미 리얼 캐릭터, 따뜻하지만 선명한 색감.',
@@ -7,4 +8,9 @@ const defaultCommonPrompt = [
   '공통 금지사항: 이미지 안에 읽을 수 있는 텍스트, 말풍선, 워터마크를 만들지 말 것.',
 ].join('\n');
 
-export { CANVAS_WIDTH, defaultCommonPrompt, DYNAMIC_STYLE_ELEMENT_ID };
+export {
+  CANVAS_WIDTH,
+  defaultCommonPrompt,
+  DYNAMIC_STYLE_ELEMENT_ID,
+  MAX_REFERENCE_IMAGES,
+};

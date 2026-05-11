@@ -76,6 +76,11 @@ interface Candidate {
   provider: string;
 }
 
+interface ReferenceImageRef {
+  panelId: string;
+  candidateId: string;
+}
+
 interface Panel {
   id: string;
   title: string;
@@ -84,6 +89,7 @@ interface Panel {
   candidates: Candidate[];
   selectedCandidateId: string | null;
   deletedCandidates: Candidate[];
+  referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
 }
 
@@ -111,5 +117,6 @@ export type {
   ProjectMeta,
   ProjectState,
   ProjectSummary,
+  ReferenceImageRef,
   ServerAdvertisement,
 };

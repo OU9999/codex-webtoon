@@ -5,7 +5,10 @@ import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker';
 import { Studio } from '@/components/studio/studio';
-import type { StudioState } from '@/components/studio/_lib/types';
+import type {
+  ReferenceImageRef,
+  StudioState,
+} from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import { createPanel } from '@/components/studio/_lib/factories';
 
@@ -40,13 +43,42 @@ const createDefaultState = (): StudioState => {
   };
 };
 
-const normalizeLoadedState = (loaded: StudioState): StudioState => ({
-  ...loaded,
-  variantCount:
-    typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
-      ? Math.min(4, Math.trunc(loaded.variantCount))
-      : 1,
-});
+const referenceKey = (reference: ReferenceImageRef): string =>
+  `${reference.panelId}:${reference.candidateId}`;
+
+const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
+  if (!value || typeof value !== 'object') return false;
+  const ref = value as Record<string, unknown>;
+  return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
+};
+
+const normalizeLoadedState = (loaded: StudioState): StudioState => {
+  const candidateKeys = new Set<string>();
+  for (const panel of loaded.panels) {
+    for (const candidate of panel.candidates) {
+      candidateKeys.add(`${panel.id}:${candidate.id}`);
+    }
+  }
+
+  return {
+    ...loaded,
+    panels: loaded.panels.map((panel) => {
+      const rawReferences = (panel as { referenceImages?: unknown })
+        .referenceImages;
+      const referenceImages = Array.isArray(rawReferences)
+        ? rawReferences
+            .filter(isReferenceImageRef)
+            .filter((reference) => candidateKeys.has(referenceKey(reference)))
+        : [];
+
+      return { ...panel, referenceImages };
+    }),
+    variantCount:
+      typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
+        ? Math.min(4, Math.trunc(loaded.variantCount))
+        : 1,
+  };
+};
 
 const ProjectShell = () => {
   const [projectName, setProjectName] = useState<string | null>(null);

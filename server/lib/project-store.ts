@@ -13,6 +13,7 @@ import type {
   ProjectMeta,
   ProjectState,
   ProjectSummary,
+  ReferenceImageRef,
 } from '../../shared/types.js';
 
 const PROJECT_FILE = 'project.json';
@@ -201,6 +202,12 @@ const isCandidate = (value: unknown): boolean => {
   );
 };
 
+const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
+  if (!value || typeof value !== 'object') return false;
+  const ref = value as Record<string, unknown>;
+  return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
+};
+
 const isPanel = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false;
   const p = value as Record<string, unknown>;
@@ -215,6 +222,9 @@ const isPanel = (value: unknown): boolean => {
       typeof p.selectedCandidateId === 'string') &&
     Array.isArray(p.deletedCandidates) &&
     p.deletedCandidates.every(isCandidate) &&
+    (p.referenceImages === undefined ||
+      (Array.isArray(p.referenceImages) &&
+        p.referenceImages.every(isReferenceImageRef))) &&
     Array.isArray(p.bubbles) &&
     p.bubbles.every(isBubble)
   );
@@ -235,13 +245,36 @@ const isProjectState = (value: unknown): value is ProjectState => {
   );
 };
 
-const normalizeProjectState = (state: ProjectState): ProjectState => ({
-  ...state,
-  variantCount:
-    typeof state.variantCount === 'number' && state.variantCount >= 1
-      ? Math.min(4, Math.trunc(state.variantCount))
-      : 1,
-});
+const referenceKey = (reference: ReferenceImageRef): string =>
+  `${reference.panelId}:${reference.candidateId}`;
+
+const normalizeProjectState = (state: ProjectState): ProjectState => {
+  const candidateKeys = new Set<string>();
+  for (const panel of state.panels) {
+    for (const candidate of panel.candidates) {
+      candidateKeys.add(`${panel.id}:${candidate.id}`);
+    }
+  }
+
+  return {
+    ...state,
+    panels: state.panels.map((panel) => {
+      const rawReferences = (panel as { referenceImages?: unknown })
+        .referenceImages;
+      const referenceImages = Array.isArray(rawReferences)
+        ? rawReferences
+            .filter(isReferenceImageRef)
+            .filter((reference) => candidateKeys.has(referenceKey(reference)))
+        : [];
+
+      return { ...panel, referenceImages };
+    }),
+    variantCount:
+      typeof state.variantCount === 'number' && state.variantCount >= 1
+        ? Math.min(4, Math.trunc(state.variantCount))
+        : 1,
+  };
+};
 
 const loadState = (name: string): ProjectState | null => {
   validateName(name);
@@ -283,7 +316,10 @@ const saveState = (name: string, state: unknown): void => {
     throw new ProjectError('project_not_found', `Project "${name}" not found.`);
   }
 
-  writeFileSync(join(dir, STATE_FILE), JSON.stringify(state, null, 2));
+  writeFileSync(
+    join(dir, STATE_FILE),
+    JSON.stringify(normalizeProjectState(state), null, 2),
+  );
   meta.updatedAt = Date.now();
   writeProjectMeta(dir, meta);
 };
