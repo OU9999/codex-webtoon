@@ -10,7 +10,10 @@ const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
   createdAt: candidate.createdAt,
   promptSnapshot: candidate.promptSnapshot,
   height: candidate.height,
-  provider: candidate.provider === 'openai' ? 'openai' : 'local-mock',
+  provider:
+    candidate.provider === 'openai' || candidate.provider === 'oauth'
+      ? candidate.provider
+      : 'local-mock',
 });
 
 const useGeneratePanel = (
@@ -41,6 +44,7 @@ const useGeneratePanel = (
         prompt: finalPrompt,
         height: selectedPanel.height,
         count: state.variantCount,
+        referenceImages: selectedPanel.referenceImages,
       });
       const newCandidates = apiCandidates.map(toLocalCandidate);
       if (newCandidates.length === 0) {

@@ -14,6 +14,7 @@ const config = defineConfig({
   server: {
     proxy: {
       '/api': 'http://127.0.0.1:4321',
+      '/projects': 'http://127.0.0.1:4321',
     },
   },
 });

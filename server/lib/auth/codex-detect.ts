@@ -1,8 +1,11 @@
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 import { isWin } from './platform.js';
+
+const execFileAsync = promisify(execFile);
 
 interface CodexAuthPaths {
   codex: string;
@@ -19,6 +22,7 @@ interface CodexAuthInfo {
 }
 
 const HOME = homedir();
+const DETECT_TTL_MS = 10_000;
 
 const codexAuthPaths = (): CodexAuthPaths => {
   const codexHome = process.env.CODEX_HOME ?? join(HOME, '.codex');
@@ -29,53 +33,72 @@ const codexAuthPaths = (): CodexAuthPaths => {
   };
 };
 
-const codexLoginStatus = (
+const codexLoginStatus = async (
   timeoutMs = 2000,
-): 'authed' | 'unauthed' | 'missing' => {
+): Promise<'authed' | 'unauthed' | 'missing'> => {
   const candidates = isWin
     ? ['codex.cmd', 'codex.exe', 'codex']
     : ['codex'];
 
   for (const bin of candidates) {
     try {
-      execFileSync(bin, ['login', 'status'], {
-        stdio: 'ignore',
+      await execFileAsync(bin, ['login', 'status'], {
         timeout: timeoutMs,
         windowsHide: true,
       });
       return 'authed';
     } catch (err) {
-      const code = (err as NodeJS.ErrnoException)?.code;
-      if (code === 'ENOENT') continue;
-      const status = (err as { status?: unknown })?.status;
-      if (typeof status === 'number') return 'unauthed';
+      const e = err as { code?: unknown; killed?: boolean };
+      if (e.code === 'ENOENT') continue;
+      // Timed out (killed by SIGTERM) — the binary exists but did not answer;
+      // mirror the previous behavior of falling through to "missing".
+      if (e.killed) return 'missing';
+      // Ran but exited non-zero -> not logged in.
+      if (typeof e.code === 'number') return 'unauthed';
     }
   }
   return 'missing';
 };
 
-const detectCodexAuth = (): CodexAuthInfo => {
-  const files = codexAuthPaths();
-  const fileHits = {
-    codex: existsSync(files.codex),
-    chatgpt: existsSync(files.chatgpt),
-    xdgCodex: existsSync(files.xdgCodex),
-  };
-  const probe = codexLoginStatus();
-  const authed =
-    probe === 'authed' ||
-    fileHits.codex ||
-    fileHits.chatgpt ||
-    fileHits.xdgCodex;
+let detectCache: { value: CodexAuthInfo; expiresAt: number } | null = null;
+let detectInflight: Promise<CodexAuthInfo> | null = null;
 
-  return {
-    authed,
-    probe,
-    files,
-    fileHits,
-    platform: process.platform,
-  };
+const detectCodexAuth = async (): Promise<CodexAuthInfo> => {
+  const now = Date.now();
+  if (detectCache && detectCache.expiresAt > now) return detectCache.value;
+  if (detectInflight) return detectInflight;
+
+  detectInflight = (async (): Promise<CodexAuthInfo> => {
+    try {
+      const files = codexAuthPaths();
+      const fileHits = {
+        codex: existsSync(files.codex),
+        chatgpt: existsSync(files.chatgpt),
+        xdgCodex: existsSync(files.xdgCodex),
+      };
+      const probe = await codexLoginStatus();
+      const authed =
+        probe === 'authed' ||
+        fileHits.codex ||
+        fileHits.chatgpt ||
+        fileHits.xdgCodex;
+
+      const value: CodexAuthInfo = {
+        authed,
+        probe,
+        files,
+        fileHits,
+        platform: process.platform,
+      };
+      detectCache = { value, expiresAt: Date.now() + DETECT_TTL_MS };
+      return value;
+    } finally {
+      detectInflight = null;
+    }
+  })();
+
+  return detectInflight;
 };
 
-export { codexAuthPaths, codexLoginStatus, detectCodexAuth };
+export { detectCodexAuth };
 export type { CodexAuthInfo, CodexAuthPaths };

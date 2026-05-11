@@ -5,6 +5,7 @@ import type {
   ProjectMeta,
   ProjectState,
   ProjectSummary,
+  ReferenceImageRef,
 } from '../../shared/types';
 
 interface GenerateCandidateRequest {
@@ -14,6 +15,7 @@ interface GenerateCandidateRequest {
   height: number;
   count?: number;
   provider?: 'auto' | 'openai' | 'oauth';
+  referenceImages?: ReferenceImageRef[];
 }
 
 class ApiClientError extends Error {

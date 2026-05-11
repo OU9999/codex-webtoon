@@ -1,14 +1,19 @@
+import { WEBTOON_CANVAS_WIDTH } from '@shared/project-state';
 import type { Bubble, BubbleType, CreatePanelOverrides, Panel } from './types';
 
 const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
   return {
     id: crypto.randomUUID(),
     title: overrides.title ?? 'New panel',
+    x: overrides.x ?? 0,
+    y: overrides.y ?? 0,
+    width: overrides.width ?? WEBTOON_CANVAS_WIDTH,
     height: overrides.height ?? 420,
     prompt: overrides.prompt ?? '',
     candidates: overrides.candidates ?? [],
     selectedCandidateId: overrides.selectedCandidateId ?? null,
     deletedCandidates: [],
+    referenceImages: overrides.referenceImages ?? [],
     bubbles: overrides.bubbles ?? [],
   };
 };

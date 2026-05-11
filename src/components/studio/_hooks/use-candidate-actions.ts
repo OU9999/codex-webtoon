@@ -10,30 +10,43 @@ const useCandidateActions = (
   };
 
   const handleCandidateDelete = (candidateId: string): void => {
-    setState((current) => ({
-      ...current,
-      panels: current.panels.map((panel) => {
-        if (panel.id !== current.selectedPanelId) return panel;
+    setState((current) => {
+      const deletedPanelId = current.selectedPanelId;
 
-        const candidate = panel.candidates.find(
-          (item) => item.id === candidateId,
-        );
-        const candidates = panel.candidates.filter(
-          (item) => item.id !== candidateId,
-        );
-        return {
-          ...panel,
-          candidates,
-          selectedCandidateId:
-            panel.selectedCandidateId === candidateId
-              ? (candidates[0]?.id ?? null)
-              : panel.selectedCandidateId,
-          deletedCandidates: candidate
-            ? [candidate, ...panel.deletedCandidates].slice(0, 5)
-            : panel.deletedCandidates,
-        };
-      }),
-    }));
+      return {
+        ...current,
+        panels: current.panels.map((panel) => {
+          const referenceImages = panel.referenceImages.filter(
+            (reference) =>
+              reference.panelId !== deletedPanelId ||
+              reference.candidateId !== candidateId,
+          );
+
+          if (panel.id !== deletedPanelId) {
+            return { ...panel, referenceImages };
+          }
+
+          const candidate = panel.candidates.find(
+            (item) => item.id === candidateId,
+          );
+          const candidates = panel.candidates.filter(
+            (item) => item.id !== candidateId,
+          );
+          return {
+            ...panel,
+            candidates,
+            selectedCandidateId:
+              panel.selectedCandidateId === candidateId
+                ? (candidates[0]?.id ?? null)
+                : panel.selectedCandidateId,
+            deletedCandidates: candidate
+              ? [candidate, ...panel.deletedCandidates].slice(0, 5)
+              : panel.deletedCandidates,
+            referenceImages,
+          };
+        }),
+      };
+    });
   };
 
   const handleRestoreCandidate = (): void => {

@@ -172,16 +172,28 @@
    * removed in later steps (panel cells / balloon overlays per DESIGN.md
    * §3 + §6).
    */
+  .webtoon-stage {
+    @apply relative overflow-visible border border-rim bg-card;
+    box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
+  }
+
   .panel-frame {
-    @apply relative isolate w-full overflow-hidden border border-rim bg-card;
+    @apply absolute isolate touch-none overflow-hidden border border-rim bg-card;
+    cursor: grab;
     box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
   }
 
   .panel-frame.selected {
     @apply border-brand;
+    z-index: 20;
+    overflow: visible;
     box-shadow:
       0 0 0 1px var(--brand),
       0 1px 0 rgb(22 51 92 / 0.06);
+  }
+
+  .panel-frame:active {
+    cursor: grabbing;
   }
 
   .panel-frame img {
@@ -190,7 +202,68 @@
   }
 
   .selected-rim {
-    @apply pointer-events-none absolute inset-[7px] border border-brand/90;
+    @apply pointer-events-none absolute inset-[-3px] border-2 border-brand;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.85);
+  }
+
+  .panel-resize-handle {
+    @apply absolute z-30 size-[10px] rounded-[2px] border border-brand bg-white;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.95),
+      0 1px 2px rgb(22 51 92 / 0.2);
+  }
+
+  .panel-resize-handle.nw {
+    top: -8px;
+    left: -8px;
+    cursor: nwse-resize;
+  }
+
+  .panel-resize-handle.n {
+    top: -8px;
+    left: calc(50% - 5px);
+    cursor: ns-resize;
+  }
+
+  .panel-resize-handle.ne {
+    top: -8px;
+    right: -8px;
+    cursor: nesw-resize;
+  }
+
+  .panel-resize-handle.e {
+    top: calc(50% - 5px);
+    right: -8px;
+    cursor: ew-resize;
+  }
+
+  .panel-resize-handle.se {
+    right: -8px;
+    bottom: -8px;
+    cursor: nwse-resize;
+  }
+
+  .panel-resize-handle.s {
+    bottom: -8px;
+    left: calc(50% - 5px);
+    cursor: ns-resize;
+  }
+
+  .panel-resize-handle.sw {
+    bottom: -8px;
+    left: -8px;
+    cursor: nesw-resize;
+  }
+
+  .panel-resize-handle.w {
+    top: calc(50% - 5px);
+    left: -8px;
+    cursor: ew-resize;
+  }
+
+  .panel-selection-toolbar {
+    @apply pointer-events-none absolute top-[-31px] left-[-3px] z-30 rounded-[3px] bg-brand px-2 py-1 font-mono text-[10px] font-semibold text-white;
+    box-shadow: 0 1px 2px rgb(22 51 92 / 0.18);
   }
 
   .panel-number {
