@@ -3,7 +3,7 @@ import { Loader2, RotateCcw } from 'lucide-react';
 
 import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
-import { ProjectPicker } from '@/components/project-picker';
+import { ProjectPicker } from '@/components/project-picker/project-picker';
 import { Studio } from '@/components/studio/studio';
 import {
   DEFAULT_CANVAS_HEIGHT,
