@@ -18,6 +18,7 @@ import type {
 } from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import { createPanel } from '@/components/studio/_lib/factories';
+import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
 
 const createDefaultState = (): StudioState => {
   const panelGap = 28;
@@ -92,7 +93,12 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
       const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
       fallbackY += geometry.height + loaded.panelGap;
 
-      return { ...panel, ...geometry, referenceImages };
+      return {
+        ...panel,
+        ...geometry,
+        referenceImages,
+        bubbles: panel.bubbles.map(withDefaultBubbleStyle),
+      };
     }),
     canvasHeight,
     panelGapColor: normalizePanelGapColor(

@@ -201,6 +201,10 @@
     pointer-events: none;
   }
 
+  .panel-visual {
+    @apply relative m-0 h-full w-full overflow-hidden;
+  }
+
   .selected-rim {
     @apply pointer-events-none absolute inset-[-3px] border-2 border-brand;
     box-shadow: 0 0 0 1px rgb(255 255 255 / 0.85);
@@ -296,90 +300,184 @@
   }
 
   .bubble-layer {
-    @apply absolute z-10 grid touch-none place-items-center px-3 py-1.5 text-center leading-none font-medium select-none;
-    color: #1a1f30;
-    font-family: var(--font-sans);
+    @apply absolute isolate z-10 box-border grid touch-none place-items-center overflow-visible px-3 py-2 text-center leading-[1.18] select-none;
+    color: var(--bubble-text, #1a1f30);
+    font-family: var(--bubble-font-family, var(--font-sans));
+    font-weight: var(--bubble-font-weight, 700);
     font-size: 12.5px;
   }
 
-  .bubble-layer span {
+  .bubble-layer > span {
+    display: block;
+    position: relative;
+    z-index: 2;
+    line-height: 1.18;
     overflow-wrap: anywhere;
+    text-wrap: balance;
   }
 
-  .bubble-layer.speech,
+  .bubble-layer.thought,
+  .bubble-layer.monologue {
+    border-width: var(--bubble-border-width, 2px);
+    border-style: var(--bubble-border-style, solid);
+    border-color: var(--bubble-border, #1a1f30);
+    border-radius: var(--bubble-radius, 14px);
+    background: var(--bubble-fill, #ffffff);
+  }
+
+  .bubble-layer.speech {
+    border: 0;
+    background: transparent;
+  }
+
+  .bubble-layer.has-outline {
+    border: 0;
+    background: transparent;
+  }
+
+  .bubble-outline-svg {
+    @apply pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-visible;
+  }
+
+  .bubble-outline-shape {
+    fill: var(--bubble-fill, #ffffff);
+    stroke: var(--bubble-border, #1a1f30);
+    stroke-width: var(--bubble-border-width, 1.5px);
+    stroke-dasharray: var(--bubble-stroke-dasharray, none);
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .bubble-layer.shape-jagged .bubble-outline-shape {
+    stroke-linejoin: miter;
+  }
+
   .bubble-layer.thought {
-    border: 1.5px solid #1a1f30;
-    border-radius: 14px;
-    background: #fbf9f0;
-  }
-
-  .bubble-layer.speech::after {
-    content: '';
-    position: absolute;
-    right: 25%;
-    bottom: -14px;
-    width: 26px;
-    height: 22px;
-    background: inherit;
-    border-right: 1.5px solid #1a1f30;
-    border-bottom: 1.5px solid #1a1f30;
-    transform: skew(18deg) rotate(24deg);
-  }
-
-  .bubble-layer.thought {
-    border-style: dashed;
-    border-radius: 18px;
+    border-style: var(--bubble-border-style, dashed);
   }
 
   .bubble-layer.thought::before,
   .bubble-layer.thought::after {
     content: '';
     position: absolute;
-    border: 1.5px solid #1a1f30;
+    border-width: var(--bubble-border-width, 2px);
+    border-style: var(--bubble-border-style, solid);
+    border-color: var(--bubble-border, #1a1f30);
     border-radius: 999px;
-    background: #fbf9f0;
+    background: var(--bubble-fill, #ffffff);
   }
 
   .bubble-layer.thought::before {
-    width: 14px;
-    height: 14px;
-    right: 18%;
-    bottom: -18px;
+    width: 16px;
+    height: 16px;
+    left: var(--bubble-thought-dot-large-x, 82%);
+    top: var(--bubble-thought-dot-large-y, 112%);
+    opacity: var(--bubble-thought-tail-opacity, 1);
+    transform: translate(-50%, -50%);
   }
 
   .bubble-layer.thought::after {
     width: 8px;
     height: 8px;
-    right: 11%;
-    bottom: -30px;
-  }
-
-  .bubble-layer.monologue {
-    border: 1.5px solid #1a1f30;
-    border-radius: 2px;
-    background: #e6eef6;
-    font-style: italic;
+    left: var(--bubble-thought-dot-small-x, 89%);
+    top: var(--bubble-thought-dot-small-y, 126%);
+    opacity: var(--bubble-thought-tail-opacity, 1);
+    transform: translate(-50%, -50%);
   }
 
   .bubble-layer.sfx {
-    color: #1a1f30;
-    font-family: var(--font-display);
+    color: var(--bubble-text, #1a1f30);
+    font-family: var(--bubble-font-family, var(--font-display));
     font-style: italic;
     font-size: 28px;
     text-shadow:
-      -2px -2px 0 #fbf9f0,
-      2px -2px 0 #fbf9f0,
-      -2px 2px 0 #fbf9f0,
-      2px 2px 0 #fbf9f0;
+      -2px -2px 0 var(--bubble-fill, #ffffff),
+      2px -2px 0 var(--bubble-fill, #ffffff),
+      -2px 2px 0 var(--bubble-fill, #ffffff),
+      2px 2px 0 var(--bubble-fill, #ffffff);
     transform: rotate(-8deg);
   }
 
   .bubble-layer.active {
-    outline: 2px solid var(--brand);
-    outline-offset: 3px;
+    outline: none;
   }
 
-  .resize-handle {
-    @apply absolute right-[-7px] bottom-[-7px] size-4 rounded-full border-2 border-white bg-brand shadow-md;
+  .transform-controls {
+    @apply pointer-events-none absolute inset-0 z-30;
+  }
+
+  .transform-box {
+    @apply pointer-events-none absolute inset-[-5px] border border-brand;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.72);
+  }
+
+  .transform-handle {
+    @apply pointer-events-auto absolute size-3 touch-none border border-white bg-brand shadow-sm;
+    border-radius: 1px;
+  }
+
+  .transform-handle.is-n {
+    top: -11px;
+    left: 50%;
+    cursor: n-resize;
+    transform: translateX(-50%);
+  }
+
+  .transform-handle.is-ne {
+    top: -11px;
+    right: -11px;
+    cursor: ne-resize;
+  }
+
+  .transform-handle.is-e {
+    top: 50%;
+    right: -11px;
+    cursor: e-resize;
+    transform: translateY(-50%);
+  }
+
+  .transform-handle.is-se {
+    right: -11px;
+    bottom: -11px;
+    cursor: se-resize;
+  }
+
+  .transform-handle.is-s {
+    bottom: -11px;
+    left: 50%;
+    cursor: s-resize;
+    transform: translateX(-50%);
+  }
+
+  .transform-handle.is-sw {
+    bottom: -11px;
+    left: -11px;
+    cursor: sw-resize;
+  }
+
+  .transform-handle.is-w {
+    top: 50%;
+    left: -11px;
+    cursor: w-resize;
+    transform: translateY(-50%);
+  }
+
+  .transform-handle.is-nw {
+    top: -11px;
+    left: -11px;
+    cursor: nw-resize;
+  }
+
+  .tail-tip-handle {
+    @apply pointer-events-auto absolute z-40 size-4 touch-none rounded-full border-2 border-white bg-status-yellow shadow-md;
+    top: var(--bubble-tail-tip-y, 136%);
+    left: var(--bubble-tail-tip-x, 78%);
+    cursor: grab;
+    transform: translate(-50%, -50%);
+  }
+
+  .tail-tip-handle::after {
+    @apply absolute inset-[-5px] rounded-full border border-status-yellow/70;
+    content: '';
   }
 }

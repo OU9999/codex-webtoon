@@ -1,5 +1,6 @@
 import { WEBTOON_CANVAS_WIDTH } from '@shared/project-state';
 import type { Bubble, BubbleType, CreatePanelOverrides, Panel } from './types';
+import { DEFAULT_BUBBLE_STYLE, getBubbleShapePatch } from './bubble-style';
 
 const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
   return {
@@ -35,6 +36,7 @@ const createBubble = (type: BubbleType): Bubble => {
       width: 250,
       height: 78,
       fontSize: 22,
+      ...getBubbleShapePatch('square'),
     },
     thought: {
       text: '생각',
@@ -43,13 +45,25 @@ const createBubble = (type: BubbleType): Bubble => {
       width: 210,
       height: 76,
       fontSize: 22,
+      borderStyle: 'dashed',
     },
-    sfx: { text: '탁', x: 420, y: 170, width: 150, height: 82, fontSize: 48 },
+    sfx: {
+      text: '탁',
+      x: 420,
+      y: 170,
+      width: 150,
+      height: 82,
+      fontSize: 48,
+      borderWidth: 0,
+      fontFamily: 'display',
+      fontWeight: 'black',
+    },
   };
 
   return {
     id: crypto.randomUUID(),
     type,
+    ...DEFAULT_BUBBLE_STYLE,
     ...defaults[type],
   };
 };
