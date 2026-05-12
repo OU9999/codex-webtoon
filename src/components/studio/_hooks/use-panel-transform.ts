@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
 import {
   MIN_PANEL_HEIGHT,
   MIN_PANEL_WIDTH,
@@ -11,7 +10,7 @@ import type {
   PanelResizeHandle,
   PanelTransform,
   PanelTransformStartPayload,
-  StudioState,
+  StudioStateSetter,
 } from '../_lib/types';
 
 const quantize = (value: number): number => Math.round(value);
@@ -42,7 +41,7 @@ const keepBubbleStagePositions = (
   }));
 };
 
-const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
+const usePanelTransform = (setState: StudioStateSetter) => {
   const transformRef = useRef<PanelTransform | null>(null);
 
   const handlePanelTransformStart = ({
@@ -77,6 +76,7 @@ const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
       resizeHandle: resizeHandle ?? null,
       rect,
       canvasHeight,
+      historyStart: setState.getSnapshot(),
       offsetX: pointerX - panel.x,
       offsetY: pointerY - panel.y,
       startX: panel.x,
@@ -107,7 +107,7 @@ const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
         transform.canvasHeight,
       );
 
-      setState((current) => ({
+      setState.transient((current) => ({
         ...current,
         panels: current.panels.map((panel) => {
           if (panel.id !== transform.panelId) return panel;
@@ -174,6 +174,10 @@ const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
     };
 
     const handlePointerUp = (): void => {
+      const transform = transformRef.current;
+      if (!transform) return;
+
+      setState.commitHistory(transform.historyStart);
       transformRef.current = null;
     };
 

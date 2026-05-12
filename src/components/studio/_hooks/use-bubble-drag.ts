@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
 import { clamp } from '../_lib/canvas-primitives';
 import { CANVAS_WIDTH } from '../_lib/constants';
 import type {
@@ -8,7 +7,7 @@ import type {
   BubbleDragStartPayload,
   BubbleResizeAnchor,
   BubbleTailSide,
-  StudioState,
+  StudioStateSetter,
 } from '../_lib/types';
 
 const MIN_BUBBLE_WIDTH = 72;
@@ -131,7 +130,7 @@ const moveTail = (bubble: Bubble, x: number, y: number): Bubble => {
   };
 };
 
-const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
+const useBubbleDrag = (setState: StudioStateSetter) => {
   const dragRef = useRef<BubbleDrag | null>(null);
 
   const handleBubbleDragStart = ({
@@ -168,6 +167,7 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       resizeAnchor,
       rect,
       canvasHeight,
+      historyStart: setState.getSnapshot(),
       panelX: panel.x,
       panelY: panel.y,
       panelHeight: panel.height,
@@ -202,7 +202,7 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       const minY = -drag.panelHeight;
       const maxY = drag.panelHeight * 2;
 
-      setState((current) => ({
+      setState.transient((current) => ({
         ...current,
         panels: current.panels.map((panel) => {
           if (panel.id !== drag.panelId) return panel;
@@ -238,6 +238,10 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
     };
 
     const handlePointerUp = (): void => {
+      const drag = dragRef.current;
+      if (!drag) return;
+
+      setState.commitHistory(drag.historyStart);
       dragRef.current = null;
     };
 

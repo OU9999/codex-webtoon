@@ -1,4 +1,8 @@
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type {
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+  SetStateAction,
+} from 'react';
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize' | 'tail';
@@ -92,6 +96,25 @@ interface StudioState {
   variantCount: number;
 }
 
+interface StudioStateSetter {
+  (action: SetStateAction<StudioState>): void;
+  transient: (action: SetStateAction<StudioState>) => void;
+  commitHistory: (previous: StudioState) => void;
+  getSnapshot: () => StudioState;
+}
+
+interface CanvasResize {
+  rect: DOMRect;
+  canvasHeight: number;
+  historyStart: StudioState;
+  pointerStartY: number;
+}
+
+interface CanvasResizeStartPayload {
+  event: ReactPointerEvent<HTMLElement>;
+  canvasHeight: number;
+}
+
 interface CreatePanelOverrides extends Partial<
   Pick<
     Panel,
@@ -115,6 +138,7 @@ interface BubbleDrag {
   resizeAnchor?: BubbleResizeAnchor;
   rect: DOMRect;
   canvasHeight: number;
+  historyStart: StudioState;
   panelX: number;
   panelY: number;
   panelHeight: number;
@@ -143,6 +167,7 @@ interface PanelTransform {
   resizeHandle: PanelResizeHandle | null;
   rect: DOMRect;
   canvasHeight: number;
+  historyStart: StudioState;
   offsetX: number;
   offsetY: number;
   startX: number;
@@ -178,6 +203,8 @@ export type {
   BubbleShape,
   BubbleTailSide,
   BubbleType,
+  CanvasResize,
+  CanvasResizeStartPayload,
   Candidate,
   CandidateProvider,
   CreatePanelOverrides,
@@ -189,4 +216,5 @@ export type {
   PanelTransformStartPayload,
   ReferenceImageRef,
   StudioState,
+  StudioStateSetter,
 };
