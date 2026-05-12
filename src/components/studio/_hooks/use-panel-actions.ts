@@ -1,14 +1,13 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import {
   MIN_CANVAS_HEIGHT,
-  MIN_PANEL_HEIGHT,
-  MIN_PANEL_WIDTH,
   normalizePanelGapColor,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
 import { createPanel } from '../_lib/factories';
 import { clamp } from '../_lib/canvas-primitives';
 import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
+import { clampPanelToCanvas } from '../_lib/panel-geometry';
 import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
 
 const isSameReferenceImage = (
@@ -23,15 +22,6 @@ const removeReferenceImage = (
   target: ReferenceImageRef,
 ): ReferenceImageRef[] =>
   references.filter((reference) => !isSameReferenceImage(reference, target));
-
-const clampPanelToCanvas = (panel: Panel, canvasHeight: number): Panel => {
-  const width = clamp(panel.width, MIN_PANEL_WIDTH, WEBTOON_CANVAS_WIDTH);
-  const height = clamp(panel.height, MIN_PANEL_HEIGHT, canvasHeight);
-  const x = clamp(panel.x, 0, WEBTOON_CANVAS_WIDTH - width);
-  const y = clamp(panel.y, 0, canvasHeight - height);
-
-  return { ...panel, x, y, width, height };
-};
 
 const usePanelActions = (
   state: StudioState,
