@@ -14,7 +14,6 @@ import type {
   BubbleFontFamily,
   BubbleFontWeight,
   BubbleShape,
-  BubbleTailSide,
   BubbleType,
 } from '@/components/studio/_lib/types';
 
@@ -70,14 +69,6 @@ const SHAPE_OPTIONS: readonly SelectOption<BubbleShape>[] = [
   { value: 'custom', label: 'Custom' },
 ];
 
-const TAIL_SIDE_OPTIONS: readonly SelectOption<BubbleTailSide>[] = [
-  { value: 'bottom', label: 'Bottom' },
-  { value: 'top', label: 'Top' },
-  { value: 'right', label: 'Right' },
-  { value: 'left', label: 'Left' },
-  { value: 'none', label: 'None' },
-];
-
 const FILL_COLOR_PRESETS: readonly BubbleColorPreset[] = [
   { label: 'White', value: '#ffffff', className: 'bg-white' },
   { label: 'Ivory', value: '#fbf9f0', className: 'bg-[#fbf9f0]' },
@@ -90,22 +81,12 @@ const BubbleForm = () => {
   const {
     handleBubbleBorderColorChange,
     handleBubbleBorderStyleChange,
-    handleBubbleBorderWidthChange,
     handleBubbleFillColorChange,
     handleBubbleFontFamilyChange,
     handleBubbleFontSizeChange,
     handleBubbleFontWeightChange,
-    handleBubbleRadiusBottomLeftChange,
-    handleBubbleRadiusBottomRightChange,
-    handleBubbleRadiusTopLeftChange,
-    handleBubbleRadiusTopRightChange,
     handleBubbleShapeChange,
     handleBubbleStylePatch,
-    handleBubbleTailPositionChange,
-    handleBubbleTailSideChange,
-    handleBubbleTailTipXChange,
-    handleBubbleTailTipYChange,
-    handleBubbleTailWidthChange,
     handleBubbleTextChange,
     handleBubbleTextColorChange,
     handleBubbleTypeChange,
@@ -289,101 +270,6 @@ const BubbleForm = () => {
           </select>
         </FieldBlock>
       </section>
-
-      <section className="grid grid-cols-2 gap-3">
-        <RangeField
-          label="좌상"
-          value={style.radiusTopLeft}
-          suffix="px"
-          min={0}
-          max={96}
-          onValueChange={handleBubbleRadiusTopLeftChange}
-        />
-        <RangeField
-          label="우상"
-          value={style.radiusTopRight}
-          suffix="px"
-          min={0}
-          max={96}
-          onValueChange={handleBubbleRadiusTopRightChange}
-        />
-        <RangeField
-          label="우하"
-          value={style.radiusBottomRight}
-          suffix="px"
-          min={0}
-          max={96}
-          onValueChange={handleBubbleRadiusBottomRightChange}
-        />
-        <RangeField
-          label="좌하"
-          value={style.radiusBottomLeft}
-          suffix="px"
-          min={0}
-          max={96}
-          onValueChange={handleBubbleRadiusBottomLeftChange}
-        />
-      </section>
-
-      {selectedBubble.type === 'speech' && (
-        <section className="grid grid-cols-2 gap-3">
-          <FieldBlock label="꼬리 방향" compact>
-            <select
-              value={style.tailSide}
-              onChange={handleBubbleTailSideChange}
-              className={SELECT_CLASS_NAME}
-            >
-              {TAIL_SIDE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </FieldBlock>
-          <RangeField
-            label="꼬리 위치"
-            value={style.tailPosition}
-            suffix="%"
-            min={5}
-            max={95}
-            onValueChange={handleBubbleTailPositionChange}
-          />
-          <RangeField
-            label="꼬리 폭"
-            value={style.tailWidth}
-            suffix="px"
-            min={10}
-            max={96}
-            onValueChange={handleBubbleTailWidthChange}
-          />
-          <RangeField
-            label="끝점 X"
-            value={style.tailTipX}
-            suffix="%"
-            min={-120}
-            max={220}
-            onValueChange={handleBubbleTailTipXChange}
-          />
-          <RangeField
-            label="끝점 Y"
-            value={style.tailTipY}
-            suffix="%"
-            min={-120}
-            max={220}
-            onValueChange={handleBubbleTailTipYChange}
-          />
-        </section>
-      )}
-
-      <RangeField
-        label="선 두께"
-        value={style.borderWidth}
-        suffix="px"
-        min={0}
-        max={8}
-        step={0.5}
-        onValueChange={handleBubbleBorderWidthChange}
-      />
 
       <Button
         type="button"
