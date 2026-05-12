@@ -102,7 +102,6 @@ const useExport = (state: StudioState) => {
       );
       ctx.save();
       ctx.translate(panel.x, panel.y);
-      ctx.scale(panel.width / CANVAS_WIDTH, 1);
       panel.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble, 0));
       ctx.restore();
     }

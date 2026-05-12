@@ -15,12 +15,14 @@ interface ResizeHandleDefinition {
 
 interface TransformResizeHandleProps extends ResizeHandleDefinition {
   bubble: Bubble;
+  canvasHeight: number;
   panel: Panel;
   onDragStart: (payload: BubbleDragStartPayload) => void;
 }
 
 interface TransformHandlesProps {
   bubble: Bubble;
+  canvasHeight: number;
   panel: Panel;
   hasTailTip: boolean;
   onDragStart: (payload: BubbleDragStartPayload) => void;
@@ -40,6 +42,7 @@ const RESIZE_HANDLES: readonly ResizeHandleDefinition[] = [
 const TransformResizeHandle = ({
   anchor,
   bubble,
+  canvasHeight,
   className,
   label,
   panel,
@@ -48,7 +51,14 @@ const TransformResizeHandle = ({
   const handlePointerDown = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void => {
-    onDragStart({ event, bubble, panel, mode: 'resize', resizeAnchor: anchor });
+    onDragStart({
+      event,
+      bubble,
+      panel,
+      mode: 'resize',
+      resizeAnchor: anchor,
+      canvasHeight,
+    });
   };
 
   return (
@@ -64,6 +74,7 @@ const TransformResizeHandle = ({
 
 const TransformHandles = ({
   bubble,
+  canvasHeight,
   panel,
   hasTailTip,
   onDragStart,
@@ -71,7 +82,7 @@ const TransformHandles = ({
   const handleTailPointerDown = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void => {
-    onDragStart({ event, bubble, panel, mode: 'tail' });
+    onDragStart({ event, bubble, panel, mode: 'tail', canvasHeight });
   };
 
   return (
@@ -82,6 +93,7 @@ const TransformHandles = ({
           key={handle.anchor}
           anchor={handle.anchor}
           bubble={bubble}
+          canvasHeight={canvasHeight}
           className={handle.className}
           label={handle.label}
           panel={panel}

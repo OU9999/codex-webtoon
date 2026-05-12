@@ -7,6 +7,7 @@ import {
 } from '@shared/project-state';
 import { clamp } from '../_lib/canvas-primitives';
 import type {
+  Bubble,
   PanelResizeHandle,
   PanelTransform,
   PanelTransformStartPayload,
@@ -26,6 +27,20 @@ const handleTouchesNorth = (handle: PanelResizeHandle | null): boolean =>
 
 const handleTouchesSouth = (handle: PanelResizeHandle | null): boolean =>
   handle === 's' || handle === 'se' || handle === 'sw';
+
+const keepBubbleStagePositions = (
+  bubbles: Bubble[],
+  deltaX: number,
+  deltaY: number,
+): Bubble[] => {
+  if (deltaX === 0 && deltaY === 0) return bubbles;
+
+  return bubbles.map((bubble) => ({
+    ...bubble,
+    x: bubble.x - deltaX,
+    y: bubble.y - deltaY,
+  }));
+};
 
 const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
   const transformRef = useRef<PanelTransform | null>(null);
@@ -98,22 +113,28 @@ const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
           if (panel.id !== transform.panelId) return panel;
 
           if (transform.mode === 'move') {
+            const x = quantize(
+              clamp(
+                pointerX - transform.offsetX,
+                0,
+                WEBTOON_CANVAS_WIDTH - panel.width,
+              ),
+            );
+            const y = quantize(
+              clamp(
+                pointerY - transform.offsetY,
+                0,
+                current.canvasHeight - panel.height,
+              ),
+            );
+            const deltaX = x - panel.x;
+            const deltaY = y - panel.y;
+
             return {
               ...panel,
-              x: quantize(
-                clamp(
-                  pointerX - transform.offsetX,
-                  0,
-                  WEBTOON_CANVAS_WIDTH - panel.width,
-                ),
-              ),
-              y: quantize(
-                clamp(
-                  pointerY - transform.offsetY,
-                  0,
-                  current.canvasHeight - panel.height,
-                ),
-              ),
+              x,
+              y,
+              bubbles: keepBubbleStagePositions(panel.bubbles, deltaX, deltaY),
             };
           }
 
@@ -135,12 +156,18 @@ const usePanelTransform = (setState: Dispatch<SetStateAction<StudioState>>) => {
             ? clamp(pointerY, startTop + MIN_PANEL_HEIGHT, current.canvasHeight)
             : startBottom;
 
+          const x = quantize(left);
+          const y = quantize(top);
+          const deltaX = x - panel.x;
+          const deltaY = y - panel.y;
+
           return {
             ...panel,
-            x: quantize(left),
-            y: quantize(top),
+            x,
+            y,
             width: quantize(right - left),
             height: quantize(bottom - top),
+            bubbles: keepBubbleStagePositions(panel.bubbles, deltaX, deltaY),
           };
         }),
       }));

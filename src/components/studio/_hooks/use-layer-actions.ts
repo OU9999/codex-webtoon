@@ -26,6 +26,26 @@ const isBubbleType = (value: unknown): value is BubbleType => {
 };
 
 const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
+  const patchBubble = (
+    panelId: string,
+    bubbleId: string,
+    patch: Partial<Bubble>,
+  ): void => {
+    setState((current) => ({
+      ...current,
+      panels: current.panels.map((panel) => {
+        if (panel.id !== panelId) return panel;
+
+        return {
+          ...panel,
+          bubbles: panel.bubbles.map((bubble) =>
+            bubble.id === bubbleId ? { ...bubble, ...patch } : bubble,
+          ),
+        };
+      }),
+    }));
+  };
+
   const patchSelectedBubbleNumber = (
     key: keyof Pick<
       Bubble,
@@ -51,8 +71,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     setState((current) => ({
       ...current,
       panels: current.panels.map((panel) => {
-        if (panel.id !== current.selectedPanelId) return panel;
-
         return {
           ...panel,
           bubbles: panel.bubbles.map((bubble) =>
@@ -70,25 +88,43 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     patch: Partial<Bubble> = {},
   ): void => {
     const bubble = { ...createBubble(type), ...patch };
+    setState((current) => {
+      const selectedPanelId = current.selectedPanelId;
+      if (!selectedPanelId) return current;
+
+      return {
+        ...current,
+        selectedPanelId: null,
+        selectedBubbleId: bubble.id,
+        panels: current.panels.map((panel) =>
+          panel.id === selectedPanelId
+            ? { ...panel, bubbles: [...panel.bubbles, bubble] }
+            : panel,
+        ),
+      };
+    });
+  };
+
+  const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
     setState((current) => ({
       ...current,
-      selectedBubbleId: bubble.id,
-      panels: current.panels.map((panel) =>
-        panel.id === current.selectedPanelId
-          ? { ...panel, bubbles: [...panel.bubbles, bubble] }
-          : panel,
-      ),
+      selectedPanelId: null,
+      selectedBubbleId: bubbleId,
     }));
   };
 
-  const handleBubbleSelect = (bubbleId: string): void => {
-    setState((current) => ({ ...current, selectedBubbleId: bubbleId }));
-  };
-
   const handleBubbleTextChange = (
-    event: ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLTextAreaElement>,
   ): void => {
     patchSelectedBubble({ text: event.target.value });
+  };
+
+  const handleBubbleTextValueChange = (
+    panelId: string,
+    bubbleId: string,
+    text: string,
+  ): void => {
+    patchBubble(panelId, bubbleId, { text });
   };
 
   const handleBubbleTypeChange = (
@@ -210,10 +246,9 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   const handleSelectedBubbleDelete = (): void => {
     setState((current) => ({
       ...current,
+      selectedPanelId: null,
       selectedBubbleId: null,
       panels: current.panels.map((panel) => {
-        if (panel.id !== current.selectedPanelId) return panel;
-
         return {
           ...panel,
           bubbles: panel.bubbles.filter(
@@ -248,6 +283,7 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     handleBubbleTailWidthChange,
     handleBubbleTextChange,
     handleBubbleTextColorChange,
+    handleBubbleTextValueChange,
     handleBubbleTypeChange,
     handleLayerAdd,
     handleSelectedBubbleDelete,

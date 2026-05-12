@@ -300,7 +300,7 @@
   }
 
   .bubble-layer {
-    @apply absolute isolate z-10 box-border grid touch-none place-items-center overflow-visible px-3 py-2 text-center leading-[1.18] select-none;
+    @apply absolute isolate z-30 box-border grid touch-none place-items-center overflow-visible px-3 py-2 text-center leading-[1.18] select-none;
     color: var(--bubble-text, #1a1f30);
     font-family: var(--bubble-font-family, var(--font-sans));
     font-weight: var(--bubble-font-weight, 700);

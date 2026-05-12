@@ -78,10 +78,14 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
     loaded.panels,
     loaded.panelGap,
   );
+  const selectedPanelId = loaded.selectedBubbleId
+    ? null
+    : loaded.selectedPanelId;
   let fallbackY = 0;
 
   return {
     ...loaded,
+    selectedPanelId,
     panels: loaded.panels.map((panel) => {
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;

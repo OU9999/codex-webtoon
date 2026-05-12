@@ -132,7 +132,7 @@ interface Panel {
 interface ProjectState {
   commonPrompt: string;
   panels: Panel[];
-  selectedPanelId: string;
+  selectedPanelId: string | null;
   selectedBubbleId: string | null;
   canvasHeight: number;
   panelGap: number;

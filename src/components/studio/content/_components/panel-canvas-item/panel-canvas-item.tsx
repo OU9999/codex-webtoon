@@ -3,12 +3,10 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { getPanelClassName } from '@/components/studio/_lib/class-names';
 import type {
-  BubbleDragStartPayload,
   Panel,
   PanelResizeHandle,
   PanelTransformStartPayload,
 } from '@/components/studio/_lib/types';
-import { BubbleLayer } from './_components/bubble-layer';
 
 interface PanelResizeHandleControl {
   handle: PanelResizeHandle;
@@ -21,8 +19,6 @@ interface PanelCanvasItemProps {
   index: number;
   canvasHeight: number;
   isSelected: boolean;
-  selectedBubbleId: string | null;
-  onBubbleDragStart: (payload: BubbleDragStartPayload) => void;
   onTransformStart: (payload: PanelTransformStartPayload) => void;
 }
 
@@ -42,8 +38,6 @@ const PanelCanvasItem = ({
   index,
   canvasHeight,
   isSelected,
-  selectedBubbleId,
-  onBubbleDragStart,
   onTransformStart,
 }: PanelCanvasItemProps) => {
   const selectedCandidate = panel.candidates.find(
@@ -113,15 +107,6 @@ const PanelCanvasItem = ({
           ))}
         </>
       )}
-      {panel.bubbles.map((bubble) => (
-        <BubbleLayer
-          key={bubble.id}
-          bubble={bubble}
-          panel={panel}
-          isSelected={bubble.id === selectedBubbleId}
-          onDragStart={onBubbleDragStart}
-        />
-      ))}
     </article>
   );
 };

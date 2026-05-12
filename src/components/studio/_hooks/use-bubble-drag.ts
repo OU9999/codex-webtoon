@@ -140,20 +140,25 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
     panel,
     mode,
     resizeAnchor,
+    canvasHeight,
   }: BubbleDragStartPayload): void => {
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
 
-    const frame = event.currentTarget.closest<HTMLElement>('.panel-frame');
-    if (!frame) return;
+    const stage = event.currentTarget.closest<HTMLElement>('.webtoon-stage');
+    if (!stage) return;
 
-    const rect = frame.getBoundingClientRect();
-    const pointerX = ((event.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
-    const pointerY = ((event.clientY - rect.top) / rect.height) * panel.height;
+    const rect = stage.getBoundingClientRect();
+    const pointerStageX =
+      ((event.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
+    const pointerStageY =
+      ((event.clientY - rect.top) / rect.height) * canvasHeight;
+    const pointerX = pointerStageX - panel.x;
+    const pointerY = pointerStageY - panel.y;
 
     setState((current) => ({
       ...current,
-      selectedPanelId: panel.id,
+      selectedPanelId: null,
       selectedBubbleId: bubble.id,
     }));
     dragRef.current = {
@@ -162,6 +167,9 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       bubbleId: bubble.id,
       resizeAnchor,
       rect,
+      canvasHeight,
+      panelX: panel.x,
+      panelY: panel.y,
       panelHeight: panel.height,
       pointerStartX: pointerX,
       pointerStartY: pointerY,
@@ -182,10 +190,13 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       const drag = dragRef.current;
       if (!drag) return;
 
-      const x =
+      const stageX =
         ((event.clientX - drag.rect.left) / drag.rect.width) * CANVAS_WIDTH;
-      const y =
-        ((event.clientY - drag.rect.top) / drag.rect.height) * drag.panelHeight;
+      const stageY =
+        ((event.clientY - drag.rect.top) / drag.rect.height) *
+        drag.canvasHeight;
+      const x = stageX - drag.panelX;
+      const y = stageY - drag.panelY;
       const minX = -CANVAS_WIDTH;
       const maxX = CANVAS_WIDTH * 2;
       const minY = -drag.panelHeight;

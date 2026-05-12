@@ -2,6 +2,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 import { ChevronLeft, MessageCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/studio/_components/empty-state';
 import { FieldBlock } from '@/components/studio/_components/field-block';
@@ -94,10 +95,10 @@ const BubbleForm = () => {
     handlePanelSelect,
     handleSelectedBubbleDelete,
     selectedBubble,
-    selectedPanel,
+    selectedBubblePanel,
   } = useStudioContext();
 
-  if (!selectedBubble) {
+  if (!selectedBubble || !selectedBubblePanel) {
     return <EmptyState>No layer selected</EmptyState>;
   }
 
@@ -112,8 +113,7 @@ const BubbleForm = () => {
   };
 
   const handleShowPanelMenu = (): void => {
-    if (!selectedPanel) return;
-    handlePanelSelect(selectedPanel.id);
+    handlePanelSelect(selectedBubblePanel.id);
   };
 
   return (
@@ -136,10 +136,10 @@ const BubbleForm = () => {
       </header>
 
       <FieldBlock label="텍스트" compact>
-        <Input
+        <Textarea
           value={selectedBubble.text}
           onChange={handleBubbleTextChange}
-          className="bg-background"
+          className="min-h-24 resize-y bg-background"
         />
       </FieldBlock>
 

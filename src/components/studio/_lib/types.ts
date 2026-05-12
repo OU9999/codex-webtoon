@@ -84,7 +84,7 @@ interface Panel {
 interface StudioState {
   commonPrompt: string;
   panels: Panel[];
-  selectedPanelId: string;
+  selectedPanelId: string | null;
   selectedBubbleId: string | null;
   canvasHeight: number;
   panelGap: number;
@@ -114,6 +114,9 @@ interface BubbleDrag {
   bubbleId: string;
   resizeAnchor?: BubbleResizeAnchor;
   rect: DOMRect;
+  canvasHeight: number;
+  panelX: number;
+  panelY: number;
   panelHeight: number;
   pointerStartX: number;
   pointerStartY: number;
@@ -131,6 +134,7 @@ interface BubbleDragStartPayload {
   panel: Panel;
   mode: BubbleDragMode;
   resizeAnchor?: BubbleResizeAnchor;
+  canvasHeight: number;
 }
 
 interface PanelTransform {

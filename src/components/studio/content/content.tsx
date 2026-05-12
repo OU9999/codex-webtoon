@@ -1,22 +1,40 @@
 import { GripVertical } from 'lucide-react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getStageClassName } from '../_lib/class-names';
 import { useStudioContext } from '../studio-context';
+import { BubbleLayer } from './_components/panel-canvas-item/_components/bubble-layer';
 import { PanelCanvasItem } from './_components/panel-canvas-item/panel-canvas-item';
 
 const Content = () => {
   const {
+    editingBubbleId,
     state,
     selectedPanel,
     handleBubbleDragStart,
+    handleBubbleTextEditEnd,
+    handleBubbleTextEditStart,
+    handleBubbleTextValueChange,
     handlePanelTransformStart,
+    handleSelectionClear,
   } = useStudioContext();
+
+  const handleWorkspacePointerDown = (
+    event: ReactPointerEvent<HTMLElement>,
+  ): void => {
+    if (event.target instanceof Element) {
+      if (event.target.closest('.webtoon-stage')) return;
+    }
+
+    handleSelectionClear();
+  };
 
   return (
     <section
       className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-3 py-4 md:px-7 md:py-5"
       aria-label="Webtoon canvas"
+      onPointerDown={handleWorkspacePointerDown}
     >
       <header className="mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-4 text-xs text-muted-foreground">
         <h2>
@@ -45,11 +63,28 @@ const Content = () => {
             index={index}
             canvasHeight={state.canvasHeight}
             isSelected={panel.id === selectedPanel?.id}
-            selectedBubbleId={state.selectedBubbleId}
-            onBubbleDragStart={handleBubbleDragStart}
             onTransformStart={handlePanelTransformStart}
           />
         ))}
+        {state.panels.map((panel) =>
+          panel.bubbles.map((bubble) => (
+            <BubbleLayer
+              key={bubble.id}
+              bubble={bubble}
+              canvasHeight={state.canvasHeight}
+              panel={panel}
+              isEditing={
+                bubble.id === editingBubbleId &&
+                bubble.id === state.selectedBubbleId
+              }
+              isSelected={bubble.id === state.selectedBubbleId}
+              onDragStart={handleBubbleDragStart}
+              onEditEnd={handleBubbleTextEditEnd}
+              onEditStart={handleBubbleTextEditStart}
+              onTextChange={handleBubbleTextValueChange}
+            />
+          )),
+        )}
       </section>
     </section>
   );

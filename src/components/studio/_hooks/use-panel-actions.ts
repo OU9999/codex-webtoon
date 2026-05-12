@@ -225,6 +225,18 @@ const usePanelActions = (
     }));
   };
 
+  const handleSelectionClear = (): void => {
+    setState((current) => {
+      if (!current.selectedPanelId && !current.selectedBubbleId) return current;
+
+      return {
+        ...current,
+        selectedPanelId: null,
+        selectedBubbleId: null,
+      };
+    });
+  };
+
   const handleSelectedPanelTitleChange = (
     event: ChangeEvent<HTMLInputElement>,
   ): void => {
@@ -345,6 +357,7 @@ const usePanelActions = (
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
     handleSelectedPanelWidthChange,
+    handleSelectionClear,
     handleVariantCountChange,
     patchSelectedPanel,
   };

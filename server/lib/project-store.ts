@@ -274,7 +274,8 @@ const isProjectState = (value: unknown): value is ProjectState => {
     typeof obj.commonPrompt === 'string' &&
     Array.isArray(obj.panels) &&
     obj.panels.every(isPanel) &&
-    typeof obj.selectedPanelId === 'string' &&
+    (obj.selectedPanelId === null ||
+      typeof obj.selectedPanelId === 'string') &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
     (obj.canvasHeight === undefined || typeof obj.canvasHeight === 'number') &&
@@ -300,10 +301,12 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
     state.panels,
     state.panelGap,
   );
+  const selectedPanelId = state.selectedBubbleId ? null : state.selectedPanelId;
   let fallbackY = 0;
 
   return {
     ...state,
+    selectedPanelId,
     panels: state.panels.map((panel) => {
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;
