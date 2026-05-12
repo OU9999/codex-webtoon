@@ -31,8 +31,8 @@ const checkApiKey = (): boolean => {
 
 const authRouter = Router();
 
-authRouter.get('/status', (_req, res) => {
-  const codex = detectCodexAuth();
+authRouter.get('/status', async (_req, res) => {
+  const codex = await detectCodexAuth();
   const handle = getOAuthHandle();
   const apiKeyAvailable = checkApiKey();
 

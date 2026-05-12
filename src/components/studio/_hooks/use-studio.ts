@@ -8,6 +8,7 @@ import { useGeneratePanel } from './use-generate-panel';
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts';
 import { useLayerActions } from './use-layer-actions';
 import { usePanelActions } from './use-panel-actions';
+import { usePanelTransform } from './use-panel-transform';
 import { useStudioState } from './use-studio-state';
 
 interface UseStudioOptions {
@@ -47,6 +48,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
   const candidates = useCandidateActions(setState, panels.patchSelectedPanel);
   const layers = useLayerActions(setState);
   const drag = useBubbleDrag(setState);
+  const transform = usePanelTransform(setState);
   const exporting = useExport(state);
   useDynamicStyles(state);
   useKeyboardShortcuts({
@@ -68,6 +70,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     ...candidates,
     ...layers,
     ...drag,
+    ...transform,
     ...exporting,
   };
 };

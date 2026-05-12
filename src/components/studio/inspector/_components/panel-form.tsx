@@ -2,10 +2,16 @@ import { ChevronLeft, RefreshCcw, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  MIN_PANEL_HEIGHT,
+  MIN_PANEL_WIDTH,
+  WEBTOON_CANVAS_WIDTH,
+} from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
 import { RangeField } from '../../_components/range-field';
 import { SectionTitle } from '../../_components/section-title';
 import { useStudioContext } from '../../studio-context';
+import { ReferenceImageSection } from './reference-image-section';
 
 const PanelForm = () => {
   const {
@@ -16,6 +22,7 @@ const PanelForm = () => {
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
+    handleSelectedPanelWidthChange,
     handleVariantCountChange,
     isGenerating,
     selectedCandidate,
@@ -24,6 +31,15 @@ const PanelForm = () => {
   } = useStudioContext();
 
   if (!selectedPanel) return null;
+
+  const maxPanelWidth = Math.max(
+    MIN_PANEL_WIDTH,
+    WEBTOON_CANVAS_WIDTH - selectedPanel.x,
+  );
+  const maxPanelHeight = Math.max(
+    MIN_PANEL_HEIGHT,
+    state.canvasHeight - selectedPanel.y,
+  );
 
   return (
     <>
@@ -39,11 +55,20 @@ const PanelForm = () => {
         />
       </FieldBlock>
       <RangeField
+        label="패널 너비"
+        value={selectedPanel.width}
+        suffix="px"
+        min={MIN_PANEL_WIDTH}
+        max={maxPanelWidth}
+        step={10}
+        onValueChange={handleSelectedPanelWidthChange}
+      />
+      <RangeField
         label="패널 높이"
         value={selectedPanel.height}
         suffix="px"
-        min={220}
-        max={900}
+        min={MIN_PANEL_HEIGHT}
+        max={maxPanelHeight}
         step={10}
         onValueChange={handleSelectedPanelHeightChange}
       />
@@ -64,6 +89,7 @@ const PanelForm = () => {
         step={1}
         onValueChange={handleVariantCountChange}
       />
+      <ReferenceImageSection />
 
       <section className="mb-5 grid gap-2">
         <Button

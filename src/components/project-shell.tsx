@@ -5,27 +5,41 @@ import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker';
 import { Studio } from '@/components/studio/studio';
-import type { StudioState } from '@/components/studio/_lib/types';
+import {
+  DEFAULT_CANVAS_HEIGHT,
+  DEFAULT_PANEL_GAP_COLOR,
+  normalizeCanvasHeight,
+  normalizePanelGapColor,
+  normalizePanelGeometry,
+} from '@shared/project-state';
+import type {
+  ReferenceImageRef,
+  StudioState,
+} from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import { createPanel } from '@/components/studio/_lib/factories';
 import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
 
 const createDefaultState = (): StudioState => {
+  const panelGap = 28;
   const panels = [
     createPanel({
       title: 'Opening beat',
+      y: 0,
       height: 420,
       prompt:
         '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
     }),
     createPanel({
       title: 'Reaction close-up',
+      y: 420 + panelGap,
       height: 330,
       prompt:
         '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
     }),
     createPanel({
       title: 'Long pause',
+      y: 420 + panelGap + 330 + panelGap,
       height: 560,
       prompt: '',
     }),
@@ -36,22 +50,66 @@ const createDefaultState = (): StudioState => {
     panels,
     selectedPanelId: panels[0].id,
     selectedBubbleId: null,
-    panelGap: 28,
+    canvasHeight: DEFAULT_CANVAS_HEIGHT,
+    panelGap,
+    panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
   };
 };
 
-const normalizeLoadedState = (loaded: StudioState): StudioState => ({
-  ...loaded,
-  panels: loaded.panels.map((panel) => ({
-    ...panel,
-    bubbles: panel.bubbles.map(withDefaultBubbleStyle),
-  })),
-  variantCount:
-    typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
-      ? Math.min(4, Math.trunc(loaded.variantCount))
-      : 1,
-});
+const referenceKey = (reference: ReferenceImageRef): string =>
+  `${reference.panelId}:${reference.candidateId}`;
+
+const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
+  if (!value || typeof value !== 'object') return false;
+  const ref = value as Record<string, unknown>;
+  return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
+};
+
+const normalizeLoadedState = (loaded: StudioState): StudioState => {
+  const candidateKeys = new Set<string>();
+  for (const panel of loaded.panels) {
+    for (const candidate of panel.candidates) {
+      candidateKeys.add(`${panel.id}:${candidate.id}`);
+    }
+  }
+  const canvasHeight = normalizeCanvasHeight(
+    (loaded as { canvasHeight?: unknown }).canvasHeight,
+    loaded.panels,
+    loaded.panelGap,
+  );
+  let fallbackY = 0;
+
+  return {
+    ...loaded,
+    panels: loaded.panels.map((panel) => {
+      const rawReferences = (panel as { referenceImages?: unknown })
+        .referenceImages;
+      const referenceImages = Array.isArray(rawReferences)
+        ? rawReferences
+            .filter(isReferenceImageRef)
+            .filter((reference) => candidateKeys.has(referenceKey(reference)))
+        : [];
+      const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
+      fallbackY += geometry.height + loaded.panelGap;
+
+      return {
+        ...panel,
+        ...geometry,
+        referenceImages,
+        bubbles: panel.bubbles.map(withDefaultBubbleStyle),
+      };
+    }),
+    canvasHeight,
+    panelGapColor: normalizePanelGapColor(
+      (loaded as { panelGapColor?: unknown }).panelGapColor,
+    ),
+    variantCount:
+      typeof loaded.variantCount === 'number' && loaded.variantCount >= 1
+        ? Math.min(4, Math.trunc(loaded.variantCount))
+        : 1,
+  };
+};
 
 const ProjectShell = () => {
   const [projectName, setProjectName] = useState<string | null>(null);

@@ -211,15 +211,17 @@ const drawEmptyPanel = (
   ctx: CanvasRenderingContext2D,
   y: number,
   height: number,
+  x = 0,
+  width = CANVAS_WIDTH,
 ): void => {
   ctx.fillStyle = '#eceee8';
-  ctx.fillRect(0, y, CANVAS_WIDTH, height);
+  ctx.fillRect(x, y, width, height);
   ctx.strokeStyle = '#ced4cb';
   ctx.lineWidth = 2;
-  for (let i = -height; i < CANVAS_WIDTH; i += 28) {
+  for (let i = -height; i < width; i += 28) {
     ctx.beginPath();
-    ctx.moveTo(i, y + height);
-    ctx.lineTo(i + height, y);
+    ctx.moveTo(x + i, y + height);
+    ctx.lineTo(x + i + height, y);
     ctx.stroke();
   }
 };

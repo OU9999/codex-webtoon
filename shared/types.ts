@@ -109,14 +109,23 @@ interface Candidate {
   provider: string;
 }
 
+interface ReferenceImageRef {
+  panelId: string;
+  candidateId: string;
+}
+
 interface Panel {
   id: string;
   title: string;
+  x: number;
+  y: number;
+  width: number;
   height: number;
   prompt: string;
   candidates: Candidate[];
   selectedCandidateId: string | null;
   deletedCandidates: Candidate[];
+  referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
 }
 
@@ -125,7 +134,9 @@ interface ProjectState {
   panels: Panel[];
   selectedPanelId: string;
   selectedBubbleId: string | null;
+  canvasHeight: number;
   panelGap: number;
+  panelGapColor: string;
   variantCount: number;
 }
 
@@ -149,5 +160,6 @@ export type {
   ProjectMeta,
   ProjectState,
   ProjectSummary,
+  ReferenceImageRef,
   ServerAdvertisement,
 };

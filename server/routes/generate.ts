@@ -1,18 +1,25 @@
-import { Router } from 'express';
-import OpenAI from 'openai';
-import { generateImageViaOAuth, OAuthGenerateError } from '../lib/auth/oauth-runtime.js';
+import { Router, type Response } from 'express';
+import OpenAI, { toFile } from 'openai';
+import {
+  generateImageViaOAuth,
+  OAuthGenerateError,
+} from '../lib/auth/oauth-runtime.js';
 import {
   MissingApiKeyError,
   resolveOpenAiApiKey,
 } from '../lib/provider/api-key.js';
-import { ImageStoreError, saveCandidate } from '../lib/image-store.js';
+import {
+  ImageStoreError,
+  readCandidatePng,
+  saveCandidate,
+} from '../lib/image-store.js';
 import {
   ProjectError,
   getProjectDir,
   touchProject,
 } from '../lib/project-store.js';
 import { getOAuthHandle } from '../runtime-context.js';
-import type { ApiError } from '../../shared/types.js';
+import type { ApiError, ReferenceImageRef } from '../../shared/types.js';
 
 type ProviderRequest = 'auto' | 'openai' | 'oauth';
 type ProviderResolved = 'openai' | 'oauth';
@@ -24,6 +31,7 @@ interface GenerateRequestBody {
   height?: unknown;
   provider?: unknown;
   count?: unknown;
+  referenceImages?: unknown;
 }
 
 interface ParsedRequest {
@@ -33,9 +41,12 @@ interface ParsedRequest {
   height: number;
   provider: ProviderRequest;
   count: number;
+  referenceImages: ReferenceImageRef[];
 }
 
 const MAX_COUNT = 4;
+const MAX_REFERENCE_IMAGES = 4;
+const GENERATION_TIMEOUT_MS = 180_000;
 
 class GenerateValidationError extends Error {
   constructor(
@@ -46,6 +57,84 @@ class GenerateValidationError extends Error {
     this.name = 'GenerateValidationError';
   }
 }
+
+class GenerationTimeoutError extends Error {
+  constructor() {
+    super(
+      `Image generation timed out after ${Math.round(GENERATION_TIMEOUT_MS / 1000)} seconds.`,
+    );
+    this.name = 'GenerationTimeoutError';
+  }
+}
+
+const withGenerationTimeout = async <Result>(
+  task: (signal: AbortSignal) => Promise<Result>,
+): Promise<Result> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GENERATION_TIMEOUT_MS);
+
+  try {
+    return await task(controller.signal);
+  } catch (err) {
+    if (controller.signal.aborted) {
+      throw new GenerationTimeoutError();
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const parseReferenceImages = (value: unknown): ReferenceImageRef[] => {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new GenerateValidationError(
+      'referenceImages',
+      'referenceImages must be an array.',
+    );
+  }
+  if (value.length > MAX_REFERENCE_IMAGES) {
+    throw new GenerateValidationError(
+      'referenceImages',
+      `referenceImages must contain ${MAX_REFERENCE_IMAGES} images or fewer.`,
+    );
+  }
+
+  const references: ReferenceImageRef[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      throw new GenerateValidationError(
+        'referenceImages',
+        'referenceImages entries must be objects.',
+      );
+    }
+
+    const reference = item as Record<string, unknown>;
+    if (
+      typeof reference.panelId !== 'string' ||
+      !reference.panelId.trim() ||
+      typeof reference.candidateId !== 'string' ||
+      !reference.candidateId.trim()
+    ) {
+      throw new GenerateValidationError(
+        'referenceImages',
+        'referenceImages entries must include panelId and candidateId.',
+      );
+    }
+
+    const panelId = reference.panelId.trim();
+    const candidateId = reference.candidateId.trim();
+    const key = `${panelId}:${candidateId}`;
+    if (seen.has(key)) continue;
+
+    references.push({ panelId, candidateId });
+    seen.add(key);
+  }
+
+  return references;
+};
 
 const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
   if (typeof body.projectName !== 'string' || !body.projectName.trim()) {
@@ -79,7 +168,11 @@ const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
 
   let provider: ProviderRequest = 'auto';
   if (typeof body.provider === 'string') {
-    if (body.provider === 'auto' || body.provider === 'openai' || body.provider === 'oauth') {
+    if (
+      body.provider === 'auto' ||
+      body.provider === 'openai' ||
+      body.provider === 'oauth'
+    ) {
       provider = body.provider;
     } else {
       throw new GenerateValidationError(
@@ -112,6 +205,7 @@ const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
     height: body.height,
     provider,
     count,
+    referenceImages: parseReferenceImages(body.referenceImages),
   };
 };
 
@@ -152,34 +246,109 @@ interface GeneratedPng {
   model: string;
 }
 
+interface ReferenceImageBuffer extends ReferenceImageRef {
+  buffer: Buffer;
+}
+
+const readReferenceImages = (
+  projectDir: string,
+  references: ReferenceImageRef[],
+): ReferenceImageBuffer[] =>
+  references.map((reference) => ({
+    ...reference,
+    buffer: readCandidatePng({
+      projectDir,
+      panelId: reference.panelId,
+      candidateId: reference.candidateId,
+    }),
+  }));
+
 const generatePng = async (
   resolved: ReturnType<typeof resolveProvider>,
   prompt: string,
   size: ImageSize,
-): Promise<GeneratedPng> => {
-  if (resolved.provider === 'oauth') {
-    const result = await generateImageViaOAuth({
-      oauthUrl: resolved.oauthUrl ?? '',
-      prompt,
-      size,
-    });
-    return { buffer: Buffer.from(result.b64, 'base64'), model: result.model };
-  }
+  referenceImages: ReferenceImageBuffer[],
+): Promise<GeneratedPng> =>
+  withGenerationTimeout(async (signal) => {
+    if (resolved.provider === 'oauth') {
+      const result = await generateImageViaOAuth({
+        oauthUrl: resolved.oauthUrl ?? '',
+        prompt,
+        size,
+        referenceImageDataUrls: referenceImages.map(
+          (reference) =>
+            `data:image/png;base64,${reference.buffer.toString('base64')}`,
+        ),
+        signal,
+      });
+      return { buffer: Buffer.from(result.b64, 'base64'), model: result.model };
+    }
 
-  const model = 'gpt-image-1';
-  const client = new OpenAI({ apiKey: resolved.apiKey });
-  const response = await client.images.generate({
-    model,
-    prompt,
-    size,
-    n: 1,
+    const model = 'gpt-image-1';
+    const client = new OpenAI({ apiKey: resolved.apiKey });
+    if (referenceImages.length > 0) {
+      const image = await Promise.all(
+        referenceImages.map((reference, index) =>
+          toFile(reference.buffer, `reference-${index + 1}.png`, {
+            type: 'image/png',
+          }),
+        ),
+      );
+      const response = await client.images.edit(
+        {
+          model,
+          prompt,
+          size,
+          n: 1,
+          image,
+          input_fidelity: 'high',
+        },
+        { signal },
+      );
+
+      const b64 = response.data?.[0]?.b64_json;
+      if (!b64) {
+        throw new Error('Image provider returned no data.');
+      }
+      return { buffer: Buffer.from(b64, 'base64'), model };
+    }
+
+    const response = await client.images.generate(
+      {
+        model,
+        prompt,
+        size,
+        n: 1,
+      },
+      { signal },
+    );
+
+    const b64 = response.data?.[0]?.b64_json;
+    if (!b64) {
+      throw new Error('Image provider returned no data.');
+    }
+    return { buffer: Buffer.from(b64, 'base64'), model };
   });
 
-  const b64 = response.data?.[0]?.b64_json;
-  if (!b64) {
-    throw new Error('Image provider returned no data.');
+const sendGenerationError = (res: Response, err: unknown): void => {
+  if (err instanceof ImageStoreError) {
+    const body: ApiError = { error: err.code, message: err.message };
+    res.status(400).json(body);
+    return;
   }
-  return { buffer: Buffer.from(b64, 'base64'), model };
+  if (err instanceof OAuthGenerateError) {
+    const body: ApiError = { error: err.code, message: err.message };
+    res.status(err.status).json(body);
+    return;
+  }
+  if (err instanceof GenerationTimeoutError) {
+    const body: ApiError = { error: 'generation_timeout', message: err.message };
+    res.status(504).json(body);
+    return;
+  }
+  const message = err instanceof Error ? err.message : 'Generation failed.';
+  const body: ApiError = { error: 'generation_failed', message };
+  res.status(502).json(body);
 };
 
 const generateRouter = Router();
@@ -234,14 +403,44 @@ generateRouter.post('/', async (req, res) => {
 
   const size = pickSize(parsed.height);
 
+  let referenceImages: ReferenceImageBuffer[];
   try {
-    const generated = await Promise.all(
-      Array.from({ length: parsed.count }, () =>
-        generatePng(resolved, parsed.prompt, size),
-      ),
-    );
+    referenceImages = readReferenceImages(projectDir, parsed.referenceImages);
+  } catch (err) {
+    sendGenerationError(res, err);
+    return;
+  }
 
-    const saved = generated.map(({ buffer, model }) =>
+  const outcomes = await Promise.allSettled(
+    Array.from({ length: parsed.count }, () =>
+      generatePng(resolved, parsed.prompt, size, referenceImages),
+    ),
+  );
+
+  const fulfilled = outcomes.filter(
+    (outcome): outcome is PromiseFulfilledResult<GeneratedPng> =>
+      outcome.status === 'fulfilled',
+  );
+  const firstRejection = outcomes.find(
+    (outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected',
+  );
+
+  if (fulfilled.length === 0) {
+    sendGenerationError(res, firstRejection?.reason);
+    return;
+  }
+  if (firstRejection) {
+    const reason =
+      firstRejection.reason instanceof Error
+        ? firstRejection.reason.message
+        : String(firstRejection.reason);
+    console.warn(
+      `[wps] generate: ${parsed.count - fulfilled.length}/${parsed.count} variants failed (${reason}); returning ${fulfilled.length}.`,
+    );
+  }
+
+  try {
+    const saved = fulfilled.map(({ value: { buffer, model } }) =>
       saveCandidate({
         projectName: parsed.projectName,
         projectDir,
@@ -253,6 +452,7 @@ generateRouter.post('/', async (req, res) => {
           provider: resolved.provider,
           model,
           size,
+          referenceImages: parsed.referenceImages,
         },
       }),
     );
@@ -260,19 +460,7 @@ generateRouter.post('/', async (req, res) => {
     touchProject(parsed.projectName);
     res.status(201).json(saved);
   } catch (err) {
-    if (err instanceof ImageStoreError) {
-      const body: ApiError = { error: err.code, message: err.message };
-      res.status(400).json(body);
-      return;
-    }
-    if (err instanceof OAuthGenerateError) {
-      const body: ApiError = { error: err.code, message: err.message };
-      res.status(err.status).json(body);
-      return;
-    }
-    const message = err instanceof Error ? err.message : 'Generation failed.';
-    const body: ApiError = { error: 'generation_failed', message };
-    res.status(502).json(body);
+    sendGenerationError(res, err);
   }
 });
 

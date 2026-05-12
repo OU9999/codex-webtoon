@@ -32,8 +32,8 @@ const PanelListItem = ({
           {String(index + 1).padStart(2, '0')}
         </span>
         <strong className="truncate">{panel.title}</strong>
-        <small className="font-bold text-muted-foreground">
-          {panel.height}px
+        <small className="font-mono text-[10px] font-bold text-muted-foreground">
+          {panel.width}×{panel.height}
         </small>
       </button>
     </li>
