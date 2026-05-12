@@ -8,12 +8,13 @@ type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
 type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
 type BubbleShape =
   | 'rounded'
+  | 'oval'
   | 'pill'
   | 'cloud'
   | 'square'
   | 'sharp'
   | 'rough'
-  | 'burst'
+  | 'jagged'
   | 'custom';
 type BubbleTailSide = 'none' | 'top' | 'right' | 'bottom' | 'left';
 
@@ -119,6 +120,7 @@ interface LayerAction {
   type: BubbleType;
   label: string;
   icon: ReactNode;
+  patch?: Partial<Bubble>;
 }
 
 export type {

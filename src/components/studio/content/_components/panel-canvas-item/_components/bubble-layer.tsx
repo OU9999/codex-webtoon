@@ -51,6 +51,7 @@ const BubbleLayer = ({
         `shape-${style.shape}`,
         `tail-${style.tailSide}`,
         getBubbleClassName(panel, bubble),
+        outlinePath && 'has-outline',
         isSelected && 'active',
       )}
       onPointerDown={handlePointerDown}

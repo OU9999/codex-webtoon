@@ -8,7 +8,7 @@ import { useStudioContext } from '../../studio-context';
 interface BubbleActionButtonProps {
   action: LayerAction;
   disabled: boolean;
-  onAdd: (type: BubbleType) => void;
+  onAdd: (type: BubbleType, patch?: LayerAction['patch']) => void;
 }
 
 const BubbleActionButton = ({
@@ -17,7 +17,7 @@ const BubbleActionButton = ({
   onAdd,
 }: BubbleActionButtonProps) => {
   const handleAdd = (): void => {
-    onAdd(action.type);
+    onAdd(action.type, action.patch);
   };
 
   return (
@@ -49,7 +49,7 @@ const BubbleActions = () => {
       <nav className="grid grid-cols-2 gap-2" aria-label="Balloon actions">
         {layerActions.map((action) => (
           <BubbleActionButton
-            key={action.type}
+            key={`${action.type}-${action.label}`}
             action={action}
             disabled={isDisabled}
             onAdd={handleLayerAdd}

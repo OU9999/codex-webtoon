@@ -60,12 +60,13 @@ type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
 type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
 type BubbleShape =
   | 'rounded'
+  | 'oval'
   | 'pill'
   | 'cloud'
   | 'square'
   | 'sharp'
   | 'rough'
-  | 'burst'
+  | 'jagged'
   | 'custom';
 type BubbleTailSide = 'none' | 'top' | 'right' | 'bottom' | 'left';
 

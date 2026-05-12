@@ -52,6 +52,11 @@ interface BubbleOutlineSvgPath {
   path: string;
 }
 
+interface ThoughtTailDots {
+  large: BubbleTailPoint;
+  small: BubbleTailPoint;
+}
+
 const BUBBLE_BORDER_STYLE_VALUES: readonly BubbleBorderStyle[] = [
   'solid',
   'dashed',
@@ -71,12 +76,13 @@ const BUBBLE_FONT_WEIGHT_VALUES: readonly BubbleFontWeight[] = [
 ];
 const BUBBLE_SHAPE_VALUES: readonly BubbleShape[] = [
   'rounded',
+  'oval',
   'pill',
   'cloud',
   'square',
   'sharp',
   'rough',
-  'burst',
+  'jagged',
   'custom',
 ];
 const BUBBLE_TAIL_SIDE_VALUES: readonly BubbleTailSide[] = [
@@ -86,6 +92,7 @@ const BUBBLE_TAIL_SIDE_VALUES: readonly BubbleTailSide[] = [
   'bottom',
   'left',
 ];
+const BUBBLE_SHAPES_WITHOUT_TAIL: readonly BubbleShape[] = ['cloud', 'jagged'];
 
 const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
   fillColor: '#ffffff',
@@ -101,12 +108,12 @@ const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
   radiusBottomRight: 18,
   radiusBottomLeft: 18,
   tailSide: 'bottom',
-  tailPosition: 68,
-  tailWidth: 32,
-  tailHeight: 28,
+  tailPosition: 66,
+  tailWidth: 28,
+  tailHeight: 24,
   tailSkew: 16,
-  tailTipX: 78,
-  tailTipY: 136,
+  tailTipX: 76,
+  tailTipY: 126,
 };
 
 const CSS_FONT_FAMILIES: Record<BubbleFontFamily, string> = {
@@ -137,6 +144,12 @@ const SHAPE_CORNER_RADII: Record<BubbleShape, BubbleCornerRadii> = {
     radiusBottomRight: 18,
     radiusBottomLeft: 18,
   },
+  oval: {
+    radiusTopLeft: 96,
+    radiusTopRight: 96,
+    radiusBottomRight: 96,
+    radiusBottomLeft: 96,
+  },
   pill: {
     radiusTopLeft: 48,
     radiusTopRight: 48,
@@ -150,10 +163,10 @@ const SHAPE_CORNER_RADII: Record<BubbleShape, BubbleCornerRadii> = {
     radiusBottomLeft: 44,
   },
   square: {
-    radiusTopLeft: 6,
-    radiusTopRight: 6,
-    radiusBottomRight: 6,
-    radiusBottomLeft: 6,
+    radiusTopLeft: 0,
+    radiusTopRight: 0,
+    radiusBottomRight: 0,
+    radiusBottomLeft: 0,
   },
   sharp: {
     radiusTopLeft: 0,
@@ -167,17 +180,27 @@ const SHAPE_CORNER_RADII: Record<BubbleShape, BubbleCornerRadii> = {
     radiusBottomRight: 18,
     radiusBottomLeft: 30,
   },
-  burst: {
-    radiusTopLeft: 2,
-    radiusTopRight: 2,
-    radiusBottomRight: 2,
-    radiusBottomLeft: 2,
+  jagged: {
+    radiusTopLeft: 0,
+    radiusTopRight: 0,
+    radiusBottomRight: 0,
+    radiusBottomLeft: 0,
   },
   custom: {
     radiusTopLeft: 18,
     radiusTopRight: 18,
     radiusBottomRight: 18,
     radiusBottomLeft: 18,
+  },
+};
+
+const SHAPE_TAIL_PATCHES: Partial<Record<BubbleShape, Partial<Bubble>>> = {
+  oval: {
+    tailPosition: 66,
+    tailWidth: 82,
+    tailHeight: 34,
+    tailTipX: 82,
+    tailTipY: 134,
   },
 };
 
@@ -244,6 +267,39 @@ const fitTailBase = (
   }
 
   return [start, end];
+};
+
+const getTailBaseBounds = (
+  bubble: Bubble,
+  style: ResolvedBubbleStyle,
+): [number, number] => {
+  if (style.shape === 'oval') return [8, 92];
+
+  if (style.tailSide === 'top') {
+    return [
+      toPercentX(style.radiusTopLeft, bubble) + 2,
+      100 - toPercentX(style.radiusTopRight, bubble) - 2,
+    ];
+  }
+
+  if (style.tailSide === 'right') {
+    return [
+      toPercentY(style.radiusTopRight, bubble) + 2,
+      100 - toPercentY(style.radiusBottomRight, bubble) - 2,
+    ];
+  }
+
+  if (style.tailSide === 'left') {
+    return [
+      toPercentY(style.radiusTopLeft, bubble) + 2,
+      100 - toPercentY(style.radiusBottomLeft, bubble) - 2,
+    ];
+  }
+
+  return [
+    toPercentX(style.radiusBottomLeft, bubble) + 2,
+    100 - toPercentX(style.radiusBottomRight, bubble) - 2,
+  ];
 };
 
 const appendTailPath = (
@@ -314,6 +370,201 @@ const appendTailPath = (
   commands.push(
     `C ${secondTipControl.x} ${secondTipControl.y} ${secondControl.x} ${secondControl.y} ${second.x} ${second.y}`,
   );
+};
+
+const getTailParts = (
+  tailPoints: BubbleTailPoint[] | null,
+): [BubbleTailPoint, BubbleTailPoint, BubbleTailPoint] | null => {
+  const [first, second, tip] = tailPoints ?? [];
+  if (!first || !second || !tip) return null;
+  return [first, second, tip];
+};
+
+const pathFromPoints = (points: readonly BubbleTailPoint[]): string => {
+  const [first, ...rest] = points;
+  if (!first) return '';
+
+  return [
+    `M ${first.x} ${first.y}`,
+    ...rest.map((point) => `L ${point.x} ${point.y}`),
+    'Z',
+  ].join(' ');
+};
+
+const getOvalFallbackAngle = (tailSide: BubbleTailSide): number => {
+  if (tailSide === 'top') return -Math.PI / 2;
+  if (tailSide === 'right') return 0;
+  if (tailSide === 'left') return Math.PI;
+  return Math.PI / 2;
+};
+
+const getOvalTailAngle = (style: ResolvedBubbleStyle): number => {
+  const deltaX = style.tailTipX - 50;
+  const deltaY = style.tailTipY - 50;
+
+  if (Math.hypot(deltaX, deltaY) < 1) {
+    return getOvalFallbackAngle(style.tailSide);
+  }
+
+  return Math.atan2(deltaY, deltaX);
+};
+
+const getOvalPointAtAngle = (angle: number): BubbleTailPoint => ({
+  x: 50 + Math.cos(angle) * 50,
+  y: 50 + Math.sin(angle) * 50,
+});
+
+const getOvalTailBaseDelta = (
+  bubble: Bubble,
+  style: ResolvedBubbleStyle,
+  angle: number,
+): number => {
+  const radiusX = Math.max(bubble.width / 2, 1);
+  const radiusY = Math.max(bubble.height / 2, 1);
+  const tangentRadius = Math.hypot(
+    radiusX * Math.sin(angle),
+    radiusY * Math.cos(angle),
+  );
+  const halfBase = Math.max(style.tailWidth, 82) / 2;
+  const delta = halfBase / Math.max(tangentRadius, 1);
+
+  return Math.min(0.76, Math.max(0.34, delta));
+};
+
+const getOvalOutlinePath = (
+  bubble: Bubble,
+  style: ResolvedBubbleStyle,
+  hasTail: boolean,
+): string => {
+  if (!hasTail || style.tailSide === 'none') {
+    return [
+      'M 50 0',
+      'C 78 0 100 22 100 50',
+      'C 100 78 78 100 50 100',
+      'C 22 100 0 78 0 50',
+      'C 0 22 22 0 50 0',
+      'Z',
+    ].join(' ');
+  }
+
+  const angle = getOvalTailAngle(style);
+  const delta = getOvalTailBaseDelta(bubble, style, angle);
+  const startAngle = angle + delta;
+  let endAngle = angle - delta;
+  const fullTurn = Math.PI * 2;
+
+  while (endAngle <= startAngle) {
+    endAngle += fullTurn;
+  }
+
+  const start = getOvalPointAtAngle(startAngle);
+  const commands = [`M ${start.x} ${start.y}`];
+  const segmentCount = 72;
+
+  for (let index = 1; index <= segmentCount; index += 1) {
+    const progress = index / segmentCount;
+    const point = getOvalPointAtAngle(
+      startAngle + (endAngle - startAngle) * progress,
+    );
+    commands.push(`L ${point.x} ${point.y}`);
+  }
+
+  commands.push(`L ${style.tailTipX} ${style.tailTipY}`);
+  commands.push('Z');
+  return commands.join(' ');
+};
+
+const getCloudOutlinePath = (): string =>
+  [
+    'M 18 76',
+    'C 4 75 -2 58 8 48',
+    'C 0 34 12 20 27 24',
+    'C 32 8 54 5 63 20',
+    'C 78 12 96 24 92 42',
+    'C 106 50 100 72 84 74',
+    'C 80 91 58 97 48 84',
+    'C 38 96 18 91 18 76',
+    'Z',
+  ].join(' ');
+
+const getJaggedOutlinePath = (): string =>
+  pathFromPoints([
+    { x: 6, y: 44 },
+    { x: 18, y: 36 },
+    { x: 11, y: 18 },
+    { x: 31, y: 24 },
+    { x: 38, y: 8 },
+    { x: 51, y: 22 },
+    { x: 69, y: 9 },
+    { x: 72, y: 29 },
+    { x: 94, y: 32 },
+    { x: 80, y: 48 },
+    { x: 94, y: 66 },
+    { x: 73, y: 65 },
+    { x: 69, y: 90 },
+    { x: 52, y: 76 },
+    { x: 35, y: 91 },
+    { x: 32, y: 70 },
+    { x: 10, y: 76 },
+    { x: 20, y: 57 },
+  ]);
+
+const getRoundedRectOutlinePath = (
+  bubble: Bubble,
+  style: ResolvedBubbleStyle,
+  tailPoints: BubbleTailPoint[] | null,
+): string => {
+  const tailParts = getTailParts(tailPoints);
+  const topLeftX = Math.min(toPercentX(style.radiusTopLeft, bubble), 48);
+  const topLeftY = Math.min(toPercentY(style.radiusTopLeft, bubble), 48);
+  const topRightX = Math.min(toPercentX(style.radiusTopRight, bubble), 48);
+  const topRightY = Math.min(toPercentY(style.radiusTopRight, bubble), 48);
+  const bottomRightX = Math.min(
+    toPercentX(style.radiusBottomRight, bubble),
+    48,
+  );
+  const bottomRightY = Math.min(
+    toPercentY(style.radiusBottomRight, bubble),
+    48,
+  );
+  const bottomLeftX = Math.min(toPercentX(style.radiusBottomLeft, bubble), 48);
+  const bottomLeftY = Math.min(toPercentY(style.radiusBottomLeft, bubble), 48);
+  const commands = [`M ${topLeftX} 0`];
+
+  if (tailParts && style.tailSide === 'top') {
+    const [first, second, tip] = tailParts;
+    appendTailPath(commands, first, second, tip, style.tailSide);
+  }
+
+  commands.push(`L ${100 - topRightX} 0`);
+  commands.push(`Q 100 0 100 ${topRightY}`);
+
+  if (tailParts && style.tailSide === 'right') {
+    const [first, second, tip] = tailParts;
+    appendTailPath(commands, first, second, tip, style.tailSide);
+  }
+
+  commands.push(`L 100 ${100 - bottomRightY}`);
+  commands.push(`Q 100 100 ${100 - bottomRightX} 100`);
+
+  if (tailParts && style.tailSide === 'bottom') {
+    const [first, second, tip] = tailParts;
+    appendTailPath(commands, second, first, tip, style.tailSide);
+  }
+
+  commands.push(`L ${bottomLeftX} 100`);
+  commands.push(`Q 0 100 0 ${100 - bottomLeftY}`);
+
+  if (tailParts && style.tailSide === 'left') {
+    const [first, second, tip] = tailParts;
+    appendTailPath(commands, second, first, tip, style.tailSide);
+  }
+
+  commands.push(`L 0 ${topLeftY}`);
+  commands.push(`Q 0 0 ${topLeftX} 0`);
+  commands.push('Z');
+
+  return commands.join(' ');
 };
 
 const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
@@ -426,6 +677,40 @@ const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
   };
 };
 
+const getThoughtTailAnchor = (
+  tailSide: BubbleTailSide,
+  tailPosition: number,
+): BubbleTailPoint | null => {
+  if (tailSide === 'top') return { x: tailPosition, y: 0 };
+  if (tailSide === 'right') return { x: 100, y: tailPosition };
+  if (tailSide === 'bottom') return { x: tailPosition, y: 100 };
+  if (tailSide === 'left') return { x: 0, y: tailPosition };
+  return null;
+};
+
+const interpolateTailPoint = (
+  anchor: BubbleTailPoint,
+  tip: BubbleTailPoint,
+  progress: number,
+): BubbleTailPoint => ({
+  x: anchor.x + (tip.x - anchor.x) * progress,
+  y: anchor.y + (tip.y - anchor.y) * progress,
+});
+
+const getThoughtTailDots = (bubble: Bubble): ThoughtTailDots | null => {
+  if (bubble.type !== 'thought') return null;
+
+  const style = resolveBubbleStyle(bubble);
+  const anchor = getThoughtTailAnchor(style.tailSide, style.tailPosition);
+  if (!anchor) return null;
+
+  const tip = { x: style.tailTipX, y: style.tailTipY };
+  return {
+    large: interpolateTailPoint(anchor, tip, 0.42),
+    small: interpolateTailPoint(anchor, tip, 0.78),
+  };
+};
+
 const withDefaultBubbleStyle = (bubble: Bubble): Bubble => {
   const style = resolveBubbleStyle(bubble);
 
@@ -457,46 +742,51 @@ const getBubbleShapePatch = (shape: BubbleShape): Partial<Bubble> => {
   return {
     shape,
     ...SHAPE_CORNER_RADII[shape],
+    ...SHAPE_TAIL_PATCHES[shape],
   };
 };
 
 const getBubbleTailSidePatch = (tailSide: BubbleTailSide): Partial<Bubble> => {
   if (tailSide === 'top') {
-    return { tailSide, tailPosition: 34, tailTipX: 22, tailTipY: -36 };
+    return { tailSide, tailPosition: 34, tailTipX: 24, tailTipY: -28 };
   }
 
   if (tailSide === 'right') {
-    return { tailSide, tailPosition: 56, tailTipX: 138, tailTipY: 70 };
+    return { tailSide, tailPosition: 56, tailTipX: 126, tailTipY: 68 };
   }
 
   if (tailSide === 'left') {
-    return { tailSide, tailPosition: 56, tailTipX: -38, tailTipY: 70 };
+    return { tailSide, tailPosition: 56, tailTipX: -26, tailTipY: 68 };
   }
 
   if (tailSide === 'none') {
     return { tailSide };
   }
 
-  return { tailSide, tailPosition: 68, tailTipX: 78, tailTipY: 136 };
+  return { tailSide, tailPosition: 66, tailTipX: 76, tailTipY: 126 };
 };
 
 const getBubbleTailPoints = (bubble: Bubble): BubbleTailPoint[] | null => {
-  if (bubble.type !== 'speech') return null;
+  if (bubble.type !== 'speech' && bubble.type !== 'thought') return null;
 
   const style = resolveBubbleStyle(bubble);
+  if (BUBBLE_SHAPES_WITHOUT_TAIL.includes(style.shape)) return null;
   if (style.tailSide === 'none') return null;
 
   const sideIsHorizontal =
     style.tailSide === 'top' || style.tailSide === 'bottom';
   const size = sideIsHorizontal ? bubble.width : bubble.height;
-  const halfBase = size > 0 ? (style.tailWidth / size) * 50 : 8;
+  const minimumTailWidth = style.shape === 'oval' ? 82 : 0;
+  const tailWidth = Math.max(style.tailWidth, minimumTailWidth);
+  const halfBase = size > 0 ? (tailWidth / size) * 50 : 8;
+  const [minBase, maxBase] = getTailBaseBounds(bubble, style);
 
   if (style.tailSide === 'top') {
     const [start, end] = fitTailBase(
       style.tailPosition,
       halfBase,
-      toPercentX(style.radiusTopLeft, bubble) + 2,
-      100 - toPercentX(style.radiusTopRight, bubble) - 2,
+      minBase,
+      maxBase,
     );
 
     return [
@@ -510,8 +800,8 @@ const getBubbleTailPoints = (bubble: Bubble): BubbleTailPoint[] | null => {
     const [start, end] = fitTailBase(
       style.tailPosition,
       halfBase,
-      toPercentY(style.radiusTopRight, bubble) + 2,
-      100 - toPercentY(style.radiusBottomRight, bubble) - 2,
+      minBase,
+      maxBase,
     );
 
     return [
@@ -525,8 +815,8 @@ const getBubbleTailPoints = (bubble: Bubble): BubbleTailPoint[] | null => {
     const [start, end] = fitTailBase(
       style.tailPosition,
       halfBase,
-      toPercentY(style.radiusTopLeft, bubble) + 2,
-      100 - toPercentY(style.radiusBottomLeft, bubble) - 2,
+      minBase,
+      maxBase,
     );
 
     return [
@@ -539,8 +829,8 @@ const getBubbleTailPoints = (bubble: Bubble): BubbleTailPoint[] | null => {
   const [start, end] = fitTailBase(
     style.tailPosition,
     halfBase,
-    toPercentX(style.radiusBottomLeft, bubble) + 2,
-    100 - toPercentX(style.radiusBottomRight, bubble) - 2,
+    minBase,
+    maxBase,
   );
 
   return [
@@ -553,58 +843,24 @@ const getBubbleTailPoints = (bubble: Bubble): BubbleTailPoint[] | null => {
 const getBubbleOutlineSvgPath = (
   bubble: Bubble,
 ): BubbleOutlineSvgPath | null => {
-  if (bubble.type !== 'speech') return null;
+  if (bubble.type === 'sfx') return null;
 
   const style = resolveBubbleStyle(bubble);
-  const tailPoints = getBubbleTailPoints(bubble);
-  const [first, second, tip] = tailPoints ?? [];
-  const hasTail = Boolean(first && second && tip);
-  const topLeftX = Math.min(toPercentX(style.radiusTopLeft, bubble), 48);
-  const topLeftY = Math.min(toPercentY(style.radiusTopLeft, bubble), 48);
-  const topRightX = Math.min(toPercentX(style.radiusTopRight, bubble), 48);
-  const topRightY = Math.min(toPercentY(style.radiusTopRight, bubble), 48);
-  const bottomRightX = Math.min(
-    toPercentX(style.radiusBottomRight, bubble),
-    48,
-  );
-  const bottomRightY = Math.min(
-    toPercentY(style.radiusBottomRight, bubble),
-    48,
-  );
-  const bottomLeftX = Math.min(toPercentX(style.radiusBottomLeft, bubble), 48);
-  const bottomLeftY = Math.min(toPercentY(style.radiusBottomLeft, bubble), 48);
-  const commands = [`M ${topLeftX} 0`];
-
-  if (hasTail && style.tailSide === 'top') {
-    appendTailPath(commands, first, second, tip, style.tailSide);
+  const tailPoints =
+    bubble.type === 'thought' ? null : getBubbleTailPoints(bubble);
+  if (style.shape === 'oval') {
+    return { path: getOvalOutlinePath(bubble, style, Boolean(tailPoints)) };
   }
 
-  commands.push(`L ${100 - topRightX} 0`);
-  commands.push(`Q 100 0 100 ${topRightY}`);
-
-  if (hasTail && style.tailSide === 'right') {
-    appendTailPath(commands, first, second, tip, style.tailSide);
+  if (style.shape === 'cloud') {
+    return { path: getCloudOutlinePath() };
   }
 
-  commands.push(`L 100 ${100 - bottomRightY}`);
-  commands.push(`Q 100 100 ${100 - bottomRightX} 100`);
-
-  if (hasTail && style.tailSide === 'bottom') {
-    appendTailPath(commands, second, first, tip, style.tailSide);
+  if (style.shape === 'jagged') {
+    return { path: getJaggedOutlinePath() };
   }
 
-  commands.push(`L ${bottomLeftX} 100`);
-  commands.push(`Q 0 100 0 ${100 - bottomLeftY}`);
-
-  if (hasTail && style.tailSide === 'left') {
-    appendTailPath(commands, second, first, tip, style.tailSide);
-  }
-
-  commands.push(`L 0 ${topLeftY}`);
-  commands.push(`Q 0 0 ${topLeftX} 0`);
-  commands.push('Z');
-
-  return { path: commands.join(' ') };
+  return { path: getRoundedRectOutlinePath(bubble, style, tailPoints) };
 };
 
 const isBubbleBorderStyle = (value: unknown): value is BubbleBorderStyle => {
@@ -638,6 +894,7 @@ export {
   getBubbleShapePatch,
   getBubbleTailSidePatch,
   getBubbleTailPoints,
+  getThoughtTailDots,
   isBubbleBorderStyle,
   isBubbleFontFamily,
   isBubbleFontWeight,
@@ -650,5 +907,6 @@ export type {
   BubbleOutlineSvgPath,
   BubbleStyleValues,
   BubbleTailPoint,
+  ThoughtTailDots,
   ResolvedBubbleStyle,
 };

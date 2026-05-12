@@ -60,12 +60,13 @@ const BORDER_STYLE_OPTIONS: readonly SelectOption<BubbleBorderStyle>[] = [
 
 const SHAPE_OPTIONS: readonly SelectOption<BubbleShape>[] = [
   { value: 'rounded', label: 'Rounded' },
+  { value: 'oval', label: 'Oval' },
   { value: 'pill', label: 'Pill' },
   { value: 'cloud', label: 'Cloud' },
   { value: 'square', label: 'Box' },
   { value: 'sharp', label: 'Sharp' },
   { value: 'rough', label: 'Rough' },
-  { value: 'burst', label: 'Burst' },
+  { value: 'jagged', label: 'Jagged' },
   { value: 'custom', label: 'Custom' },
 ];
 

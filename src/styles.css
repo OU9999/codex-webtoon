@@ -257,6 +257,11 @@
     background: transparent;
   }
 
+  .bubble-layer.has-outline {
+    border: 0;
+    background: transparent;
+  }
+
   .bubble-outline-svg {
     @apply pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-visible;
   }
@@ -268,6 +273,10 @@
     stroke-dasharray: var(--bubble-stroke-dasharray, none);
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
+  }
+
+  .bubble-layer.shape-jagged .bubble-outline-shape {
+    stroke-linejoin: miter;
   }
 
   .bubble-layer.thought {
@@ -286,17 +295,21 @@
   }
 
   .bubble-layer.thought::before {
-    width: 14px;
-    height: 14px;
-    right: 18%;
-    bottom: -18px;
+    width: 16px;
+    height: 16px;
+    left: var(--bubble-thought-dot-large-x, 82%);
+    top: var(--bubble-thought-dot-large-y, 112%);
+    opacity: var(--bubble-thought-tail-opacity, 1);
+    transform: translate(-50%, -50%);
   }
 
   .bubble-layer.thought::after {
     width: 8px;
     height: 8px;
-    right: 11%;
-    bottom: -30px;
+    left: var(--bubble-thought-dot-small-x, 89%);
+    top: var(--bubble-thought-dot-small-y, 126%);
+    opacity: var(--bubble-thought-tail-opacity, 1);
+    transform: translate(-50%, -50%);
   }
 
   .bubble-layer.sfx {

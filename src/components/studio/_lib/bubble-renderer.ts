@@ -1,5 +1,10 @@
 import { wrapText } from './canvas-primitives';
-import { getBubbleTailPoints, resolveBubbleStyle } from './bubble-style';
+import {
+  getBubbleOutlineSvgPath,
+  getBubbleTailPoints,
+  getThoughtTailDots,
+  resolveBubbleStyle,
+} from './bubble-style';
 import { CANVAS_WIDTH } from './constants';
 import type { Bubble, BubbleTailSide } from './types';
 import type { BubbleTailPoint } from './bubble-style';
@@ -219,6 +224,61 @@ const drawEmptyPanel = (
   }
 };
 
+const drawOutlinePathToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  bubble: Bubble,
+  offsetY: number,
+  path: string,
+  borderWidth: number,
+): void => {
+  const sourcePath = new Path2D(path);
+
+  if (typeof DOMMatrix === 'function') {
+    const matrix = new DOMMatrix()
+      .translateSelf(bubble.x, offsetY + bubble.y)
+      .scaleSelf(bubble.width / 100, bubble.height / 100);
+    const canvasPath = new Path2D();
+    canvasPath.addPath(sourcePath, matrix);
+    ctx.fill(canvasPath);
+    if (borderWidth > 0) ctx.stroke(canvasPath);
+    return;
+  }
+
+  ctx.save();
+  ctx.translate(bubble.x, offsetY + bubble.y);
+  ctx.scale(bubble.width / 100, bubble.height / 100);
+  ctx.fill(sourcePath);
+  if (borderWidth > 0) ctx.stroke(sourcePath);
+  ctx.restore();
+};
+
+const drawThoughtTailDots = (
+  ctx: CanvasRenderingContext2D,
+  bubble: Bubble,
+  offsetY: number,
+  borderWidth: number,
+): void => {
+  const dots = getThoughtTailDots(bubble);
+  if (!dots) return;
+
+  const large = pointToCanvas(bubble, offsetY, dots.large);
+  const small = pointToCanvas(bubble, offsetY, dots.small);
+  const dotStrokeWidth = Math.max(borderWidth, 1);
+
+  [
+    { point: large, radius: 8 },
+    { point: small, radius: 4 },
+  ].forEach(({ point, radius }) => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    if (borderWidth > 0) {
+      ctx.lineWidth = dotStrokeWidth;
+      ctx.stroke();
+    }
+  });
+};
+
 const drawBubbleToCanvas = (
   ctx: CanvasRenderingContext2D,
   bubble: Bubble,
@@ -262,29 +322,43 @@ const drawBubbleToCanvas = (
     bottomRight: style.radiusBottomRight,
     bottomLeft: style.radiusBottomLeft,
   };
+  const outlinePath = getBubbleOutlineSvgPath(bubble);
 
-  if (bubble.type === 'speech') {
-    speechBubblePathWithTail(
+  if (outlinePath) {
+    drawOutlinePathToCanvas(
       ctx,
       bubble,
       offsetY,
-      cornerRadii,
-      getBubbleTailPoints(bubble),
-      style.tailSide,
+      outlinePath.path,
+      style.borderWidth,
     );
+    if (bubble.type === 'thought') {
+      drawThoughtTailDots(ctx, bubble, offsetY, style.borderWidth);
+    }
   } else {
-    roundedRectWithCorners(
-      ctx,
-      bubble.x,
-      offsetY + bubble.y,
-      bubble.width,
-      bubble.height,
-      cornerRadii,
-    );
-  }
+    if (bubble.type === 'speech') {
+      speechBubblePathWithTail(
+        ctx,
+        bubble,
+        offsetY,
+        cornerRadii,
+        getBubbleTailPoints(bubble),
+        style.tailSide,
+      );
+    } else {
+      roundedRectWithCorners(
+        ctx,
+        bubble.x,
+        offsetY + bubble.y,
+        bubble.width,
+        bubble.height,
+        cornerRadii,
+      );
+    }
 
-  ctx.fill();
-  if (style.borderWidth > 0) ctx.stroke();
+    ctx.fill();
+    if (style.borderWidth > 0) ctx.stroke();
+  }
 
   ctx.setLineDash([]);
   const lines = wrapText(ctx, bubble.text, bubble.width - 28).slice(0, 4);

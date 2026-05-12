@@ -65,8 +65,11 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     }));
   };
 
-  const handleLayerAdd = (type: BubbleType): void => {
-    const bubble = createBubble(type);
+  const handleLayerAdd = (
+    type: BubbleType,
+    patch: Partial<Bubble> = {},
+  ): void => {
+    const bubble = { ...createBubble(type), ...patch };
     setState((current) => ({
       ...current,
       selectedBubbleId: bubble.id,

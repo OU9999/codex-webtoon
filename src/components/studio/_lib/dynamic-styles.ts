@@ -3,7 +3,7 @@ import {
   getPanelClassName,
   getStripGapClassName,
 } from './class-names';
-import { resolveBubbleStyle } from './bubble-style';
+import { getThoughtTailDots, resolveBubbleStyle } from './bubble-style';
 import { CANVAS_WIDTH } from './constants';
 import type { StudioState } from './types';
 
@@ -30,6 +30,7 @@ const buildDynamicStyles = (state: StudioState): string => {
       const width = (bubble.width / CANVAS_WIDTH) * 100;
       const height = (bubble.height / panel.height) * 100;
       const viewportSize = (bubble.fontSize / CANVAS_WIDTH) * 100;
+      const thoughtTailDots = getThoughtTailDots(bubble);
 
       rules.push(
         [
@@ -57,6 +58,11 @@ const buildDynamicStyles = (state: StudioState): string => {
           `--bubble-tail-skew:${style.tailSkew}deg;`,
           `--bubble-tail-tip-x:${style.tailTipX}%;`,
           `--bubble-tail-tip-y:${style.tailTipY}%;`,
+          `--bubble-thought-tail-opacity:${thoughtTailDots ? 1 : 0};`,
+          `--bubble-thought-dot-large-x:${thoughtTailDots?.large.x ?? 82}%;`,
+          `--bubble-thought-dot-large-y:${thoughtTailDots?.large.y ?? 112}%;`,
+          `--bubble-thought-dot-small-x:${thoughtTailDots?.small.x ?? 89}%;`,
+          `--bubble-thought-dot-small-y:${thoughtTailDots?.small.y ?? 126}%;`,
           `--bubble-font-family:${style.cssFontFamily};`,
           `--bubble-font-weight:${style.cssFontWeight};`,
           '}',
