@@ -9,7 +9,8 @@ import {
   isBubbleTailSide,
 } from '../_lib/bubble-style';
 import { createBubble } from '../_lib/factories';
-import type { Bubble, BubbleType, StudioState } from '../_lib/types';
+import { CANVAS_WIDTH } from '../_lib/constants';
+import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
 
 const BUBBLE_TYPE_VALUES: readonly BubbleType[] = [
   'speech',
@@ -23,6 +24,108 @@ const isBubbleType = (value: unknown): value is BubbleType => {
     typeof value === 'string' &&
     BUBBLE_TYPE_VALUES.includes(value as BubbleType)
   );
+};
+
+interface CanvasPoint {
+  x: number;
+  y: number;
+}
+
+interface LayerAddTarget {
+  panel: Panel;
+  x: number;
+  y: number;
+}
+
+const getVisibleStageCenter = (canvasHeight: number): CanvasPoint => {
+  const stage = document.querySelector<HTMLElement>('.webtoon-stage');
+  if (!stage) return { x: CANVAS_WIDTH / 2, y: canvasHeight / 2 };
+
+  const rect = stage.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return { x: CANVAS_WIDTH / 2, y: canvasHeight / 2 };
+  }
+
+  const visibleLeft = Math.max(rect.left, 0);
+  const visibleRight = Math.min(rect.right, window.innerWidth);
+  const visibleTop = Math.max(rect.top, 0);
+  const visibleBottom = Math.min(rect.bottom, window.innerHeight);
+  const centerClientX =
+    visibleRight > visibleLeft
+      ? (visibleLeft + visibleRight) / 2
+      : rect.left + rect.width / 2;
+  const centerClientY =
+    visibleBottom > visibleTop
+      ? (visibleTop + visibleBottom) / 2
+      : rect.top + rect.height / 2;
+
+  return {
+    x: ((centerClientX - rect.left) / rect.width) * CANVAS_WIDTH,
+    y: ((centerClientY - rect.top) / rect.height) * canvasHeight,
+  };
+};
+
+const panelContainsPoint = (panel: Panel, point: CanvasPoint): boolean => {
+  return (
+    point.x >= panel.x &&
+    point.x <= panel.x + panel.width &&
+    point.y >= panel.y &&
+    point.y <= panel.y + panel.height
+  );
+};
+
+const getPanelDistanceToPoint = (panel: Panel, point: CanvasPoint): number => {
+  const nearestX = Math.min(Math.max(point.x, panel.x), panel.x + panel.width);
+  const nearestY = Math.min(Math.max(point.y, panel.y), panel.y + panel.height);
+  const deltaX = point.x - nearestX;
+  const deltaY = point.y - nearestY;
+
+  return deltaX * deltaX + deltaY * deltaY;
+};
+
+const findViewCenterPanel = (
+  panels: Panel[],
+  point: CanvasPoint,
+): Panel | null => {
+  const containingPanel = panels.find((panel) =>
+    panelContainsPoint(panel, point),
+  );
+  if (containingPanel) return containingPanel;
+
+  return panels.reduce<Panel | null>((nearest, panel) => {
+    if (!nearest) return panel;
+
+    return getPanelDistanceToPoint(panel, point) <
+      getPanelDistanceToPoint(nearest, point)
+      ? panel
+      : nearest;
+  }, null);
+};
+
+const getLayerAddTarget = (
+  state: StudioState,
+  bubble: Bubble,
+): LayerAddTarget | null => {
+  const selectedPanel = state.panels.find(
+    (panel) => panel.id === state.selectedPanelId,
+  );
+  if (selectedPanel) {
+    return {
+      panel: selectedPanel,
+      x: bubble.x,
+      y: bubble.y,
+    };
+  }
+
+  const center = getVisibleStageCenter(state.canvasHeight);
+  const panel = findViewCenterPanel(state.panels, center);
+  if (!panel) return null;
+
+  return {
+    panel,
+    x: center.x - panel.x - bubble.width / 2,
+    y: center.y - panel.y - bubble.height / 2,
+  };
 };
 
 const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
@@ -89,16 +192,21 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   ): void => {
     const bubble = { ...createBubble(type), ...patch };
     setState((current) => {
-      const selectedPanelId = current.selectedPanelId;
-      if (!selectedPanelId) return current;
+      const target = getLayerAddTarget(current, bubble);
+      if (!target) return current;
+      const nextBubble = {
+        ...bubble,
+        x: target.x,
+        y: target.y,
+      };
 
       return {
         ...current,
         selectedPanelId: null,
-        selectedBubbleId: bubble.id,
+        selectedBubbleId: nextBubble.id,
         panels: current.panels.map((panel) =>
-          panel.id === selectedPanelId
-            ? { ...panel, bubbles: [...panel.bubbles, bubble] }
+          panel.id === target.panel.id
+            ? { ...panel, bubbles: [...panel.bubbles, nextBubble] }
             : panel,
         ),
       };

@@ -36,8 +36,8 @@ const BubbleActionButton = ({
 };
 
 const BubbleActions = () => {
-  const { handleLayerAdd, selectedPanel } = useStudioContext();
-  const isDisabled = !selectedPanel;
+  const { handleLayerAdd, state } = useStudioContext();
+  const isDisabled = state.panels.length === 0;
 
   return (
     <section className="mb-4 border-y py-3">
