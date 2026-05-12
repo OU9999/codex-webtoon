@@ -1,4 +1,4 @@
-import { GripVertical } from 'lucide-react';
+import { GripHorizontal, GripVertical } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ const Content = () => {
     handleBubbleTextEditEnd,
     handleBubbleTextEditStart,
     handleBubbleTextValueChange,
+    handleCanvasResizeStart,
     handlePanelTransformStart,
     handleSelectionClear,
   } = useStudioContext();
@@ -30,9 +31,15 @@ const Content = () => {
     handleSelectionClear();
   };
 
+  const handleCanvasResizePointerDown = (
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ): void => {
+    handleCanvasResizeStart({ event, canvasHeight: state.canvasHeight });
+  };
+
   return (
     <section
-      className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-3 py-4 md:px-7 md:py-5"
+      className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-3 pt-4 pb-12 md:px-7 md:pt-5 md:pb-14"
       aria-label="Webtoon canvas"
       onPointerDown={handleWorkspacePointerDown}
     >
@@ -85,6 +92,15 @@ const Content = () => {
             />
           )),
         )}
+        <button
+          type="button"
+          className="canvas-resize-handle"
+          aria-label={`Resize canvas height (${state.canvasHeight}px)`}
+          onPointerDown={handleCanvasResizePointerDown}
+        >
+          <GripHorizontal className="size-4" aria-hidden="true" />
+          <span>{state.canvasHeight}px</span>
+        </button>
       </section>
     </section>
   );

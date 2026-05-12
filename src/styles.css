@@ -177,6 +177,16 @@
     box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
   }
 
+  .canvas-resize-handle {
+    @apply absolute bottom-[-32px] left-1/2 z-40 flex h-7 -translate-x-1/2 touch-none items-center gap-1 rounded-[3px] border border-rim bg-white px-2 font-mono text-[10px] font-semibold text-fg-muted shadow-sm select-none;
+    cursor: ns-resize;
+  }
+
+  .canvas-resize-handle:hover,
+  .canvas-resize-handle:focus-visible {
+    @apply border-brand text-brand ring-2 ring-brand/20 outline-none;
+  }
+
   .panel-frame {
     @apply absolute isolate touch-none overflow-hidden border border-rim bg-card;
     cursor: grab;
