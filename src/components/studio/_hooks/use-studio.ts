@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { buildFinalPrompt } from '../_lib/prompt';
 import type {
   BubbleDragStartPayload,
+  CanvasResizeStartPayload,
   PanelTransformStartPayload,
   StudioState,
 } from '../_lib/types';
 import { useBubbleDrag } from './use-bubble-drag';
+import { useCanvasResize } from './use-canvas-resize';
 import { useCandidateActions } from './use-candidate-actions';
 import { useDynamicStyles } from './use-dynamic-styles';
 import { useExport } from './use-export';
@@ -23,10 +25,11 @@ interface UseStudioOptions {
 }
 
 const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
-  const [state, setState, saveStatus] = useStudioState({
-    projectName,
-    initialState,
-  });
+  const [state, setState, saveStatus, historyEntries, canUndo, handleUndo] =
+    useStudioState({
+      projectName,
+      initialState,
+    });
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
 
   const selectedPanelCandidate = state.selectedPanelId
@@ -67,6 +70,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
   const layers = useLayerActions(setState);
   const drag = useBubbleDrag(setState);
   const transform = usePanelTransform(setState);
+  const canvasResize = useCanvasResize(setState);
   const exporting = useExport(state);
 
   const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
@@ -86,9 +90,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     setEditingBubbleId(null);
   };
 
-  const handleBubbleDragStart = (
-    payload: BubbleDragStartPayload,
-  ): void => {
+  const handleBubbleDragStart = (payload: BubbleDragStartPayload): void => {
     setEditingBubbleId(null);
     drag.handleBubbleDragStart(payload);
   };
@@ -105,6 +107,11 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     transform.handlePanelTransformStart(payload);
   };
 
+  const handleCanvasResizeStart = (payload: CanvasResizeStartPayload): void => {
+    setEditingBubbleId(null);
+    canvasResize.handleCanvasResizeStart(payload);
+  };
+
   const handleSelectionClear = (): void => {
     setEditingBubbleId(null);
     panels.handleSelectionClear();
@@ -115,10 +122,25 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     layers.handleSelectedBubbleDelete();
   };
 
+  const handleSelectionDelete = (): void => {
+    setEditingBubbleId(null);
+    if (state.selectedBubbleId) {
+      layers.handleSelectedBubbleDelete();
+      return;
+    }
+
+    if (!state.selectedPanelId) return;
+    panels.handleDeletePanel();
+  };
+
   useDynamicStyles(state);
   useKeyboardShortcuts({
     onGenerate: generation.handleGenerateSelectedPanel,
-    enabled: Boolean(selectedPanel) && !generation.isGenerating,
+    generateEnabled: Boolean(selectedPanel) && !generation.isGenerating,
+    onUndo: handleUndo,
+    undoEnabled: canUndo,
+    onSelectionDelete: handleSelectionDelete,
+    selectionDeleteEnabled: Boolean(state.selectedBubbleId || selectedPanel),
   });
 
   return {
@@ -130,7 +152,10 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     finalPrompt,
     projectName,
     saveStatus,
+    historyEntries,
+    canUndo,
     onBack,
+    handleUndo,
     ...panels,
     ...generation,
     ...candidates,
@@ -143,6 +168,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     handleBubbleSelect,
     handleBubbleTextEditEnd,
     handleBubbleTextEditStart,
+    handleCanvasResizeStart,
     handlePanelSelect,
     handlePanelTransformStart,
     handleSelectionClear,
