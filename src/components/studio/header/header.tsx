@@ -4,7 +4,6 @@ import {
   Download,
   FolderOpen,
   Loader2,
-  PanelTop,
   Save,
   Sparkles,
 } from 'lucide-react';
@@ -15,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
 import { useStudioContext } from '../studio-context';
 import type { SaveStatus } from '../_hooks/use-studio-state';
+import { HeaderLogo } from './_components/header-logo';
 
 interface SaveBadgeContent {
   icon: ReactNode;
@@ -23,7 +23,10 @@ interface SaveBadgeContent {
 
 const saveBadge = (status: SaveStatus): SaveBadgeContent | null => {
   if (status === 'saving') {
-    return { icon: <Loader2 className="size-3.5 animate-spin" />, label: '저장 중' };
+    return {
+      icon: <Loader2 className="size-3.5 animate-spin" />,
+      label: '저장 중',
+    };
   }
   if (status === 'saved') {
     return { icon: <CircleCheck className="size-3.5" />, label: '저장됨' };
@@ -54,7 +57,11 @@ const Header = () => {
   return (
     <header className="z-20 flex h-auto shrink-0 flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:h-[68px] md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
       <h1 className="flex items-center gap-3">
-        <PanelTop className="size-6 text-primary" />
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-md bg-[linear-gradient(135deg,#112D61_0%,#2E72ED_55%,#19439D_100%)] p-px">
+          <span className="grid size-full place-items-center overflow-hidden rounded-[3px] bg-white">
+            <HeaderLogo className="size-full shrink-0" aria-hidden="true" />
+          </span>
+        </span>
         <span>
           <strong className="block text-base leading-none">
             Webtoon Panel Studio
