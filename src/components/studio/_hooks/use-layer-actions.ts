@@ -1,30 +1,14 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import {
-  getBubbleShapePatch,
   getBubbleTailSidePatch,
   isBubbleBorderStyle,
   isBubbleFontFamily,
   isBubbleFontWeight,
-  isBubbleShape,
   isBubbleTailSide,
 } from '../_lib/bubble-style';
 import { createBubble } from '../_lib/factories';
 import { CANVAS_WIDTH } from '../_lib/constants';
 import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
-
-const BUBBLE_TYPE_VALUES: readonly BubbleType[] = [
-  'speech',
-  'monologue',
-  'thought',
-  'sfx',
-];
-
-const isBubbleType = (value: unknown): value is BubbleType => {
-  return (
-    typeof value === 'string' &&
-    BUBBLE_TYPE_VALUES.includes(value as BubbleType)
-  );
-};
 
 interface CanvasPoint {
   x: number;
@@ -235,13 +219,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     patchBubble(panelId, bubbleId, { text });
   };
 
-  const handleBubbleTypeChange = (
-    event: ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    if (!isBubbleType(event.target.value)) return;
-    patchSelectedBubble({ type: event.target.value });
-  };
-
   const handleBubbleFontSizeChange = (value: number[]): void => {
     const fontSize = value[0];
     if (typeof fontSize !== 'number') return;
@@ -291,13 +268,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   ): void => {
     if (!isBubbleFontWeight(event.target.value)) return;
     patchSelectedBubble({ fontWeight: event.target.value });
-  };
-
-  const handleBubbleShapeChange = (
-    event: ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    if (!isBubbleShape(event.target.value)) return;
-    patchSelectedBubble(getBubbleShapePatch(event.target.value));
   };
 
   const handleBubbleRadiusTopLeftChange = (value: number[]): void => {
@@ -380,7 +350,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     handleBubbleRadiusTopLeftChange,
     handleBubbleRadiusTopRightChange,
     handleBubbleSelect,
-    handleBubbleShapeChange,
     handleBubbleStylePatch,
     handleBubbleTailHeightChange,
     handleBubbleTailPositionChange,
@@ -392,7 +361,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     handleBubbleTextChange,
     handleBubbleTextColorChange,
     handleBubbleTextValueChange,
-    handleBubbleTypeChange,
     handleLayerAdd,
     handleSelectedBubbleDelete,
   };

@@ -1,6 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { layerActions } from '../../_lib/layer-actions';
+import { getLayerActionPatch, layerActions } from '../../_lib/layer-actions';
 import type { BubbleType, LayerAction } from '../../_lib/types';
 import { useStudioContext } from '../../studio-context';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
@@ -17,7 +17,7 @@ const BubbleActionButton = ({
   onAdd,
 }: BubbleActionButtonProps) => {
   const handleAdd = (): void => {
-    onAdd(action.type, action.patch);
+    onAdd(action.type, getLayerActionPatch(action));
   };
 
   return (
@@ -56,7 +56,7 @@ const BubbleActions = () => {
       <nav className="grid grid-cols-2 gap-2" aria-label="Balloon actions">
         {layerActions.map((action) => (
           <BubbleActionButton
-            key={`${action.type}-${action.label}`}
+            key={action.id}
             action={action}
             disabled={isDisabled}
             onAdd={handleLayerAdd}
