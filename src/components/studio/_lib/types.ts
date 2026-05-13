@@ -9,7 +9,7 @@ type BubbleDragMode = 'move' | 'resize' | 'tail';
 type BubbleResizeAnchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
-type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
+type BubbleFontWeight = 'regular' | 'medium' | 'bold';
 type BubbleShape =
   | 'rounded'
   | 'oval'
@@ -184,7 +184,17 @@ interface PanelTransformStartPayload {
   canvasHeight: number;
 }
 
+type LayerActionId =
+  | 'speech'
+  | 'oval'
+  | 'cloud'
+  | 'jagged'
+  | 'box'
+  | 'thought'
+  | 'sfx';
+
 interface LayerAction {
+  id: LayerActionId;
   type: BubbleType;
   label: string;
   icon: ReactNode;
@@ -209,6 +219,7 @@ export type {
   CandidateProvider,
   CreatePanelOverrides,
   LayerAction,
+  LayerActionId,
   Panel,
   PanelResizeHandle,
   PanelTransform,

@@ -56,7 +56,7 @@ const createBubble = (type: BubbleType): Bubble => {
       fontSize: 48,
       borderWidth: 0,
       fontFamily: 'display',
-      fontWeight: 'black',
+      fontWeight: 'bold',
     },
   };
 

@@ -57,7 +57,7 @@ interface AuthStatus {
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
-type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
+type BubbleFontWeight = 'regular' | 'medium' | 'bold';
 type BubbleShape =
   | 'rounded'
   | 'oval'
