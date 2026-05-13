@@ -4,6 +4,10 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/studio/_components/empty-state';
 import { MAX_REFERENCE_IMAGES } from '@/components/studio/_lib/constants';
 import { cn } from '@/lib/utils';
+import {
+  getCandidateReference,
+  getReferenceImageKey,
+} from '@shared/reference-images';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
 import type {
@@ -30,9 +34,6 @@ interface ReferenceImageOptionButtonProps {
   onToggle: (reference: ReferenceImageRef) => void;
 }
 
-const getReferenceKey = (reference: ReferenceImageRef): string =>
-  `${reference.panelId}:${reference.candidateId}`;
-
 const isSameReference = (
   reference: ReferenceImageRef,
   target: ReferenceImageRef,
@@ -40,17 +41,25 @@ const isSameReference = (
   reference.panelId === target.panelId &&
   reference.candidateId === target.candidateId;
 
-const buildReferenceOptions = (panels: Panel[]): ReferenceImageOption[] =>
-  panels.flatMap((panel, panelIndex) =>
-    panel.candidates.map((candidate) => ({
-      reference: {
-        panelId: panel.id,
-        candidateId: candidate.id,
-      },
-      candidate,
-      panelIndex,
-    })),
-  );
+const buildReferenceOptions = (panels: Panel[]): ReferenceImageOption[] => {
+  const options = new Map<string, ReferenceImageOption>();
+
+  panels.forEach((panel, panelIndex) => {
+    panel.candidates.forEach((candidate) => {
+      const reference = getCandidateReference(panel.id, candidate);
+      const key = getReferenceImageKey(reference);
+      if (options.has(key)) return;
+
+      options.set(key, {
+        reference,
+        candidate,
+        panelIndex,
+      });
+    });
+  });
+
+  return Array.from(options.values());
+};
 
 const findReferenceOption = (
   options: ReferenceImageOption[],
@@ -146,7 +155,7 @@ const ReferenceImageSection = () => {
   const options = buildReferenceOptions(state.panels);
   const selectedOptions = selectedReferenceOptions(options, selectedPanel);
   const selectedKeys = new Set(
-    selectedPanel.referenceImages.map(getReferenceKey),
+    selectedPanel.referenceImages.map(getReferenceImageKey),
   );
   const isAtLimit = selectedOptions.length >= MAX_REFERENCE_IMAGES;
   const meta = `${selectedOptions.length}/${MAX_REFERENCE_IMAGES}`;
@@ -182,7 +191,7 @@ const ReferenceImageSection = () => {
           )}
           {selectedOptions.map((option) => (
             <ReferenceImageCard
-              key={getReferenceKey(option.reference)}
+              key={getReferenceImageKey(option.reference)}
               option={option}
               onRemove={handleReferenceImageRemove}
             />
@@ -204,7 +213,7 @@ const ReferenceImageSection = () => {
           >
             {options.length === 0 && <EmptyState>No candidates</EmptyState>}
             {options.map((option) => {
-              const key = getReferenceKey(option.reference);
+              const key = getReferenceImageKey(option.reference);
               const isSelected = selectedKeys.has(key);
               const disabled = !isSelected && isAtLimit;
 

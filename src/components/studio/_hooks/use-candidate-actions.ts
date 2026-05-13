@@ -1,4 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react';
+import {
+  getCandidateReference,
+  getReferenceImageKey,
+} from '@shared/reference-images';
 import type { Panel, StudioState } from '../_lib/types';
 
 const useCandidateActions = (
@@ -12,23 +16,38 @@ const useCandidateActions = (
   const handleCandidateDelete = (candidateId: string): void => {
     setState((current) => {
       const deletedPanelId = current.selectedPanelId;
+      if (!deletedPanelId) return current;
+
+      const deletedPanel = current.panels.find(
+        (panel) => panel.id === deletedPanelId,
+      );
+      if (!deletedPanel) return current;
+
+      const candidate = deletedPanel.candidates.find(
+        (item) => item.id === candidateId,
+      );
+      const referenceKeys = new Set([
+        getReferenceImageKey({ panelId: deletedPanelId, candidateId }),
+      ]);
+      if (candidate) {
+        referenceKeys.add(
+          getReferenceImageKey(
+            getCandidateReference(deletedPanelId, candidate),
+          ),
+        );
+      }
 
       return {
         ...current,
         panels: current.panels.map((panel) => {
           const referenceImages = panel.referenceImages.filter(
-            (reference) =>
-              reference.panelId !== deletedPanelId ||
-              reference.candidateId !== candidateId,
+            (reference) => !referenceKeys.has(getReferenceImageKey(reference)),
           );
 
           if (panel.id !== deletedPanelId) {
             return { ...panel, referenceImages };
           }
 
-          const candidate = panel.candidates.find(
-            (item) => item.id === candidateId,
-          );
           const candidates = panel.candidates.filter(
             (item) => item.id !== candidateId,
           );
