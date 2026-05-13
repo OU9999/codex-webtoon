@@ -2,10 +2,10 @@ import { Check, Images, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/studio/_components/empty-state';
-import { SectionTitle } from '@/components/studio/_components/section-title';
 import { MAX_REFERENCE_IMAGES } from '@/components/studio/_lib/constants';
 import { cn } from '@/lib/utils';
 import { useStudioContext } from '../../studio-context';
+import { InspectorSection } from './inspector-section';
 import type {
   Candidate,
   Panel,
@@ -149,33 +149,30 @@ const ReferenceImageSection = () => {
     selectedPanel.referenceImages.map(getReferenceKey),
   );
   const isAtLimit = selectedOptions.length >= MAX_REFERENCE_IMAGES;
+  const meta = `${selectedOptions.length}/${MAX_REFERENCE_IMAGES}`;
 
   return (
-    <section className="mb-5 rounded-md border bg-background/70">
-      <header className="flex items-center justify-between gap-3 border-b px-3 py-2">
-        <SectionTitle
-          icon={<Images className="size-4" />}
-          title="References"
-          className="mt-0 mb-0"
-        />
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] font-bold text-muted-foreground">
-            {selectedOptions.length}/{MAX_REFERENCE_IMAGES}
-          </span>
+    <InspectorSection
+      icon={<Images className="size-4" />}
+      title="References"
+      meta={meta}
+    >
+      <section className="grid gap-3">
+        <header className="flex items-center justify-between gap-2">
+          <p className="font-mono text-[9.5px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
+            Selected
+          </p>
           {selectedOptions.length > 0 && (
             <Button
               type="button"
               variant="link"
-              className="h-6 px-0 text-xs"
+              className="h-6 px-0 font-mono text-[10px] font-semibold uppercase"
               onClick={handleReferenceImagesClear}
             >
               Clear
             </Button>
           )}
-        </div>
-      </header>
-
-      <section className="grid gap-3 p-3">
+        </header>
         <section
           className="grid grid-cols-4 gap-2"
           aria-label="Selected reference images"
@@ -224,7 +221,7 @@ const ReferenceImageSection = () => {
           </section>
         </section>
       </section>
-    </section>
+    </InspectorSection>
   );
 };
 

@@ -1,5 +1,5 @@
-import type { MouseEvent as ReactMouseEvent } from 'react';
-import { ChevronLeft, MessageCircle, Trash2 } from 'lucide-react';
+import type { ChangeEvent, MouseEvent as ReactMouseEvent } from 'react';
+import { MessageCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,16 +7,20 @@ import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/studio/_components/empty-state';
 import { FieldBlock } from '@/components/studio/_components/field-block';
 import { RangeField } from '@/components/studio/_components/range-field';
-import { SectionTitle } from '@/components/studio/_components/section-title';
+import {
+  getLayerActionById,
+  getLayerActionIdForBubble,
+  getLayerActionPatch,
+  layerActions,
+} from '@/components/studio/_lib/layer-actions';
 import { resolveBubbleStyle } from '@/components/studio/_lib/bubble-style';
 import { useStudioContext } from '@/components/studio/studio-context';
 import type {
   BubbleBorderStyle,
   BubbleFontFamily,
   BubbleFontWeight,
-  BubbleShape,
-  BubbleType,
 } from '@/components/studio/_lib/types';
+import { InspectorSection } from '../../inspector-section';
 
 interface SelectOption<Value extends string> {
   value: Value;
@@ -32,13 +36,6 @@ interface BubbleColorPreset {
 const SELECT_CLASS_NAME =
   'h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
-const BUBBLE_TYPE_OPTIONS: readonly SelectOption<BubbleType>[] = [
-  { value: 'speech', label: 'Speech' },
-  { value: 'monologue', label: 'Box' },
-  { value: 'thought', label: 'Thought' },
-  { value: 'sfx', label: 'SFX' },
-];
-
 const FONT_FAMILY_OPTIONS: readonly SelectOption<BubbleFontFamily>[] = [
   { value: 'inter', label: 'Inter Tight' },
   { value: 'mono', label: 'IBM Plex Mono' },
@@ -50,25 +47,12 @@ const FONT_WEIGHT_OPTIONS: readonly SelectOption<BubbleFontWeight>[] = [
   { value: 'regular', label: 'Regular' },
   { value: 'medium', label: 'Medium' },
   { value: 'bold', label: 'Bold' },
-  { value: 'black', label: 'Black' },
 ];
 
 const BORDER_STYLE_OPTIONS: readonly SelectOption<BubbleBorderStyle>[] = [
   { value: 'solid', label: 'Solid' },
   { value: 'dashed', label: 'Dashed' },
   { value: 'dotted', label: 'Dotted' },
-];
-
-const SHAPE_OPTIONS: readonly SelectOption<BubbleShape>[] = [
-  { value: 'rounded', label: 'Rounded' },
-  { value: 'oval', label: 'Oval' },
-  { value: 'pill', label: 'Pill' },
-  { value: 'cloud', label: 'Cloud' },
-  { value: 'square', label: 'Box' },
-  { value: 'sharp', label: 'Sharp' },
-  { value: 'rough', label: 'Rough' },
-  { value: 'jagged', label: 'Jagged' },
-  { value: 'custom', label: 'Custom' },
 ];
 
 const FILL_COLOR_PRESETS: readonly BubbleColorPreset[] = [
@@ -87,12 +71,9 @@ const BubbleForm = () => {
     handleBubbleFontFamilyChange,
     handleBubbleFontSizeChange,
     handleBubbleFontWeightChange,
-    handleBubbleShapeChange,
     handleBubbleStylePatch,
     handleBubbleTextChange,
     handleBubbleTextColorChange,
-    handleBubbleTypeChange,
-    handlePanelSelect,
     handleSelectedBubbleDelete,
     selectedBubble,
     selectedBubblePanel,
@@ -103,6 +84,7 @@ const BubbleForm = () => {
   }
 
   const style = resolveBubbleStyle(selectedBubble);
+  const meta = selectedBubble.type.toUpperCase();
 
   const handleFillPresetSelect = (
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -112,49 +94,27 @@ const BubbleForm = () => {
     handleBubbleStylePatch({ fillColor });
   };
 
-  const handleShowPanelMenu = (): void => {
-    handlePanelSelect(selectedBubblePanel.id);
+  const handleBubblePresetChange = (
+    event: ChangeEvent<HTMLSelectElement>,
+  ): void => {
+    const action = getLayerActionById(event.target.value);
+    if (!action) return;
+    handleBubbleStylePatch(getLayerActionPatch(action));
   };
 
   return (
-    <section className="grid gap-3">
-      <header className="flex items-start justify-between gap-3">
-        <SectionTitle
-          icon={<MessageCircle className="size-4" />}
-          title="Bubble"
-          className="mt-0 mb-0"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleShowPanelMenu}
-        >
-          <ChevronLeft className="size-4" />
-          Panel
-        </Button>
-      </header>
-
+    <InspectorSection
+      icon={<MessageCircle className="size-4" />}
+      title="Bubble"
+      meta={meta}
+      contentClassName="grid gap-3"
+    >
       <FieldBlock label="텍스트" compact>
         <Textarea
           value={selectedBubble.text}
           onChange={handleBubbleTextChange}
           className="min-h-24 resize-y bg-background"
         />
-      </FieldBlock>
-
-      <FieldBlock label="종류" compact>
-        <select
-          value={selectedBubble.type}
-          onChange={handleBubbleTypeChange}
-          className={SELECT_CLASS_NAME}
-        >
-          {BUBBLE_TYPE_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
       </FieldBlock>
 
       <RangeField
@@ -244,7 +204,7 @@ const BubbleForm = () => {
       </section>
 
       <section className="grid grid-cols-2 gap-3">
-        <FieldBlock label="선 종류" compact>
+        <FieldBlock label="선 스타일" compact>
           <select
             value={style.borderStyle}
             onChange={handleBubbleBorderStyleChange}
@@ -259,12 +219,12 @@ const BubbleForm = () => {
         </FieldBlock>
         <FieldBlock label="모양" compact>
           <select
-            value={style.shape}
-            onChange={handleBubbleShapeChange}
+            value={getLayerActionIdForBubble(selectedBubble)}
+            onChange={handleBubblePresetChange}
             className={SELECT_CLASS_NAME}
           >
-            {SHAPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+            {layerActions.map((option) => (
+              <option key={option.id} value={option.id}>
                 {option.label}
               </option>
             ))}
@@ -281,7 +241,7 @@ const BubbleForm = () => {
         <Trash2 className="size-4" />
         Delete layer
       </Button>
-    </section>
+    </InspectorSection>
   );
 };
 
