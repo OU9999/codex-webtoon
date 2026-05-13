@@ -1,62 +1,29 @@
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStudioContext } from '../../studio-context';
 
 const PanelActions = () => {
-  const {
-    handleAddPanel,
-    handleDeletePanel,
-    handleDuplicatePanel,
-    handleMovePanelDown,
-    handleMovePanelUp,
-  } = useStudioContext();
+  const { handleDeletePanel, selectedPanel, state } = useStudioContext();
+
+  if (!selectedPanel) return null;
+
+  const isDeleteDisabled = state.panels.length <= 1;
 
   return (
-    <nav className="mb-4 flex flex-wrap gap-2" aria-label="Panel actions">
+    <nav
+      className="mt-3 border-t border-rim-subtle pt-3"
+      aria-label="Panel actions"
+    >
       <Button
         type="button"
         variant="outline"
         size="sm"
-        onClick={handleAddPanel}
-      >
-        <Plus className="size-4" />
-        Add
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleDuplicatePanel}
-      >
-        <Copy className="size-4" />
-        Copy
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={handleMovePanelUp}
-        aria-label="Move up"
-      >
-        <ArrowUp className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        onClick={handleMovePanelDown}
-        aria-label="Move down"
-      >
-        <ArrowDown className="size-4" />
-      </Button>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
+        disabled={isDeleteDisabled}
         onClick={handleDeletePanel}
-        aria-label="Delete panel"
+        className="h-7 w-full justify-start rounded-[4px] px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
       >
-        <Trash2 className="size-4 text-destructive" />
+        <Trash2 className="size-3.5" />
+        Delete selected cut
       </Button>
     </nav>
   );

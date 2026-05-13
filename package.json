@@ -40,6 +40,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
+    "@radix-ui/react-collapsible": "^1.1.12",
     "express": "^5.1.0",
     "openai": "^5.8.2",
     "ulid": "^3.0.2"

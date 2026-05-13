@@ -1,7 +1,7 @@
 import { History, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SectionTitle } from '../../_components/section-title';
 import { useStudioContext } from '../../studio-context';
+import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
 
 const formatHistoryTime = (createdAt: number): string => {
   return new Intl.DateTimeFormat(undefined, {
@@ -13,22 +13,27 @@ const formatHistoryTime = (createdAt: number): string => {
 
 const HistorySection = () => {
   const { canUndo, handleUndo, historyEntries } = useStudioContext();
+  const meta = `${historyEntries.length} edits`;
 
   return (
-    <section className="mb-4 border-y py-3">
-      <header className="mb-2 flex items-center justify-between gap-3">
-        <SectionTitle
-          icon={<History className="size-4" />}
-          title="History"
-          className="mt-0 mb-0"
-        />
+    <SidebarCollapsibleSection
+      icon={<History className="size-4" />}
+      title="History"
+      meta={meta}
+      defaultOpen={false}
+      contentClassName="p-2"
+    >
+      <header className="mb-2 flex items-center justify-between gap-2">
+        <span className="font-mono text-[9.5px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
+          Latest edits
+        </span>
         <Button
           type="button"
           variant="outline"
           size="sm"
           disabled={!canUndo}
           onClick={handleUndo}
-          className="h-7 px-2 text-[11px]"
+          className="h-6 rounded-[3px] px-2 font-mono text-[9.5px] font-semibold uppercase"
         >
           <Undo2 className="size-3.5" />
           Undo
@@ -42,7 +47,7 @@ const HistorySection = () => {
           historyEntries.slice(0, 6).map((entry) => (
             <p
               key={entry.id}
-              className="grid grid-cols-[minmax(0,1fr)_58px] items-center gap-2 rounded-md border border-rim bg-background px-2.5 py-1.5 text-[11px]"
+              className="grid grid-cols-[minmax(0,1fr)_58px] items-center gap-2 rounded-[4px] border border-rim bg-background px-2.5 py-1.5 text-[11px]"
             >
               <span className="truncate text-fg-secondary">{entry.label}</span>
               <time
@@ -54,12 +59,12 @@ const HistorySection = () => {
             </p>
           ))
         ) : (
-          <p className="rounded-md border border-dashed border-rim bg-background px-2.5 py-2 text-[11px] text-fg-muted">
+          <p className="rounded-[4px] border border-dashed border-rim bg-background px-2.5 py-2 text-[11px] text-fg-muted">
             No edits yet
           </p>
         )}
       </section>
-    </section>
+    </SidebarCollapsibleSection>
   );
 };
 
