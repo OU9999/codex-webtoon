@@ -46,10 +46,10 @@ const buildDynamicStyles = (state: StudioState): string => {
           : style.borderStyle === 'dotted'
             ? '2 6'
             : 'none';
-      const left = (bubble.x / CANVAS_WIDTH) * 100;
-      const top = (bubble.y / panel.height) * 100;
+      const left = ((panel.x + bubble.x) / CANVAS_WIDTH) * 100;
+      const top = ((panel.y + bubble.y) / state.canvasHeight) * 100;
       const width = (bubble.width / CANVAS_WIDTH) * 100;
-      const height = (bubble.height / panel.height) * 100;
+      const height = (bubble.height / state.canvasHeight) * 100;
       const viewportSize = (bubble.fontSize / CANVAS_WIDTH) * 100;
       const thoughtTailDots = getThoughtTailDots(bubble);
 

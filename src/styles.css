@@ -177,6 +177,16 @@
     box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
   }
 
+  .canvas-resize-handle {
+    @apply absolute bottom-[-32px] left-1/2 z-40 flex h-7 -translate-x-1/2 touch-none items-center gap-1 rounded-[3px] border border-rim bg-white px-2 font-mono text-[10px] font-semibold text-fg-muted shadow-sm select-none;
+    cursor: ns-resize;
+  }
+
+  .canvas-resize-handle:hover,
+  .canvas-resize-handle:focus-visible {
+    @apply border-brand text-brand ring-2 ring-brand/20 outline-none;
+  }
+
   .panel-frame {
     @apply absolute isolate touch-none overflow-hidden border border-rim bg-card;
     cursor: grab;
@@ -300,7 +310,7 @@
   }
 
   .bubble-layer {
-    @apply absolute isolate z-10 box-border grid touch-none place-items-center overflow-visible px-3 py-2 text-center leading-[1.18] select-none;
+    @apply absolute isolate z-30 box-border grid touch-none place-items-center overflow-visible px-3 py-2 text-center leading-[1.18] select-none;
     color: var(--bubble-text, #1a1f30);
     font-family: var(--bubble-font-family, var(--font-sans));
     font-weight: var(--bubble-font-weight, 700);
@@ -313,6 +323,7 @@
     z-index: 2;
     line-height: 1.18;
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
     text-wrap: balance;
   }
 

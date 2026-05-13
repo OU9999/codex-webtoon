@@ -15,6 +15,10 @@ import {
   normalizePanelGapColor,
   normalizePanelGeometry,
 } from '../../shared/project-state.js';
+import {
+  buildReferenceImageLookup,
+  normalizeReferenceImageRefs,
+} from '../../shared/reference-images.js';
 import type {
   ProjectMeta,
   ProjectState,
@@ -116,6 +120,57 @@ const writeProjectMeta = (dir: string, meta: ProjectMeta): void => {
   atomicWriteFileSync(join(dir, PROJECT_FILE), JSON.stringify(meta, null, 2));
 };
 
+const getObjectRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object') return null;
+
+  return value as Record<string, unknown>;
+};
+
+const getCandidateImageUrl = (candidate: unknown): string | null => {
+  const candidateRecord = getObjectRecord(candidate);
+  if (!candidateRecord) return null;
+
+  return typeof candidateRecord.imageUrl === 'string'
+    ? candidateRecord.imageUrl
+    : null;
+};
+
+const getFirstPanelThumbnailUrl = (state: unknown): string | null => {
+  const stateRecord = getObjectRecord(state);
+  if (!stateRecord || !Array.isArray(stateRecord.panels)) return null;
+
+  const firstPanel = getObjectRecord(stateRecord.panels[0]);
+  if (!firstPanel || !Array.isArray(firstPanel.candidates)) return null;
+
+  const selectedCandidateId =
+    typeof firstPanel.selectedCandidateId === 'string'
+      ? firstPanel.selectedCandidateId
+      : null;
+  const selectedCandidate = selectedCandidateId
+    ? firstPanel.candidates.find((candidate) => {
+        const candidateRecord = getObjectRecord(candidate);
+        return candidateRecord?.id === selectedCandidateId;
+      })
+    : null;
+
+  return (
+    getCandidateImageUrl(selectedCandidate) ??
+    getCandidateImageUrl(firstPanel.candidates[0]) ??
+    null
+  );
+};
+
+const readProjectThumbnailUrl = (dir: string): string | null => {
+  const file = join(dir, STATE_FILE);
+  if (!existsSync(file)) return null;
+
+  try {
+    return getFirstPanelThumbnailUrl(JSON.parse(readFileSync(file, 'utf-8')));
+  } catch {
+    return null;
+  }
+};
+
 const createProject = (rawName: string): ProjectSummary => {
   validateName(rawName);
   const name = rawName.trim();
@@ -143,6 +198,7 @@ const createProject = (rawName: string): ProjectSummary => {
     path: dir,
     createdAt: meta.createdAt,
     updatedAt: meta.updatedAt,
+    thumbnailUrl: null,
   };
 };
 
@@ -163,6 +219,7 @@ const listProjects = (): ProjectSummary[] => {
       path: dir,
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
+      thumbnailUrl: readProjectThumbnailUrl(dir),
     });
   }
 
@@ -274,7 +331,7 @@ const isProjectState = (value: unknown): value is ProjectState => {
     typeof obj.commonPrompt === 'string' &&
     Array.isArray(obj.panels) &&
     obj.panels.every(isPanel) &&
-    typeof obj.selectedPanelId === 'string' &&
+    (obj.selectedPanelId === null || typeof obj.selectedPanelId === 'string') &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
     (obj.canvasHeight === undefined || typeof obj.canvasHeight === 'number') &&
@@ -285,32 +342,27 @@ const isProjectState = (value: unknown): value is ProjectState => {
   );
 };
 
-const referenceKey = (reference: ReferenceImageRef): string =>
-  `${reference.panelId}:${reference.candidateId}`;
-
 const normalizeProjectState = (state: ProjectState): ProjectState => {
-  const candidateKeys = new Set<string>();
-  for (const panel of state.panels) {
-    for (const candidate of panel.candidates) {
-      candidateKeys.add(`${panel.id}:${candidate.id}`);
-    }
-  }
+  const referenceLookup = buildReferenceImageLookup(state.panels);
   const canvasHeight = normalizeCanvasHeight(
     (state as { canvasHeight?: unknown }).canvasHeight,
     state.panels,
     state.panelGap,
   );
+  const selectedPanelId = state.selectedBubbleId ? null : state.selectedPanelId;
   let fallbackY = 0;
 
   return {
     ...state,
+    selectedPanelId,
     panels: state.panels.map((panel) => {
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;
       const referenceImages = Array.isArray(rawReferences)
-        ? rawReferences
-            .filter(isReferenceImageRef)
-            .filter((reference) => candidateKeys.has(referenceKey(reference)))
+        ? normalizeReferenceImageRefs(
+            rawReferences.filter(isReferenceImageRef),
+            referenceLookup,
+          )
         : [];
       const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
       fallbackY += geometry.height + state.panelGap;

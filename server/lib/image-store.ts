@@ -1,4 +1,10 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { ulid } from 'ulid';
 import { config } from '../config.js';
@@ -52,6 +58,27 @@ const candidatePngPath = (
     ensurePanelId(panelId),
     `${ensureCandidateId(candidateId)}.png`,
   );
+
+const findCandidatePngPath = (
+  projectDir: string,
+  candidateId: string,
+): string | null => {
+  const safeCandidateId = ensureCandidateId(candidateId);
+  const root = join(projectDir, CANDIDATES_DIR);
+  if (!existsSync(root)) return null;
+
+  const panelDirs = readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  for (const panelDir of panelDirs) {
+    const pngPath = join(root, panelDir, `${safeCandidateId}.png`);
+    if (existsSync(pngPath)) return pngPath;
+  }
+
+  return null;
+};
 
 interface ReadCandidatePngInput {
   projectDir: string;
@@ -126,11 +153,18 @@ const readCandidatePng = (input: ReadCandidatePngInput): Buffer => {
       'code' in err &&
       err.code === 'ENOENT'
     ) {
+      const fallbackPath = findCandidatePngPath(
+        input.projectDir,
+        input.candidateId,
+      );
+      if (fallbackPath) return readFileSync(fallbackPath);
+
       throw new ImageStoreError(
         'reference_image_not_found',
         'Reference image was not found.',
       );
     }
+
     throw err;
   }
 };

@@ -19,7 +19,7 @@ const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
 const useGeneratePanel = (
   state: StudioState,
   setState: Dispatch<SetStateAction<StudioState>>,
-  selectedPanel: Panel | undefined,
+  selectedPanel: Panel | null,
   finalPrompt: string,
   projectName: string,
 ) => {
@@ -34,6 +34,7 @@ const useGeneratePanel = (
       return;
     }
 
+    const targetPanelId = selectedPanel.id;
     setIsGenerating(true);
     setGenerationError(null);
 
@@ -55,7 +56,7 @@ const useGeneratePanel = (
       setState((current) => ({
         ...current,
         panels: current.panels.map((panel) =>
-          panel.id === current.selectedPanelId
+          panel.id === targetPanelId
             ? {
                 ...panel,
                 candidates: [...newCandidates, ...panel.candidates],

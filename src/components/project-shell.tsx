@@ -3,7 +3,7 @@ import { Loader2, RotateCcw } from 'lucide-react';
 
 import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
-import { ProjectPicker } from '@/components/project-picker';
+import { ProjectPicker } from '@/components/project-picker/project-picker';
 import { Studio } from '@/components/studio/studio';
 import {
   DEFAULT_CANVAS_HEIGHT,
@@ -12,6 +12,10 @@ import {
   normalizePanelGapColor,
   normalizePanelGeometry,
 } from '@shared/project-state';
+import {
+  buildReferenceImageLookup,
+  normalizeReferenceImageRefs,
+} from '@shared/reference-images';
 import type {
   ReferenceImageRef,
   StudioState,
@@ -57,9 +61,6 @@ const createDefaultState = (): StudioState => {
   };
 };
 
-const referenceKey = (reference: ReferenceImageRef): string =>
-  `${reference.panelId}:${reference.candidateId}`;
-
 const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
   if (!value || typeof value !== 'object') return false;
   const ref = value as Record<string, unknown>;
@@ -67,28 +68,28 @@ const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
 };
 
 const normalizeLoadedState = (loaded: StudioState): StudioState => {
-  const candidateKeys = new Set<string>();
-  for (const panel of loaded.panels) {
-    for (const candidate of panel.candidates) {
-      candidateKeys.add(`${panel.id}:${candidate.id}`);
-    }
-  }
+  const referenceLookup = buildReferenceImageLookup(loaded.panels);
   const canvasHeight = normalizeCanvasHeight(
     (loaded as { canvasHeight?: unknown }).canvasHeight,
     loaded.panels,
     loaded.panelGap,
   );
+  const selectedPanelId = loaded.selectedBubbleId
+    ? null
+    : loaded.selectedPanelId;
   let fallbackY = 0;
 
   return {
     ...loaded,
+    selectedPanelId,
     panels: loaded.panels.map((panel) => {
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;
       const referenceImages = Array.isArray(rawReferences)
-        ? rawReferences
-            .filter(isReferenceImageRef)
-            .filter((reference) => candidateKeys.has(referenceKey(reference)))
+        ? normalizeReferenceImageRefs(
+            rawReferences.filter(isReferenceImageRef),
+            referenceLookup,
+          )
         : [];
       const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
       fallbackY += geometry.height + loaded.panelGap;

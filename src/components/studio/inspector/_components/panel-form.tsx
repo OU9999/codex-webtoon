@@ -1,4 +1,4 @@
-import { ChevronLeft, RefreshCcw, Sparkles, X } from 'lucide-react';
+import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,9 +9,8 @@ import {
 } from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
 import { RangeField } from '../../_components/range-field';
-import { SectionTitle } from '../../_components/section-title';
 import { useStudioContext } from '../../studio-context';
-import { ReferenceImageSection } from './reference-image-section';
+import { InspectorSection } from './inspector-section';
 
 const PanelForm = () => {
   const {
@@ -40,13 +39,20 @@ const PanelForm = () => {
     MIN_PANEL_HEIGHT,
     state.canvasHeight - selectedPanel.y,
   );
+  const panelIndex = state.panels.findIndex(
+    (panel) => panel.id === selectedPanel.id,
+  );
+  const meta =
+    panelIndex >= 0
+      ? `PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${state.panels.length}`
+      : `${selectedPanel.width}x${selectedPanel.height}`;
 
   return (
-    <>
-      <SectionTitle
-        icon={<ChevronLeft className="size-4" />}
-        title="Selected Cut"
-      />
+    <InspectorSection
+      icon={<SquarePen className="size-4" />}
+      title="Selected Cut"
+      meta={meta}
+    >
       <FieldBlock label="패널 이름" compact>
         <Input
           value={selectedPanel.title}
@@ -89,9 +95,8 @@ const PanelForm = () => {
         step={1}
         onValueChange={handleVariantCountChange}
       />
-      <ReferenceImageSection />
 
-      <section className="mb-5 grid gap-2">
+      <section className="grid gap-2">
         <Button
           type="button"
           className="w-full"
@@ -138,7 +143,7 @@ const PanelForm = () => {
           </pre>
         </details>
       </section>
-    </>
+    </InspectorSection>
   );
 };
 

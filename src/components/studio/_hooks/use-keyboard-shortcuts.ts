@@ -2,31 +2,74 @@ import { useEffect } from 'react';
 
 interface UseKeyboardShortcutsOptions {
   onGenerate: () => void;
-  enabled: boolean;
+  generateEnabled: boolean;
+  onUndo: () => void;
+  undoEnabled: boolean;
+  onSelectionDelete: () => void;
+  selectionDeleteEnabled: boolean;
 }
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+
+  return Boolean(target.closest('input, textarea, select'));
+};
 
 const useKeyboardShortcuts = ({
   onGenerate,
-  enabled,
+  generateEnabled,
+  onUndo,
+  undoEnabled,
+  onSelectionDelete,
+  selectionDeleteEnabled,
 }: UseKeyboardShortcutsOptions): void => {
   /**
-   * Binds Cmd/Ctrl+Enter as a global "generate selected panel" shortcut.
-   * Reads onGenerate from a closure that's recreated each render — that's
-   * fine because the listener is reattached on every change anyway.
+   * Binds global editor shortcuts for generating, undoing, and deleting the
+   * current canvas selection while preserving native text-field editing.
    */
   useEffect(() => {
-    if (!enabled) return;
-
     const handler = (event: KeyboardEvent): void => {
-      if (event.key !== 'Enter') return;
+      if (
+        event.key === 'Backspace' &&
+        selectionDeleteEnabled &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !event.isComposing &&
+        !isEditableTarget(event.target)
+      ) {
+        event.preventDefault();
+        onSelectionDelete();
+        return;
+      }
+
       if (!(event.metaKey || event.ctrlKey)) return;
+
+      const key = event.key.toLowerCase();
+      if (key === 'z' && !event.shiftKey && undoEnabled) {
+        event.preventDefault();
+        onUndo();
+        return;
+      }
+
+      if (event.key !== 'Enter') return;
+      if (!generateEnabled) return;
+
       event.preventDefault();
       onGenerate();
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [enabled, onGenerate]);
+  }, [
+    generateEnabled,
+    onGenerate,
+    onSelectionDelete,
+    onUndo,
+    selectionDeleteEnabled,
+    undoEnabled,
+  ]);
 };
 
 export { useKeyboardShortcuts };

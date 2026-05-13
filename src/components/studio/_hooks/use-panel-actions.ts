@@ -1,14 +1,16 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import {
   MIN_CANVAS_HEIGHT,
-  MIN_PANEL_HEIGHT,
-  MIN_PANEL_WIDTH,
   normalizePanelGapColor,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
 import { createPanel } from '../_lib/factories';
 import { clamp } from '../_lib/canvas-primitives';
 import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
+import {
+  clampPanelToCanvas,
+  getMinimumCanvasHeightForContent,
+} from '../_lib/panel-geometry';
 import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
 
 const isSameReferenceImage = (
@@ -24,13 +26,28 @@ const removeReferenceImage = (
 ): ReferenceImageRef[] =>
   references.filter((reference) => !isSameReferenceImage(reference, target));
 
-const clampPanelToCanvas = (panel: Panel, canvasHeight: number): Panel => {
-  const width = clamp(panel.width, MIN_PANEL_WIDTH, WEBTOON_CANVAS_WIDTH);
-  const height = clamp(panel.height, MIN_PANEL_HEIGHT, canvasHeight);
-  const x = clamp(panel.x, 0, WEBTOON_CANVAS_WIDTH - width);
-  const y = clamp(panel.y, 0, canvasHeight - height);
+const DEFAULT_PANEL_HEIGHT = 420;
 
-  return { ...panel, x, y, width, height };
+const getPanelBottom = (panel: Panel): number => panel.y + panel.height;
+
+const getAppendPanelY = (panels: Panel[], panelGap: number): number => {
+  if (panels.length === 0) return 0;
+
+  return Math.max(...panels.map(getPanelBottom)) + panelGap;
+};
+
+const scrollPanelIntoView = (panelId: string): void => {
+  window.requestAnimationFrame(() => {
+    const panelElement = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-panel-id]'),
+    ).find((element) => element.dataset.panelId === panelId);
+
+    panelElement?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center',
+    });
+  });
 };
 
 const usePanelActions = (
@@ -74,31 +91,19 @@ const usePanelActions = (
 
   const handleAddPanel = (): void => {
     setState((current) => {
-      const selected = current.panels.find(
-        (item) => item.id === current.selectedPanelId,
-      );
-      const panelHeight = 420;
-      const rawY = selected
-        ? selected.y + selected.height + current.panelGap
-        : 0;
+      const panelHeight = DEFAULT_PANEL_HEIGHT;
+      const rawY = getAppendPanelY(current.panels, current.panelGap);
       const canvasHeight = Math.max(current.canvasHeight, rawY + panelHeight);
       const panel = createPanel({
         title: `Panel ${current.panels.length + 1}`,
         y: clamp(rawY, 0, canvasHeight - panelHeight),
         height: panelHeight,
       });
-      const selectedIndex = current.panels.findIndex(
-        (item) => item.id === current.selectedPanelId,
-      );
-      const insertAt =
-        selectedIndex >= 0 ? selectedIndex + 1 : current.panels.length;
-      const panels = [...current.panels];
-      panels.splice(insertAt, 0, panel);
 
       return {
         ...current,
         canvasHeight,
-        panels,
+        panels: [...current.panels, panel],
         selectedPanelId: panel.id,
         selectedBubbleId: null,
       };
@@ -185,15 +190,16 @@ const usePanelActions = (
   const handleCanvasHeightChange = (value: number[]): void => {
     const raw = value[0];
     if (typeof raw !== 'number') return;
-    const canvasHeight = Math.max(MIN_CANVAS_HEIGHT, Math.trunc(raw));
 
-    setState((current) => ({
-      ...current,
-      canvasHeight,
-      panels: current.panels.map((panel) =>
-        clampPanelToCanvas(panel, canvasHeight),
-      ),
-    }));
+    setState((current) => {
+      const canvasHeight = Math.max(
+        MIN_CANVAS_HEIGHT,
+        Math.trunc(raw),
+        getMinimumCanvasHeightForContent(current.panels),
+      );
+
+      return { ...current, canvasHeight };
+    });
   };
 
   const handlePanelGapChange = (value: number[]): void => {
@@ -223,6 +229,19 @@ const usePanelActions = (
       selectedPanelId: panelId,
       selectedBubbleId: null,
     }));
+    scrollPanelIntoView(panelId);
+  };
+
+  const handleSelectionClear = (): void => {
+    setState((current) => {
+      if (!current.selectedPanelId && !current.selectedBubbleId) return current;
+
+      return {
+        ...current,
+        selectedPanelId: null,
+        selectedBubbleId: null,
+      };
+    });
   };
 
   const handleSelectedPanelTitleChange = (
@@ -345,6 +364,7 @@ const usePanelActions = (
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
     handleSelectedPanelWidthChange,
+    handleSelectionClear,
     handleVariantCountChange,
     patchSelectedPanel,
   };

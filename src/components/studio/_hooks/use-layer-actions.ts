@@ -1,31 +1,127 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import {
-  getBubbleShapePatch,
   getBubbleTailSidePatch,
   isBubbleBorderStyle,
   isBubbleFontFamily,
   isBubbleFontWeight,
-  isBubbleShape,
   isBubbleTailSide,
 } from '../_lib/bubble-style';
 import { createBubble } from '../_lib/factories';
-import type { Bubble, BubbleType, StudioState } from '../_lib/types';
+import { CANVAS_WIDTH } from '../_lib/constants';
+import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
 
-const BUBBLE_TYPE_VALUES: readonly BubbleType[] = [
-  'speech',
-  'monologue',
-  'thought',
-  'sfx',
-];
+interface CanvasPoint {
+  x: number;
+  y: number;
+}
 
-const isBubbleType = (value: unknown): value is BubbleType => {
+interface LayerAddTarget {
+  panel: Panel;
+  x: number;
+  y: number;
+}
+
+const getVisibleStageCenter = (canvasHeight: number): CanvasPoint => {
+  const stage = document.querySelector<HTMLElement>('.webtoon-stage');
+  if (!stage) return { x: CANVAS_WIDTH / 2, y: canvasHeight / 2 };
+
+  const rect = stage.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return { x: CANVAS_WIDTH / 2, y: canvasHeight / 2 };
+  }
+
+  const visibleLeft = Math.max(rect.left, 0);
+  const visibleRight = Math.min(rect.right, window.innerWidth);
+  const visibleTop = Math.max(rect.top, 0);
+  const visibleBottom = Math.min(rect.bottom, window.innerHeight);
+  const centerClientX =
+    visibleRight > visibleLeft
+      ? (visibleLeft + visibleRight) / 2
+      : rect.left + rect.width / 2;
+  const centerClientY =
+    visibleBottom > visibleTop
+      ? (visibleTop + visibleBottom) / 2
+      : rect.top + rect.height / 2;
+
+  return {
+    x: ((centerClientX - rect.left) / rect.width) * CANVAS_WIDTH,
+    y: ((centerClientY - rect.top) / rect.height) * canvasHeight,
+  };
+};
+
+const panelContainsPoint = (panel: Panel, point: CanvasPoint): boolean => {
   return (
-    typeof value === 'string' &&
-    BUBBLE_TYPE_VALUES.includes(value as BubbleType)
+    point.x >= panel.x &&
+    point.x <= panel.x + panel.width &&
+    point.y >= panel.y &&
+    point.y <= panel.y + panel.height
   );
 };
 
+const getPanelDistanceToPoint = (panel: Panel, point: CanvasPoint): number => {
+  const nearestX = Math.min(Math.max(point.x, panel.x), panel.x + panel.width);
+  const nearestY = Math.min(Math.max(point.y, panel.y), panel.y + panel.height);
+  const deltaX = point.x - nearestX;
+  const deltaY = point.y - nearestY;
+
+  return deltaX * deltaX + deltaY * deltaY;
+};
+
+const findViewCenterPanel = (
+  panels: Panel[],
+  point: CanvasPoint,
+): Panel | null => {
+  const containingPanel = panels.find((panel) =>
+    panelContainsPoint(panel, point),
+  );
+  if (containingPanel) return containingPanel;
+
+  return panels.reduce<Panel | null>((nearest, panel) => {
+    if (!nearest) return panel;
+
+    return getPanelDistanceToPoint(panel, point) <
+      getPanelDistanceToPoint(nearest, point)
+      ? panel
+      : nearest;
+  }, null);
+};
+
+const getLayerAddTarget = (
+  state: StudioState,
+  bubble: Bubble,
+): LayerAddTarget | null => {
+  const center = getVisibleStageCenter(state.canvasHeight);
+  const panel = findViewCenterPanel(state.panels, center);
+  if (!panel) return null;
+
+  return {
+    panel,
+    x: center.x - panel.x - bubble.width / 2,
+    y: center.y - panel.y - bubble.height / 2,
+  };
+};
+
 const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
+  const patchBubble = (
+    panelId: string,
+    bubbleId: string,
+    patch: Partial<Bubble>,
+  ): void => {
+    setState((current) => ({
+      ...current,
+      panels: current.panels.map((panel) => {
+        if (panel.id !== panelId) return panel;
+
+        return {
+          ...panel,
+          bubbles: panel.bubbles.map((bubble) =>
+            bubble.id === bubbleId ? { ...bubble, ...patch } : bubble,
+          ),
+        };
+      }),
+    }));
+  };
+
   const patchSelectedBubbleNumber = (
     key: keyof Pick<
       Bubble,
@@ -51,8 +147,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     setState((current) => ({
       ...current,
       panels: current.panels.map((panel) => {
-        if (panel.id !== current.selectedPanelId) return panel;
-
         return {
           ...panel,
           bubbles: panel.bubbles.map((bubble) =>
@@ -70,32 +164,48 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     patch: Partial<Bubble> = {},
   ): void => {
     const bubble = { ...createBubble(type), ...patch };
+    setState((current) => {
+      const target = getLayerAddTarget(current, bubble);
+      if (!target) return current;
+      const nextBubble = {
+        ...bubble,
+        x: target.x,
+        y: target.y,
+      };
+
+      return {
+        ...current,
+        selectedPanelId: null,
+        selectedBubbleId: nextBubble.id,
+        panels: current.panels.map((panel) =>
+          panel.id === target.panel.id
+            ? { ...panel, bubbles: [...panel.bubbles, nextBubble] }
+            : panel,
+        ),
+      };
+    });
+  };
+
+  const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
     setState((current) => ({
       ...current,
-      selectedBubbleId: bubble.id,
-      panels: current.panels.map((panel) =>
-        panel.id === current.selectedPanelId
-          ? { ...panel, bubbles: [...panel.bubbles, bubble] }
-          : panel,
-      ),
+      selectedPanelId: null,
+      selectedBubbleId: bubbleId,
     }));
   };
 
-  const handleBubbleSelect = (bubbleId: string): void => {
-    setState((current) => ({ ...current, selectedBubbleId: bubbleId }));
-  };
-
   const handleBubbleTextChange = (
-    event: ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLTextAreaElement>,
   ): void => {
     patchSelectedBubble({ text: event.target.value });
   };
 
-  const handleBubbleTypeChange = (
-    event: ChangeEvent<HTMLSelectElement>,
+  const handleBubbleTextValueChange = (
+    panelId: string,
+    bubbleId: string,
+    text: string,
   ): void => {
-    if (!isBubbleType(event.target.value)) return;
-    patchSelectedBubble({ type: event.target.value });
+    patchBubble(panelId, bubbleId, { text });
   };
 
   const handleBubbleFontSizeChange = (value: number[]): void => {
@@ -147,13 +257,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   ): void => {
     if (!isBubbleFontWeight(event.target.value)) return;
     patchSelectedBubble({ fontWeight: event.target.value });
-  };
-
-  const handleBubbleShapeChange = (
-    event: ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    if (!isBubbleShape(event.target.value)) return;
-    patchSelectedBubble(getBubbleShapePatch(event.target.value));
   };
 
   const handleBubbleRadiusTopLeftChange = (value: number[]): void => {
@@ -210,10 +313,9 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   const handleSelectedBubbleDelete = (): void => {
     setState((current) => ({
       ...current,
+      selectedPanelId: null,
       selectedBubbleId: null,
       panels: current.panels.map((panel) => {
-        if (panel.id !== current.selectedPanelId) return panel;
-
         return {
           ...panel,
           bubbles: panel.bubbles.filter(
@@ -237,7 +339,6 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     handleBubbleRadiusTopLeftChange,
     handleBubbleRadiusTopRightChange,
     handleBubbleSelect,
-    handleBubbleShapeChange,
     handleBubbleStylePatch,
     handleBubbleTailHeightChange,
     handleBubbleTailPositionChange,
@@ -248,7 +349,7 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     handleBubbleTailWidthChange,
     handleBubbleTextChange,
     handleBubbleTextColorChange,
-    handleBubbleTypeChange,
+    handleBubbleTextValueChange,
     handleLayerAdd,
     handleSelectedBubbleDelete,
   };

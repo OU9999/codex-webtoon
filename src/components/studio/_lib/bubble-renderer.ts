@@ -281,6 +281,13 @@ const drawThoughtTailDots = (
   });
 };
 
+const getTextLineY = (
+  centerY: number,
+  lineHeight: number,
+  index: number,
+  lineCount: number,
+): number => centerY + (index - (lineCount - 1) / 2) * lineHeight;
+
 const drawBubbleToCanvas = (
   ctx: CanvasRenderingContext2D,
   bubble: Bubble,
@@ -298,16 +305,15 @@ const drawBubbleToCanvas = (
     ctx.fillStyle = style.textColor;
     ctx.strokeStyle = style.fillColor;
     ctx.lineWidth = Math.max(4, style.borderWidth * 2);
-    ctx.strokeText(
-      bubble.text,
-      bubble.x + bubble.width / 2,
-      offsetY + bubble.y + bubble.height / 2,
-    );
-    ctx.fillText(
-      bubble.text,
-      bubble.x + bubble.width / 2,
-      offsetY + bubble.y + bubble.height / 2,
-    );
+    const lines = wrapText(ctx, bubble.text, bubble.width).slice(0, 4);
+    const lineHeight = bubble.fontSize * 1.1;
+    const centerX = bubble.x + bubble.width / 2;
+    const centerY = offsetY + bubble.y + bubble.height / 2;
+    lines.forEach((line, index) => {
+      const lineY = getTextLineY(centerY, lineHeight, index, lines.length);
+      ctx.strokeText(line, centerX, lineY);
+      ctx.fillText(line, centerX, lineY);
+    });
     ctx.restore();
     return;
   }
@@ -365,13 +371,10 @@ const drawBubbleToCanvas = (
   ctx.setLineDash([]);
   const lines = wrapText(ctx, bubble.text, bubble.width - 28).slice(0, 4);
   ctx.fillStyle = style.textColor;
+  const centerY = offsetY + bubble.y + bubble.height / 2;
   lines.forEach((line, index) => {
     const lineHeight = bubble.fontSize * 1.15;
-    const lineY =
-      offsetY +
-      bubble.y +
-      bubble.height / 2 +
-      (index - (lines.length - 1) / 2) * lineHeight;
+    const lineY = getTextLineY(centerY, lineHeight, index, lines.length);
     ctx.fillText(line, bubble.x + bubble.width / 2, lineY);
   });
   ctx.restore();

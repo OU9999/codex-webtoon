@@ -21,26 +21,35 @@ const wrapText = (
   text: string,
   maxWidth: number,
 ): string[] => {
-  const words = String(text || '')
-    .split(/\s+/)
-    .filter(Boolean);
-  if (words.length === 0) return [''];
-
   const lines: string[] = [];
-  let line = '';
+  const hardLines = String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n');
 
-  words.forEach((word) => {
-    const next = line ? `${line} ${word}` : word;
-    if (ctx.measureText(next).width <= maxWidth || !line) {
-      line = next;
+  hardLines.forEach((hardLine) => {
+    const words = hardLine.split(/[^\S\n]+/).filter(Boolean);
+    if (words.length === 0) {
+      lines.push('');
       return;
     }
+
+    let line = '';
+    words.forEach((word) => {
+      const next = line ? `${line} ${word}` : word;
+      if (ctx.measureText(next).width <= maxWidth || !line) {
+        line = next;
+        return;
+      }
+
+      lines.push(line);
+      line = word;
+    });
+
     lines.push(line);
-    line = word;
   });
 
-  lines.push(line);
-  return lines;
+  return lines.length > 0 ? lines : [''];
 };
 
 const clamp = (value: number, min: number, max: number): number =>

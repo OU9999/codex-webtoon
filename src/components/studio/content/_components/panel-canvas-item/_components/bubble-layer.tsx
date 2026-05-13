@@ -1,7 +1,10 @@
 import type {
+  ChangeEvent as ReactChangeEvent,
+  KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from 'react';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { getBubbleClassName } from '@/components/studio/_lib/class-names';
 import {
@@ -18,16 +21,94 @@ import { TransformHandles } from './transform-handles';
 
 interface BubbleLayerProps {
   bubble: Bubble;
+  canvasHeight: number;
   panel: Panel;
+  isEditing: boolean;
   isSelected: boolean;
   onDragStart: (payload: BubbleDragStartPayload) => void;
+  onEditEnd: () => void;
+  onEditStart: (panelId: string, bubbleId: string) => void;
+  onTextChange: (panelId: string, bubbleId: string, text: string) => void;
 }
+
+interface BubbleTextEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  onEditEnd: () => void;
+}
+
+const BubbleTextEditor = ({
+  value,
+  onChange,
+  onEditEnd,
+}: BubbleTextEditorProps) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleBlur = (): void => {
+    onEditEnd();
+  };
+
+  const handleChange = (event: ReactChangeEvent<HTMLTextAreaElement>): void => {
+    onChange(event.target.value);
+  };
+
+  const handleDoubleClick = (
+    event: ReactMouseEvent<HTMLTextAreaElement>,
+  ): void => {
+    event.stopPropagation();
+  };
+
+  const handleKeyDown = (
+    event: ReactKeyboardEvent<HTMLTextAreaElement>,
+  ): void => {
+    if (event.key !== 'Escape') return;
+
+    event.preventDefault();
+    onEditEnd();
+  };
+
+  const handlePointerDown = (
+    event: ReactPointerEvent<HTMLTextAreaElement>,
+  ): void => {
+    event.stopPropagation();
+  };
+
+  /**
+   * Focuses and selects the inline text editor as soon as a bubble enters edit mode.
+   */
+  useEffect(() => {
+    const editor = textareaRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    editor.select();
+  }, []);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      aria-label="말풍선 텍스트 수정"
+      className="bubble-text-editor relative z-20 h-full w-full resize-none border-0 bg-transparent p-0 text-center leading-[1.18] [font-weight:inherit] [text-wrap:balance] [overflow-wrap:anywhere] whitespace-pre-wrap [color:inherit] caret-brand outline-none [font:inherit]"
+      value={value}
+      onBlur={handleBlur}
+      onChange={handleChange}
+      onDoubleClick={handleDoubleClick}
+      onKeyDown={handleKeyDown}
+      onPointerDown={handlePointerDown}
+    />
+  );
+};
 
 const BubbleLayer = ({
   bubble,
+  canvasHeight,
   panel,
+  isEditing,
   isSelected,
   onDragStart,
+  onEditEnd,
+  onEditStart,
+  onTextChange,
 }: BubbleLayerProps) => {
   const style = resolveBubbleStyle(bubble);
   const outlinePath = getBubbleOutlineSvgPath(bubble);
@@ -36,11 +117,28 @@ const BubbleLayer = ({
   const handlePointerDown = (
     event: ReactPointerEvent<HTMLDivElement>,
   ): void => {
-    onDragStart({ event, bubble, panel, mode: 'move' });
+    if (isEditing) {
+      event.stopPropagation();
+      return;
+    }
+
+    onDragStart({ event, bubble, panel, mode: 'move', canvasHeight });
   };
 
   const handleClick = (event: ReactMouseEvent<HTMLDivElement>): void => {
     event.stopPropagation();
+  };
+
+  const handleDoubleClick = (event: ReactMouseEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isEditing) return;
+
+    onEditStart(panel.id, bubble.id);
+  };
+
+  const handleTextChange = (text: string): void => {
+    onTextChange(panel.id, bubble.id, text);
   };
 
   return (
@@ -52,12 +150,14 @@ const BubbleLayer = ({
         `tail-${style.tailSide}`,
         getBubbleClassName(panel, bubble),
         outlinePath && 'has-outline',
+        isEditing && 'editing cursor-text',
         isSelected && 'active',
       )}
       onPointerDown={handlePointerDown}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
+      onDoubleClick={handleDoubleClick}
+      role={isEditing ? undefined : 'button'}
+      tabIndex={isEditing ? -1 : 0}
     >
       {outlinePath && (
         <svg
@@ -69,10 +169,19 @@ const BubbleLayer = ({
           <path className="bubble-outline-shape" d={outlinePath.path} />
         </svg>
       )}
-      <span>{bubble.text}</span>
-      {isSelected && (
+      {isEditing ? (
+        <BubbleTextEditor
+          value={bubble.text}
+          onChange={handleTextChange}
+          onEditEnd={onEditEnd}
+        />
+      ) : (
+        <span>{bubble.text}</span>
+      )}
+      {isSelected && !isEditing && (
         <TransformHandles
           bubble={bubble}
+          canvasHeight={canvasHeight}
           panel={panel}
           hasTailTip={Boolean(tailPoints)}
           onDragStart={onDragStart}

@@ -1,11 +1,15 @@
-import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type {
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+  SetStateAction,
+} from 'react';
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize' | 'tail';
 type BubbleResizeAnchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
-type BubbleFontWeight = 'regular' | 'medium' | 'bold' | 'black';
+type BubbleFontWeight = 'regular' | 'medium' | 'bold';
 type BubbleShape =
   | 'rounded'
   | 'oval'
@@ -84,12 +88,35 @@ interface Panel {
 interface StudioState {
   commonPrompt: string;
   panels: Panel[];
-  selectedPanelId: string;
+  selectedPanelId: string | null;
   selectedBubbleId: string | null;
   canvasHeight: number;
   panelGap: number;
   panelGapColor: string;
   variantCount: number;
+}
+
+interface StudioStateSetter {
+  (action: SetStateAction<StudioState>): void;
+  transient: (action: SetStateAction<StudioState>) => void;
+  commitHistory: (previous: StudioState) => void;
+  getSnapshot: () => StudioState;
+}
+
+interface CanvasResize {
+  rect: DOMRect;
+  canvasHeight: number;
+  historyStart: StudioState;
+  lastClientY: number;
+  pointerStartY: number;
+  scrollContainer: HTMLElement | null;
+  scrollFrame: number | null;
+  scrollStartTop: number;
+}
+
+interface CanvasResizeStartPayload {
+  event: ReactPointerEvent<HTMLElement>;
+  canvasHeight: number;
 }
 
 interface CreatePanelOverrides extends Partial<
@@ -114,6 +141,10 @@ interface BubbleDrag {
   bubbleId: string;
   resizeAnchor?: BubbleResizeAnchor;
   rect: DOMRect;
+  canvasHeight: number;
+  historyStart: StudioState;
+  panelX: number;
+  panelY: number;
   panelHeight: number;
   pointerStartX: number;
   pointerStartY: number;
@@ -131,6 +162,7 @@ interface BubbleDragStartPayload {
   panel: Panel;
   mode: BubbleDragMode;
   resizeAnchor?: BubbleResizeAnchor;
+  canvasHeight: number;
 }
 
 interface PanelTransform {
@@ -139,6 +171,7 @@ interface PanelTransform {
   resizeHandle: PanelResizeHandle | null;
   rect: DOMRect;
   canvasHeight: number;
+  historyStart: StudioState;
   offsetX: number;
   offsetY: number;
   startX: number;
@@ -155,7 +188,17 @@ interface PanelTransformStartPayload {
   canvasHeight: number;
 }
 
+type LayerActionId =
+  | 'speech'
+  | 'oval'
+  | 'cloud'
+  | 'jagged'
+  | 'box'
+  | 'thought'
+  | 'sfx';
+
 interface LayerAction {
+  id: LayerActionId;
   type: BubbleType;
   label: string;
   icon: ReactNode;
@@ -174,10 +217,13 @@ export type {
   BubbleShape,
   BubbleTailSide,
   BubbleType,
+  CanvasResize,
+  CanvasResizeStartPayload,
   Candidate,
   CandidateProvider,
   CreatePanelOverrides,
   LayerAction,
+  LayerActionId,
   Panel,
   PanelResizeHandle,
   PanelTransform,
@@ -185,4 +231,5 @@ export type {
   PanelTransformStartPayload,
   ReferenceImageRef,
   StudioState,
+  StudioStateSetter,
 };

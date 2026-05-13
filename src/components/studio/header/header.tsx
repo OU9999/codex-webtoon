@@ -4,11 +4,11 @@ import {
   Download,
   FolderOpen,
   Loader2,
-  PanelTop,
   Save,
   Sparkles,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,10 @@ interface SaveBadgeContent {
 
 const saveBadge = (status: SaveStatus): SaveBadgeContent | null => {
   if (status === 'saving') {
-    return { icon: <Loader2 className="size-3.5 animate-spin" />, label: '저장 중' };
+    return {
+      icon: <Loader2 className="size-3.5 animate-spin" />,
+      label: '저장 중',
+    };
   }
   if (status === 'saved') {
     return { icon: <CircleCheck className="size-3.5" />, label: '저장됨' };
@@ -52,72 +55,62 @@ const Header = () => {
   const generateDisabled = !selectedPanel || isGenerating;
 
   return (
-    <header className="z-20 flex h-auto shrink-0 flex-col gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:h-[68px] md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
-      <h1 className="flex items-center gap-3">
-        <PanelTop className="size-6 text-primary" />
-        <span>
-          <strong className="block text-base leading-none">
-            Webtoon Panel Studio
-          </strong>
-          <span className="mt-1 block text-xs font-normal text-muted-foreground">
-            {projectName}
-          </span>
-        </span>
-      </h1>
-      <nav
-        className="flex flex-wrap items-center gap-2"
-        aria-label="Export actions"
-      >
-        <Button type="button" variant="outline" onClick={onBack}>
-          <FolderOpen className="size-4" />
-          프로젝트
-        </Button>
-        <AuthBadge
-          status={auth.status}
-          loading={auth.loading}
-          error={auth.error}
-          onRefresh={auth.refresh}
-        />
-        {badge && (
-          <Badge
-            variant="outline"
-            className="h-8 gap-1.5 rounded-full px-3 text-xs text-muted-foreground"
-          >
-            {badge.icon}
-            {badge.label}
-          </Badge>
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleProjectJsonExport}
-        >
-          <Save className="size-4" />
-          JSON
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleWebtoonPngExport}
-          disabled={isExporting}
-        >
-          <Download className="size-4" />
-          {isExporting ? 'Exporting' : 'PNG'}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleGenerateSelectedPanel}
-          disabled={generateDisabled}
-        >
-          {isGenerating ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Sparkles className="size-4" />
+    <AppHeader
+      subtitle={projectName}
+      actionsLabel="Export actions"
+      actions={
+        <>
+          <Button type="button" variant="outline" onClick={onBack}>
+            <FolderOpen className="size-4" />
+            프로젝트
+          </Button>
+          <AuthBadge
+            status={auth.status}
+            loading={auth.loading}
+            error={auth.error}
+            onRefresh={auth.refresh}
+          />
+          {badge && (
+            <Badge
+              variant="outline"
+              className="h-8 gap-1.5 rounded-full px-3 text-xs text-muted-foreground"
+            >
+              {badge.icon}
+              {badge.label}
+            </Badge>
           )}
-          {isGenerating ? 'Generating' : 'Generate'}
-        </Button>
-      </nav>
-    </header>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleProjectJsonExport}
+          >
+            <Save className="size-4" />
+            JSON
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleWebtoonPngExport}
+            disabled={isExporting}
+          >
+            <Download className="size-4" />
+            {isExporting ? 'Exporting' : 'PNG'}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleGenerateSelectedPanel}
+            disabled={generateDisabled}
+          >
+            {isGenerating ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+            {isGenerating ? 'Generating' : 'Generate'}
+          </Button>
+        </>
+      }
+    />
   );
 };
 

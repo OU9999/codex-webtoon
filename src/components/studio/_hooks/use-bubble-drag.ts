@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
 import { clamp } from '../_lib/canvas-primitives';
 import { CANVAS_WIDTH } from '../_lib/constants';
 import type {
@@ -8,7 +7,7 @@ import type {
   BubbleDragStartPayload,
   BubbleResizeAnchor,
   BubbleTailSide,
-  StudioState,
+  StudioStateSetter,
 } from '../_lib/types';
 
 const MIN_BUBBLE_WIDTH = 72;
@@ -131,7 +130,7 @@ const moveTail = (bubble: Bubble, x: number, y: number): Bubble => {
   };
 };
 
-const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
+const useBubbleDrag = (setState: StudioStateSetter) => {
   const dragRef = useRef<BubbleDrag | null>(null);
 
   const handleBubbleDragStart = ({
@@ -140,20 +139,25 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
     panel,
     mode,
     resizeAnchor,
+    canvasHeight,
   }: BubbleDragStartPayload): void => {
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
 
-    const frame = event.currentTarget.closest<HTMLElement>('.panel-frame');
-    if (!frame) return;
+    const stage = event.currentTarget.closest<HTMLElement>('.webtoon-stage');
+    if (!stage) return;
 
-    const rect = frame.getBoundingClientRect();
-    const pointerX = ((event.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
-    const pointerY = ((event.clientY - rect.top) / rect.height) * panel.height;
+    const rect = stage.getBoundingClientRect();
+    const pointerStageX =
+      ((event.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
+    const pointerStageY =
+      ((event.clientY - rect.top) / rect.height) * canvasHeight;
+    const pointerX = pointerStageX - panel.x;
+    const pointerY = pointerStageY - panel.y;
 
     setState((current) => ({
       ...current,
-      selectedPanelId: panel.id,
+      selectedPanelId: null,
       selectedBubbleId: bubble.id,
     }));
     dragRef.current = {
@@ -162,6 +166,10 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       bubbleId: bubble.id,
       resizeAnchor,
       rect,
+      canvasHeight,
+      historyStart: setState.getSnapshot(),
+      panelX: panel.x,
+      panelY: panel.y,
       panelHeight: panel.height,
       pointerStartX: pointerX,
       pointerStartY: pointerY,
@@ -182,16 +190,19 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
       const drag = dragRef.current;
       if (!drag) return;
 
-      const x =
+      const stageX =
         ((event.clientX - drag.rect.left) / drag.rect.width) * CANVAS_WIDTH;
-      const y =
-        ((event.clientY - drag.rect.top) / drag.rect.height) * drag.panelHeight;
+      const stageY =
+        ((event.clientY - drag.rect.top) / drag.rect.height) *
+        drag.canvasHeight;
+      const x = stageX - drag.panelX;
+      const y = stageY - drag.panelY;
       const minX = -CANVAS_WIDTH;
       const maxX = CANVAS_WIDTH * 2;
       const minY = -drag.panelHeight;
       const maxY = drag.panelHeight * 2;
 
-      setState((current) => ({
+      setState.transient((current) => ({
         ...current,
         panels: current.panels.map((panel) => {
           if (panel.id !== drag.panelId) return panel;
@@ -227,6 +238,10 @@ const useBubbleDrag = (setState: Dispatch<SetStateAction<StudioState>>) => {
     };
 
     const handlePointerUp = (): void => {
+      const drag = dragRef.current;
+      if (!drag) return;
+
+      setState.commitHistory(drag.historyStart);
       dragRef.current = null;
     };
 

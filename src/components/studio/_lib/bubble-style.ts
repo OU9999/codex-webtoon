@@ -72,7 +72,6 @@ const BUBBLE_FONT_WEIGHT_VALUES: readonly BubbleFontWeight[] = [
   'regular',
   'medium',
   'bold',
-  'black',
 ];
 const BUBBLE_SHAPE_VALUES: readonly BubbleShape[] = [
   'rounded',
@@ -134,7 +133,6 @@ const CSS_FONT_WEIGHTS: Record<BubbleFontWeight, number> = {
   regular: 400,
   medium: 500,
   bold: 700,
-  black: 900,
 };
 
 const SHAPE_CORNER_RADII: Record<BubbleShape, BubbleCornerRadii> = {
