@@ -18,9 +18,17 @@ const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
   return (
     <section className="grid grid-cols-[380px_1fr] overflow-hidden rounded-lg border border-rim bg-elevated">
       <div className="relative bg-canvas">
-        <div className="grid h-full w-full place-items-center bg-[radial-gradient(circle,rgb(22_51_92/0.07)_1px,transparent_1px)] bg-[length:18px_18px] font-mono text-7xl font-semibold text-fg-faint/70 select-none">
-          {initial}
-        </div>
+        {project.thumbnailUrl ? (
+          <img
+            src={project.thumbnailUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-[radial-gradient(circle,rgb(22_51_92/0.07)_1px,transparent_1px)] bg-[length:18px_18px] font-mono text-7xl font-semibold text-fg-faint/70 select-none">
+            {initial}
+          </div>
+        )}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_70%,var(--bg-elevated)_100%)]" />
       </div>
       <div className="flex min-w-0 flex-col justify-center gap-2 px-7 py-6">

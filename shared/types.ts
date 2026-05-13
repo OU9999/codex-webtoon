@@ -24,6 +24,7 @@ interface ProjectSummary {
   path: string;
   createdAt: number;
   updatedAt: number;
+  thumbnailUrl: string | null;
 }
 
 interface CreateProjectRequest {

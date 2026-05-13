@@ -106,7 +106,15 @@ const RecentProjects = ({
                   aria-label={`Open ${project.name}`}
                 />
                 <span className="pointer-events-none grid size-10 place-items-center overflow-hidden rounded border border-rim bg-canvas font-mono text-base font-semibold text-fg-faint">
-                  {initial}
+                  {project.thumbnailUrl ? (
+                    <img
+                      src={project.thumbnailUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    initial
+                  )}
                 </span>
                 <span className="pointer-events-none truncate text-[12.5px] font-semibold text-foreground">
                   {project.name}

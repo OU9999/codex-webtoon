@@ -1,25 +1,10 @@
-import { SquarePen } from 'lucide-react';
+import { ImageIcon, SquarePen } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { MIN_CANVAS_HEIGHT } from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
 import { RangeField } from '../../_components/range-field';
 import { useStudioContext } from '../../studio-context';
-import { PanelActions } from './panel-actions';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
-
-const getProjectInitials = (name: string): string => {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  if (initials) return initials;
-  return 'WP';
-};
 
 const ProjectSection = () => {
   const {
@@ -27,12 +12,17 @@ const ProjectSection = () => {
     state,
     handleCanvasHeightChange,
     handleCommonPromptChange,
-    handlePanelGapChange,
     handlePanelGapColorChange,
   } = useStudioContext();
 
-  const projectInitials = getProjectInitials(projectName);
   const panelCount = `${state.panels.length} cuts`;
+  const firstPanel = state.panels[0] ?? null;
+  const firstPanelCandidate =
+    firstPanel?.candidates.find(
+      (candidate) => candidate.id === firstPanel.selectedCandidateId,
+    ) ??
+    firstPanel?.candidates[0] ??
+    null;
 
   return (
     <SidebarCollapsibleSection
@@ -41,8 +31,16 @@ const ProjectSection = () => {
       meta={panelCount}
     >
       <section className="mb-3 flex items-center gap-2.5">
-        <span className="text-fg flex size-[30px] shrink-0 items-center justify-center rounded-[4px] border border-rim-strong bg-[linear-gradient(135deg,#b8d2e2,#7aa6c4)] font-mono text-[10px] font-black tracking-[0.08em]">
-          {projectInitials}
+        <span className="flex size-[30px] shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-rim-strong bg-panel">
+          {firstPanelCandidate ? (
+            <img
+              src={firstPanelCandidate.imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ImageIcon className="size-3.5 text-fg-faint" />
+          )}
         </span>
         <span className="min-w-0">
           <strong className="block truncate text-[13px] font-black text-foreground">
@@ -73,14 +71,6 @@ const ProjectSection = () => {
         step={10}
         onValueChange={handleCanvasHeightChange}
       />
-      <RangeField
-        label="컷 사이 여백"
-        value={state.panelGap}
-        suffix="px"
-        min={0}
-        max={96}
-        onValueChange={handlePanelGapChange}
-      />
       <section className="grid gap-3">
         <header className="flex items-center justify-between gap-3 text-xs font-black text-muted-foreground">
           <span>컷 사이 배경</span>
@@ -99,7 +89,6 @@ const ProjectSection = () => {
           <span>간격 영역 색상</span>
         </label>
       </section>
-      <PanelActions />
     </SidebarCollapsibleSection>
   );
 };
