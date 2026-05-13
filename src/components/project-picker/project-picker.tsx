@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { FolderPlus, Loader2, Search } from 'lucide-react';
 
+import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
-import { HeaderLogo } from '@/components/studio/header/_components/header-logo';
+import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
 import { deleteProject, listProjects } from '@/api/client';
 import type { ProjectSummary } from '@shared/types';
@@ -14,14 +15,6 @@ import { RecentProjects } from './_components/recent-projects';
 interface ProjectPickerProps {
   onPick: (projectName: string) => void;
 }
-
-const TrafficLights = () => (
-  <span className="flex items-center gap-1.5" aria-hidden="true">
-    <span className="size-[11px] rounded-full bg-status-red/80" />
-    <span className="size-[11px] rounded-full bg-status-yellow/80" />
-    <span className="size-[11px] rounded-full bg-status-green/80" />
-  </span>
-);
 
 const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
@@ -111,25 +104,24 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="flex h-[38px] shrink-0 items-center gap-3 border-b border-rim bg-elevated px-3">
-        <TrafficLights />
-        <span className="grid size-[18px] shrink-0 place-items-center overflow-hidden rounded-[3px]">
-          <HeaderLogo className="size-full" aria-hidden="true" />
-        </span>
-        <span className="text-[11.5px] font-semibold">
-          Webtoon Panel Studio
-        </span>
-        <span className="font-mono text-[11px] text-fg-secondary">
-          no project open
-        </span>
-        <span className="flex-1" />
-        <AuthBadge
-          status={auth.status}
-          loading={auth.loading}
-          error={auth.error}
-          onRefresh={auth.refresh}
-        />
-      </header>
+      <AppHeader
+        subtitle="no project open"
+        actionsLabel="Project actions"
+        actions={
+          <>
+            <AuthBadge
+              status={auth.status}
+              loading={auth.loading}
+              error={auth.error}
+              onRefresh={auth.refresh}
+            />
+            <Button type="button" onClick={handleNewProject}>
+              <FolderPlus className="size-4" />
+              New project
+            </Button>
+          </>
+        }
+      />
 
       <main className="flex flex-1 justify-center overflow-y-auto bg-background">
         <div className="flex w-full max-w-[980px] flex-col gap-7 px-10 pt-9 pb-20">
