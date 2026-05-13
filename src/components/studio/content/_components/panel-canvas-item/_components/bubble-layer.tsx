@@ -48,9 +48,7 @@ const BubbleTextEditor = ({
     onEditEnd();
   };
 
-  const handleChange = (
-    event: ReactChangeEvent<HTMLTextAreaElement>,
-  ): void => {
+  const handleChange = (event: ReactChangeEvent<HTMLTextAreaElement>): void => {
     onChange(event.target.value);
   };
 
@@ -63,14 +61,7 @@ const BubbleTextEditor = ({
   const handleKeyDown = (
     event: ReactKeyboardEvent<HTMLTextAreaElement>,
   ): void => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      onEditEnd();
-      return;
-    }
-
-    if (event.key !== 'Enter') return;
-    if (event.shiftKey) return;
+    if (event.key !== 'Escape') return;
 
     event.preventDefault();
     onEditEnd();
@@ -97,7 +88,7 @@ const BubbleTextEditor = ({
     <textarea
       ref={textareaRef}
       aria-label="말풍선 텍스트 수정"
-      className="bubble-text-editor relative z-20 h-full w-full resize-none border-0 bg-transparent p-0 text-center leading-[1.18] [color:inherit] [font:inherit] [font-weight:inherit] [overflow-wrap:anywhere] [text-wrap:balance] outline-none caret-brand"
+      className="bubble-text-editor relative z-20 h-full w-full resize-none border-0 bg-transparent p-0 text-center leading-[1.18] [font-weight:inherit] [text-wrap:balance] [overflow-wrap:anywhere] whitespace-pre-wrap [color:inherit] caret-brand outline-none [font:inherit]"
       value={value}
       onBlur={handleBlur}
       onChange={handleChange}

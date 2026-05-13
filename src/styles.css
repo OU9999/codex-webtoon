@@ -323,6 +323,7 @@
     z-index: 2;
     line-height: 1.18;
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
     text-wrap: balance;
   }
 
