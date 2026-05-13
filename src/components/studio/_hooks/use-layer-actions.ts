@@ -90,17 +90,6 @@ const getLayerAddTarget = (
   state: StudioState,
   bubble: Bubble,
 ): LayerAddTarget | null => {
-  const selectedPanel = state.panels.find(
-    (panel) => panel.id === state.selectedPanelId,
-  );
-  if (selectedPanel) {
-    return {
-      panel: selectedPanel,
-      x: bubble.x,
-      y: bubble.y,
-    };
-  }
-
   const center = getVisibleStageCenter(state.canvasHeight);
   const panel = findViewCenterPanel(state.panels, center);
   if (!panel) return null;

@@ -107,7 +107,11 @@ interface CanvasResize {
   rect: DOMRect;
   canvasHeight: number;
   historyStart: StudioState;
+  lastClientY: number;
   pointerStartY: number;
+  scrollContainer: HTMLElement | null;
+  scrollFrame: number | null;
+  scrollStartTop: number;
 }
 
 interface CanvasResizeStartPayload {

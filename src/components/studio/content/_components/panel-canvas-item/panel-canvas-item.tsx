@@ -72,6 +72,7 @@ const PanelCanvasItem = ({
         getPanelClassName(panel),
         isSelected && 'selected',
       )}
+      data-panel-id={panel.id}
       onPointerDown={handleMovePointerDown}
     >
       <figure className="panel-visual">
