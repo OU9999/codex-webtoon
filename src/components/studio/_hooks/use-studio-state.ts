@@ -37,6 +37,10 @@ const panelsChanged = (previous: StudioState, next: StudioState): boolean => {
   return JSON.stringify(previous.panels) !== JSON.stringify(next.panels);
 };
 
+const canvasesChanged = (previous: StudioState, next: StudioState): boolean => {
+  return JSON.stringify(previous.canvases) !== JSON.stringify(next.canvases);
+};
+
 const findChangedPanelLabel = (
   previous: StudioState,
   next: StudioState,
@@ -101,24 +105,25 @@ const findChangedPanelLabel = (
   return null;
 };
 
-const getHistoryLabel = (
-  previous: StudioState,
-  next: StudioState,
-): string => {
+const getHistoryLabel = (previous: StudioState, next: StudioState): string => {
   if (previous.panels.length !== next.panels.length) {
-    return previous.panels.length < next.panels.length ? '패널 추가' : '패널 삭제';
+    return previous.panels.length < next.panels.length
+      ? '패널 추가'
+      : '패널 삭제';
   }
 
   const previousBubbleCount = countBubbles(previous);
   const nextBubbleCount = countBubbles(next);
   if (previousBubbleCount !== nextBubbleCount) {
-    return previousBubbleCount < nextBubbleCount ? '말풍선 추가' : '말풍선 삭제';
+    return previousBubbleCount < nextBubbleCount
+      ? '말풍선 추가'
+      : '말풍선 삭제';
   }
 
   if (previous.commonPrompt !== next.commonPrompt) return '공용 프롬프트 수정';
 
   if (
-    previous.canvasHeight !== next.canvasHeight ||
+    canvasesChanged(previous, next) ||
     previous.panelGap !== next.panelGap ||
     previous.panelGapColor !== next.panelGapColor
   ) {
@@ -139,8 +144,8 @@ const shouldRecordHistory = (
 ): boolean => {
   return (
     previous.commonPrompt !== next.commonPrompt ||
+    canvasesChanged(previous, next) ||
     panelsChanged(previous, next) ||
-    previous.canvasHeight !== next.canvasHeight ||
     previous.panelGap !== next.panelGap ||
     previous.panelGapColor !== next.panelGapColor ||
     previous.variantCount !== next.variantCount

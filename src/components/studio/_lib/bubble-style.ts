@@ -32,6 +32,7 @@ interface BubbleStyleValues {
 interface ResolvedBubbleStyle extends BubbleStyleValues {
   borderRadius: string;
   canvasFontFamily: string;
+  canvasFontWeight: number;
   cssFontFamily: string;
   cssFontWeight: number;
 }
@@ -123,16 +124,36 @@ const CSS_FONT_FAMILIES: Record<BubbleFontFamily, string> = {
 };
 
 const CANVAS_FONT_FAMILIES: Record<BubbleFontFamily, string> = {
-  inter: 'Inter, Arial, sans-serif',
-  mono: 'IBM Plex Mono, monospace',
-  display: 'Bagel Fat One, Inter, Arial, sans-serif',
-  serif: 'Georgia, Times New Roman, serif',
+  inter:
+    "'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+  mono: "'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Apple SD Gothic Neo', 'Malgun Gothic', monospace",
+  display:
+    "'Bagel Fat One', 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+  serif: "Georgia, 'Times New Roman', serif",
 };
 
 const CSS_FONT_WEIGHTS: Record<BubbleFontWeight, number> = {
   regular: 400,
   medium: 500,
   bold: 700,
+};
+
+const CANVAS_FONT_WEIGHTS: Record<
+  BubbleFontFamily,
+  Record<BubbleFontWeight, number>
+> = {
+  inter: CSS_FONT_WEIGHTS,
+  mono: {
+    regular: 400,
+    medium: 500,
+    bold: 600,
+  },
+  display: {
+    regular: 400,
+    medium: 400,
+    bold: 400,
+  },
+  serif: CSS_FONT_WEIGHTS,
 };
 
 const SHAPE_CORNER_RADII: Record<BubbleShape, BubbleCornerRadii> = {
@@ -670,6 +691,7 @@ const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
     ),
     borderRadius: `${radiusTopLeft}px ${radiusTopRight}px ${radiusBottomRight}px ${radiusBottomLeft}px`,
     canvasFontFamily: CANVAS_FONT_FAMILIES[fontFamily],
+    canvasFontWeight: CANVAS_FONT_WEIGHTS[fontFamily][fontWeight],
     cssFontFamily: CSS_FONT_FAMILIES[fontFamily],
     cssFontWeight: CSS_FONT_WEIGHTS[fontWeight],
   };

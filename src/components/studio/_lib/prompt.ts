@@ -2,16 +2,23 @@ import { CANVAS_WIDTH } from './constants';
 import type { Panel } from './types';
 
 const buildFinalPrompt = ({
-  commonPrompt,
+  projectCommonPrompt,
+  canvasCommonPrompt,
   panel,
 }: {
-  commonPrompt: string;
+  projectCommonPrompt: string;
+  canvasCommonPrompt: string;
   panel?: Panel;
 }): string => {
-  if (!panel) return commonPrompt.trim();
+  if (!panel) {
+    return [projectCommonPrompt.trim(), canvasCommonPrompt.trim()]
+      .filter(Boolean)
+      .join('\n\n');
+  }
 
   return [
-    commonPrompt.trim(),
+    projectCommonPrompt.trim(),
+    canvasCommonPrompt.trim(),
     panel.prompt.trim(),
     `Panel spec: vertical webtoon panel, output width ${CANVAS_WIDTH}px, panel height ${panel.height}px, no readable text in image.`,
   ]

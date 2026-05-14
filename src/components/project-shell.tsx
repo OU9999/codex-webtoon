@@ -6,11 +6,15 @@ import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker/project-picker';
 import { Studio } from '@/components/studio/studio';
 import {
+  DEFAULT_CANVAS_TITLE,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_PANEL_GAP_COLOR,
+  getNormalizedPanelCanvasId,
   normalizeCanvasHeight,
   normalizePanelGapColor,
   normalizePanelGeometry,
+  normalizeProjectCanvases,
+  normalizeSelectedCanvasId,
 } from '@shared/project-state';
 import {
   buildReferenceImageLookup,
@@ -21,13 +25,21 @@ import type {
   StudioState,
 } from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
-import { createPanel } from '@/components/studio/_lib/factories';
+import {
+  createPanel,
+  createWebtoonCanvas,
+} from '@/components/studio/_lib/factories';
 import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
 
 const createDefaultState = (): StudioState => {
   const panelGap = 28;
+  const canvas = createWebtoonCanvas({
+    title: DEFAULT_CANVAS_TITLE,
+    height: DEFAULT_CANVAS_HEIGHT,
+  });
   const panels = [
     createPanel({
+      canvasId: canvas.id,
       title: 'Opening beat',
       y: 0,
       height: 420,
@@ -35,6 +47,7 @@ const createDefaultState = (): StudioState => {
         '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
     }),
     createPanel({
+      canvasId: canvas.id,
       title: 'Reaction close-up',
       y: 420 + panelGap,
       height: 330,
@@ -42,6 +55,7 @@ const createDefaultState = (): StudioState => {
         '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
     }),
     createPanel({
+      canvasId: canvas.id,
       title: 'Long pause',
       y: 420 + panelGap + 330 + panelGap,
       height: 560,
@@ -51,10 +65,11 @@ const createDefaultState = (): StudioState => {
 
   return {
     commonPrompt: defaultCommonPrompt,
+    canvases: [canvas],
+    selectedCanvasId: canvas.id,
     panels,
     selectedPanelId: panels[0].id,
     selectedBubbleId: null,
-    canvasHeight: DEFAULT_CANVAS_HEIGHT,
     panelGap,
     panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
@@ -69,20 +84,47 @@ const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
 
 const normalizeLoadedState = (loaded: StudioState): StudioState => {
   const referenceLookup = buildReferenceImageLookup(loaded.panels);
-  const canvasHeight = normalizeCanvasHeight(
-    (loaded as { canvasHeight?: unknown }).canvasHeight,
+  const canvases = normalizeProjectCanvases(
+    (loaded as { canvases?: unknown }).canvases,
     loaded.panels,
     loaded.panelGap,
+    (loaded as { canvasHeight?: unknown }).canvasHeight,
+    (loaded as { panelGapColor?: unknown }).panelGapColor,
   );
+  const validCanvasIds = new Set(canvases.map((canvas) => canvas.id));
+  const fallbackCanvasId = canvases[0]?.id ?? '';
   const selectedPanelId = loaded.selectedBubbleId
     ? null
     : loaded.selectedPanelId;
-  let fallbackY = 0;
+  const selectedCanvasId = normalizeSelectedCanvasId(
+    (loaded as { selectedCanvasId?: unknown }).selectedCanvasId,
+    canvases,
+    loaded.panels,
+    selectedPanelId,
+  );
+  const fallbackYByCanvas = new Map<string, number>(
+    canvases.map((canvas) => [canvas.id, 0]),
+  );
 
   return {
-    ...loaded,
+    commonPrompt: loaded.commonPrompt,
+    canvases,
+    selectedCanvasId,
     selectedPanelId,
     panels: loaded.panels.map((panel) => {
+      const canvasId = getNormalizedPanelCanvasId(
+        panel,
+        validCanvasIds,
+        fallbackCanvasId,
+      );
+      const canvasHeight =
+        canvases.find((canvas) => canvas.id === canvasId)?.height ??
+        normalizeCanvasHeight(
+          (loaded as { canvasHeight?: unknown }).canvasHeight,
+          loaded.panels,
+          loaded.panelGap,
+        );
+      const fallbackY = fallbackYByCanvas.get(canvasId) ?? 0;
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;
       const referenceImages = Array.isArray(rawReferences)
@@ -92,16 +134,21 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
           )
         : [];
       const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
-      fallbackY += geometry.height + loaded.panelGap;
+      fallbackYByCanvas.set(
+        canvasId,
+        fallbackY + geometry.height + loaded.panelGap,
+      );
 
       return {
         ...panel,
+        canvasId,
         ...geometry,
         referenceImages,
         bubbles: panel.bubbles.map(withDefaultBubbleStyle),
       };
     }),
-    canvasHeight,
+    selectedBubbleId: loaded.selectedBubbleId,
+    panelGap: loaded.panelGap,
     panelGapColor: normalizePanelGapColor(
       (loaded as { panelGapColor?: unknown }).panelGapColor,
     ),

@@ -1,9 +1,43 @@
 import { useState } from 'react';
 import { normalizePanelGapColor } from '@shared/project-state';
-import { drawBubbleToCanvas, drawEmptyPanel } from '../_lib/bubble-renderer';
-import { CANVAS_WIDTH } from '../_lib/constants';
+import {
+  drawBubbleToCanvas,
+  drawEmptyPanel,
+  getBubbleCanvasFont,
+} from '../_lib/bubble-renderer';
+import { getCanvasPanels } from '../_lib/canvas-state';
+import { CANVAS_CONNECTOR_HEIGHT, CANVAS_WIDTH } from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
-import type { StudioState } from '../_lib/types';
+import type { Panel, StudioState } from '../_lib/types';
+
+const FONT_LOAD_SAMPLE_TEXT = 'Aa가나';
+
+const canvasToPngBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
+  return new Promise((resolve) => {
+    canvas.toBlob(resolve, 'image/png');
+  });
+};
+
+const waitForCanvasFonts = async (panels: Panel[]): Promise<void> => {
+  const fonts = document.fonts;
+  if (!fonts) return;
+
+  const requestedFonts = new Set<string>();
+  panels.forEach((panel) => {
+    panel.bubbles.forEach((bubble) => {
+      requestedFonts.add(getBubbleCanvasFont(bubble));
+    });
+  });
+
+  try {
+    await Promise.allSettled(
+      [...requestedFonts].map((font) =>
+        fonts.load(font, FONT_LOAD_SAMPLE_TEXT),
+      ),
+    );
+    await fonts.ready;
+  } catch {}
+};
 
 const drawImageCover = (
   ctx: CanvasRenderingContext2D,
@@ -48,68 +82,123 @@ const drawImageCover = (
   );
 };
 
+const getExportHeight = (state: StudioState): number => {
+  const canvasHeightTotal = state.canvases.reduce(
+    (sum, canvas) => sum + canvas.height,
+    0,
+  );
+  const connectorHeightTotal =
+    Math.max(0, state.canvases.length - 1) * CANVAS_CONNECTOR_HEIGHT;
+
+  return canvasHeightTotal + connectorHeightTotal;
+};
+
+const drawCanvasConnector = (
+  ctx: CanvasRenderingContext2D,
+  y: number,
+  fromColor: string,
+  toColor: string,
+): void => {
+  const gradient = ctx.createLinearGradient(
+    0,
+    y,
+    0,
+    y + CANVAS_CONNECTOR_HEIGHT,
+  );
+  gradient.addColorStop(0, fromColor);
+  gradient.addColorStop(1, toColor);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, y, CANVAS_WIDTH, CANVAS_CONNECTOR_HEIGHT);
+};
+
 const useExport = (state: StudioState) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleWebtoonPngExport = async (): Promise<void> => {
     setIsExporting(true);
-    const canvas = document.createElement('canvas');
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = state.canvasHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      setIsExporting(false);
-      return;
-    }
 
-    ctx.fillStyle = normalizePanelGapColor(state.panelGapColor);
-    ctx.fillRect(0, 0, CANVAS_WIDTH, state.canvasHeight);
+    try {
+      await waitForCanvasFonts(state.panels);
 
-    for (const panel of state.panels) {
-      const candidate = panel.candidates.find(
-        (item) => item.id === panel.selectedCandidateId,
-      );
-      if (candidate?.imageUrl) {
-        try {
-          const image = await loadImage(candidate.imageUrl);
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(panel.x, panel.y, panel.width, panel.height);
-          ctx.clip();
-          drawImageCover(
-            ctx,
-            image,
-            panel.x,
-            panel.y,
-            panel.width,
-            panel.height,
+      const canvas = document.createElement('canvas');
+      canvas.width = CANVAS_WIDTH;
+      canvas.height = getExportHeight(state);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let canvasOffsetY = 0;
+
+      for (const [canvasIndex, projectCanvas] of state.canvases.entries()) {
+        const canvasBackgroundColor = normalizePanelGapColor(
+          projectCanvas.backgroundColor,
+        );
+        if (canvasIndex > 0) {
+          const previousCanvas = state.canvases[canvasIndex - 1];
+          const previousBackgroundColor = normalizePanelGapColor(
+            previousCanvas?.backgroundColor,
           );
-          ctx.restore();
-        } catch {
-          drawEmptyPanel(ctx, panel.y, panel.height, panel.x, panel.width);
+          drawCanvasConnector(
+            ctx,
+            canvasOffsetY,
+            previousBackgroundColor,
+            canvasBackgroundColor,
+          );
+          canvasOffsetY += CANVAS_CONNECTOR_HEIGHT;
         }
-      } else {
-        drawEmptyPanel(ctx, panel.y, panel.height, panel.x, panel.width);
+
+        ctx.fillStyle = canvasBackgroundColor;
+        ctx.fillRect(0, canvasOffsetY, CANVAS_WIDTH, projectCanvas.height);
+
+        for (const panel of getCanvasPanels(state, projectCanvas.id)) {
+          const panelY = canvasOffsetY + panel.y;
+          const candidate = panel.candidates.find(
+            (item) => item.id === panel.selectedCandidateId,
+          );
+          if (candidate?.imageUrl) {
+            try {
+              const image = await loadImage(candidate.imageUrl);
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(panel.x, panelY, panel.width, panel.height);
+              ctx.clip();
+              drawImageCover(
+                ctx,
+                image,
+                panel.x,
+                panelY,
+                panel.width,
+                panel.height,
+              );
+              ctx.restore();
+            } catch {
+              drawEmptyPanel(ctx, panelY, panel.height, panel.x, panel.width);
+            }
+          } else {
+            drawEmptyPanel(ctx, panelY, panel.height, panel.x, panel.width);
+          }
+
+          ctx.strokeStyle = '#1f2326';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(
+            panel.x + 0.5,
+            panelY + 0.5,
+            panel.width - 1,
+            panel.height - 1,
+          );
+          ctx.save();
+          ctx.translate(panel.x, panelY);
+          panel.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble, 0));
+          ctx.restore();
+        }
+
+        canvasOffsetY += projectCanvas.height;
       }
 
-      ctx.strokeStyle = '#1f2326';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(
-        panel.x + 1.5,
-        panel.y + 1.5,
-        panel.width - 3,
-        panel.height - 3,
-      );
-      ctx.save();
-      ctx.translate(panel.x, panel.y);
-      panel.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble, 0));
-      ctx.restore();
-    }
-
-    canvas.toBlob((blob) => {
+      const blob = await canvasToPngBlob(canvas);
       if (blob) downloadBlob(blob, `webtoon-panel-${Date.now()}.png`);
+    } finally {
       setIsExporting(false);
-    }, 'image/png');
+    }
   };
 
   const handleProjectJsonExport = (): void => {

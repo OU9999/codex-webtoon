@@ -6,7 +6,8 @@ import type { Bubble, BubbleType } from '@/components/studio/_lib/types';
 interface LayerRowProps {
   bubble: Bubble;
   isActive: boolean;
-  onSelect: (bubbleId: string) => void;
+  panelId: string;
+  onSelect: (bubbleId: string, panelId: string) => void;
 }
 
 const TYPE_ICONS: Record<BubbleType, ReactNode> = {
@@ -23,9 +24,9 @@ const TYPE_LABELS: Record<BubbleType, string> = {
   sfx: 'SFX',
 };
 
-const LayerRow = ({ bubble, isActive, onSelect }: LayerRowProps) => {
+const LayerRow = ({ bubble, isActive, panelId, onSelect }: LayerRowProps) => {
   const handleSelect = (): void => {
-    onSelect(bubble.id);
+    onSelect(bubble.id, panelId);
   };
 
   return (

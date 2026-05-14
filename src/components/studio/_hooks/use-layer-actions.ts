@@ -8,6 +8,11 @@ import {
 } from '../_lib/bubble-style';
 import { createBubble } from '../_lib/factories';
 import { CANVAS_WIDTH } from '../_lib/constants';
+import {
+  getCanvasPanels,
+  getPanelCanvas,
+  getSelectedCanvas,
+} from '../_lib/canvas-state';
 import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
 
 interface CanvasPoint {
@@ -21,8 +26,19 @@ interface LayerAddTarget {
   y: number;
 }
 
-const getVisibleStageCenter = (canvasHeight: number): CanvasPoint => {
-  const stage = document.querySelector<HTMLElement>('.webtoon-stage');
+const getCanvasStageElement = (canvasId: string): HTMLElement | null => {
+  return (
+    Array.from(document.querySelectorAll<HTMLElement>('.webtoon-stage')).find(
+      (element) => element.dataset.canvasId === canvasId,
+    ) ?? null
+  );
+};
+
+const getVisibleStageCenter = (
+  canvasId: string,
+  canvasHeight: number,
+): CanvasPoint => {
+  const stage = getCanvasStageElement(canvasId);
   if (!stage) return { x: CANVAS_WIDTH / 2, y: canvasHeight / 2 };
 
   const rect = stage.getBoundingClientRect();
@@ -90,8 +106,11 @@ const getLayerAddTarget = (
   state: StudioState,
   bubble: Bubble,
 ): LayerAddTarget | null => {
-  const center = getVisibleStageCenter(state.canvasHeight);
-  const panel = findViewCenterPanel(state.panels, center);
+  const canvas = getSelectedCanvas(state);
+  if (!canvas) return null;
+
+  const center = getVisibleStageCenter(canvas.id, canvas.height);
+  const panel = findViewCenterPanel(getCanvasPanels(state, canvas.id), center);
   if (!panel) return null;
 
   return {
@@ -175,6 +194,7 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
 
       return {
         ...current,
+        selectedCanvasId: target.panel.canvasId,
         selectedPanelId: null,
         selectedBubbleId: nextBubble.id,
         panels: current.panels.map((panel) =>
@@ -187,11 +207,21 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   };
 
   const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
-    setState((current) => ({
-      ...current,
-      selectedPanelId: null,
-      selectedBubbleId: bubbleId,
-    }));
+    setState((current) => {
+      const panel = panelId
+        ? current.panels.find((item) => item.id === panelId)
+        : current.panels.find((item) =>
+            item.bubbles.some((bubble) => bubble.id === bubbleId),
+          );
+      const canvas = panel ? getPanelCanvas(current, panel) : null;
+
+      return {
+        ...current,
+        selectedCanvasId: canvas?.id ?? current.selectedCanvasId,
+        selectedPanelId: null,
+        selectedBubbleId: bubbleId,
+      };
+    });
   };
 
   const handleBubbleTextChange = (

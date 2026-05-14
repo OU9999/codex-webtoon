@@ -5,14 +5,19 @@ import { SidebarCollapsibleSection } from '../sidebar-collapsible-section';
 import { PanelListItem } from './_components/panel-list-item';
 
 const PanelList = () => {
-  const { state, selectedPanel, handleAddPanel, handlePanelSelect } =
-    useStudioContext();
-  const meta = `${state.panels.length} cuts`;
+  const {
+    selectedCanvas,
+    selectedCanvasPanels,
+    selectedPanel,
+    handleAddPanel,
+    handlePanelSelect,
+  } = useStudioContext();
+  const meta = `${selectedCanvasPanels.length} cuts`;
 
   return (
     <SidebarCollapsibleSection
       icon={<Rows3 className="size-4" />}
-      title="Panels"
+      title={selectedCanvas?.title ?? 'Panels'}
       meta={meta}
       className="min-h-0"
       contentClassName="grid gap-2 p-2"
@@ -28,7 +33,7 @@ const PanelList = () => {
         Add cut
       </Button>
       <ol className="grid max-h-[min(42vh,360px)] content-start gap-1.5 overflow-y-auto">
-        {state.panels.map((panel, index) => (
+        {selectedCanvasPanels.map((panel, index) => (
           <PanelListItem
             key={panel.id}
             panel={panel}

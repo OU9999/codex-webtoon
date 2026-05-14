@@ -288,6 +288,13 @@ const getTextLineY = (
   lineCount: number,
 ): number => centerY + (index - (lineCount - 1) / 2) * lineHeight;
 
+const getBubbleCanvasFont = (bubble: Bubble): string => {
+  const style = resolveBubbleStyle(bubble);
+  const fontStyle = bubble.type === 'sfx' ? 'italic ' : '';
+
+  return `${fontStyle}${style.canvasFontWeight} ${bubble.fontSize}px ${style.canvasFontFamily}`;
+};
+
 const drawBubbleToCanvas = (
   ctx: CanvasRenderingContext2D,
   bubble: Bubble,
@@ -295,9 +302,7 @@ const drawBubbleToCanvas = (
 ): void => {
   ctx.save();
   const style = resolveBubbleStyle(bubble);
-  const fontStyle =
-    bubble.type === 'sfx' || bubble.type === 'monologue' ? 'italic ' : '';
-  ctx.font = `${fontStyle}${style.cssFontWeight} ${bubble.fontSize}px ${style.canvasFontFamily}`;
+  ctx.font = getBubbleCanvasFont(bubble);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -380,4 +385,4 @@ const drawBubbleToCanvas = (
   ctx.restore();
 };
 
-export { drawBubbleToCanvas, drawEmptyPanel };
+export { drawBubbleToCanvas, drawEmptyPanel, getBubbleCanvasFont };

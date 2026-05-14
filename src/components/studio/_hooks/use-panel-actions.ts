@@ -4,9 +4,14 @@ import {
   normalizePanelGapColor,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
-import { createPanel } from '../_lib/factories';
+import { createPanel, createWebtoonCanvas } from '../_lib/factories';
 import { clamp } from '../_lib/canvas-primitives';
 import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
+import {
+  getCanvasPanels,
+  getPanelCanvasHeight,
+  getSelectedCanvas,
+} from '../_lib/canvas-state';
 import {
   clampPanelToCanvas,
   getMinimumCanvasHeightForContent,
@@ -27,6 +32,7 @@ const removeReferenceImage = (
   references.filter((reference) => !isSameReferenceImage(reference, target));
 
 const DEFAULT_PANEL_HEIGHT = 420;
+const CANVAS_SCROLL_CONTAINER_SELECTOR = '[data-canvas-scroll-container]';
 
 const getPanelBottom = (panel: Panel): number => panel.y + panel.height;
 
@@ -41,11 +47,65 @@ const scrollPanelIntoView = (panelId: string): void => {
     const panelElement = Array.from(
       document.querySelectorAll<HTMLElement>('[data-panel-id]'),
     ).find((element) => element.dataset.panelId === panelId);
+    if (!panelElement) return;
 
-    panelElement?.scrollIntoView({
+    const scrollContainer = panelElement.closest<HTMLElement>(
+      CANVAS_SCROLL_CONTAINER_SELECTOR,
+    );
+    if (!scrollContainer) {
+      panelElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+      return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const panelRect = panelElement.getBoundingClientRect();
+    const centeredTop =
+      scrollContainer.scrollTop +
+      panelRect.top -
+      containerRect.top -
+      (containerRect.height - panelRect.height) / 2;
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, centeredTop),
       behavior: 'smooth',
-      block: 'center',
-      inline: 'center',
+    });
+  });
+};
+
+const scrollCanvasIntoView = (canvasId: string): void => {
+  window.requestAnimationFrame(() => {
+    const canvasElement = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-canvas-id]'),
+    ).find((element) => element.dataset.canvasId === canvasId);
+    if (!canvasElement) return;
+
+    const scrollContainer = canvasElement.closest<HTMLElement>(
+      CANVAS_SCROLL_CONTAINER_SELECTOR,
+    );
+    if (!scrollContainer) {
+      canvasElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      });
+      return;
+    }
+
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const canvasRect = canvasElement.getBoundingClientRect();
+    const centeredTop =
+      scrollContainer.scrollTop +
+      canvasRect.top -
+      containerRect.top -
+      (containerRect.height - canvasRect.height) / 2;
+
+    scrollContainer.scrollTo({
+      top: Math.max(0, centeredTop),
+      behavior: 'smooth',
     });
   });
 };
@@ -65,19 +125,32 @@ const usePanelActions = (
 
   const moveSelectedPanel = (direction: number): void => {
     setState((current) => {
-      const index = current.panels.findIndex(
+      const selected = current.panels.find(
         (panel) => panel.id === current.selectedPanelId,
       );
+      if (!selected) return current;
+
+      const canvasPanels = getCanvasPanels(current, selected.canvasId);
+      const index = canvasPanels.findIndex((panel) => panel.id === selected.id);
       const target = index + direction;
       if (index < 0) return current;
       if (target < 0) return current;
-      if (target >= current.panels.length) return current;
+      if (target >= canvasPanels.length) return current;
 
-      const panels = [...current.panels];
-      const [panel] = panels.splice(index, 1);
+      const reordered = [...canvasPanels];
+      const [panel] = reordered.splice(index, 1);
       if (!panel) return current;
 
-      panels.splice(target, 0, panel);
+      reordered.splice(target, 0, panel);
+      let canvasPanelIndex = 0;
+      const panels = current.panels.map((item) => {
+        if (item.canvasId !== selected.canvasId) return item;
+
+        const nextPanel = reordered[canvasPanelIndex];
+        canvasPanelIndex += 1;
+        return nextPanel ?? item;
+      });
+
       return { ...current, panels };
     });
   };
@@ -91,19 +164,27 @@ const usePanelActions = (
 
   const handleAddPanel = (): void => {
     setState((current) => {
+      const canvas = getSelectedCanvas(current);
+      if (!canvas) return current;
+
+      const canvasPanels = getCanvasPanels(current, canvas.id);
       const panelHeight = DEFAULT_PANEL_HEIGHT;
-      const rawY = getAppendPanelY(current.panels, current.panelGap);
-      const canvasHeight = Math.max(current.canvasHeight, rawY + panelHeight);
+      const rawY = getAppendPanelY(canvasPanels, current.panelGap);
+      const canvasHeight = Math.max(canvas.height, rawY + panelHeight);
       const panel = createPanel({
-        title: `Panel ${current.panels.length + 1}`,
+        canvasId: canvas.id,
+        title: `Panel ${canvasPanels.length + 1}`,
         y: clamp(rawY, 0, canvasHeight - panelHeight),
         height: panelHeight,
       });
 
       return {
         ...current,
-        canvasHeight,
+        canvases: current.canvases.map((item) =>
+          item.id === canvas.id ? { ...item, height: canvasHeight } : item,
+        ),
         panels: [...current.panels, panel],
+        selectedCanvasId: canvas.id,
         selectedPanelId: panel.id,
         selectedBubbleId: null,
       };
@@ -123,8 +204,10 @@ const usePanelActions = (
         WEBTOON_CANVAS_WIDTH - selected.width,
       );
       const y = selected.y + 24;
-      const canvasHeight = Math.max(current.canvasHeight, y + selected.height);
+      const selectedCanvasHeight = getPanelCanvasHeight(current, selected);
+      const canvasHeight = Math.max(selectedCanvasHeight, y + selected.height);
       const duplicate = createPanel({
+        canvasId: selected.canvasId,
         title: `${selected.title} copy`,
         x,
         y,
@@ -148,8 +231,13 @@ const usePanelActions = (
 
       return {
         ...current,
-        canvasHeight,
+        canvases: current.canvases.map((canvas) =>
+          canvas.id === selected.canvasId
+            ? { ...canvas, height: canvasHeight }
+            : canvas,
+        ),
         panels,
+        selectedCanvasId: selected.canvasId,
         selectedPanelId: duplicate.id,
         selectedBubbleId: null,
       };
@@ -178,6 +266,7 @@ const usePanelActions = (
       return {
         ...current,
         panels: normalizedPanels,
+        selectedCanvasId: nextPanel.canvasId,
         selectedPanelId: nextPanel.id,
         selectedBubbleId: null,
       };
@@ -192,13 +281,22 @@ const usePanelActions = (
     if (typeof raw !== 'number') return;
 
     setState((current) => {
+      const canvas = getSelectedCanvas(current);
+      if (!canvas) return current;
+
+      const canvasPanels = getCanvasPanels(current, canvas.id);
       const canvasHeight = Math.max(
         MIN_CANVAS_HEIGHT,
         Math.trunc(raw),
-        getMinimumCanvasHeightForContent(current.panels),
+        getMinimumCanvasHeightForContent(canvasPanels),
       );
 
-      return { ...current, canvasHeight };
+      return {
+        ...current,
+        canvases: current.canvases.map((item) =>
+          item.id === canvas.id ? { ...item, height: canvasHeight } : item,
+        ),
+      };
     });
   };
 
@@ -209,11 +307,38 @@ const usePanelActions = (
     setState((current) => ({ ...current, panelGap }));
   };
 
-  const handlePanelGapColorChange = (
+  const handleCanvasBackgroundColorChange = (
     event: ChangeEvent<HTMLInputElement>,
   ): void => {
-    const panelGapColor = normalizePanelGapColor(event.target.value);
-    setState((current) => ({ ...current, panelGapColor }));
+    const backgroundColor = normalizePanelGapColor(event.target.value);
+    setState((current) => {
+      const canvas = getSelectedCanvas(current);
+      if (!canvas) return current;
+
+      return {
+        ...current,
+        canvases: current.canvases.map((item) =>
+          item.id === canvas.id ? { ...item, backgroundColor } : item,
+        ),
+      };
+    });
+  };
+
+  const handleCanvasCommonPromptChange = (
+    event: ChangeEvent<HTMLTextAreaElement>,
+  ): void => {
+    const commonPrompt = event.target.value;
+    setState((current) => {
+      const canvas = getSelectedCanvas(current);
+      if (!canvas) return current;
+
+      return {
+        ...current,
+        canvases: current.canvases.map((item) =>
+          item.id === canvas.id ? { ...item, commonPrompt } : item,
+        ),
+      };
+    });
   };
 
   const handleVariantCountChange = (value: number[]): void => {
@@ -226,10 +351,43 @@ const usePanelActions = (
   const handlePanelSelect = (panelId: string): void => {
     setState((current) => ({
       ...current,
+      selectedCanvasId:
+        current.panels.find((panel) => panel.id === panelId)?.canvasId ??
+        current.selectedCanvasId,
       selectedPanelId: panelId,
       selectedBubbleId: null,
     }));
     scrollPanelIntoView(panelId);
+  };
+
+  const handleCanvasSelect = (canvasId: string): void => {
+    setState((current) => {
+      const canvas = current.canvases.find((item) => item.id === canvasId);
+      if (!canvas) return current;
+
+      return {
+        ...current,
+        selectedCanvasId: canvas.id,
+        selectedPanelId: null,
+        selectedBubbleId: null,
+      };
+    });
+    scrollCanvasIntoView(canvasId);
+  };
+
+  const handleAddCanvas = (): void => {
+    const canvas = createWebtoonCanvas({
+      title: `Canvas ${state.canvases.length + 1}`,
+    });
+
+    setState((current) => ({
+      ...current,
+      canvases: [...current.canvases, canvas],
+      selectedCanvasId: canvas.id,
+      selectedPanelId: null,
+      selectedBubbleId: null,
+    }));
+    scrollCanvasIntoView(canvas.id);
   };
 
   const handleSelectionClear = (): void => {
@@ -258,7 +416,10 @@ const usePanelActions = (
       panels: current.panels.map((panel) => {
         if (panel.id !== current.selectedPanelId) return panel;
 
-        return clampPanelToCanvas({ ...panel, height }, current.canvasHeight);
+        return clampPanelToCanvas(
+          { ...panel, height },
+          getPanelCanvasHeight(current, panel),
+        );
       }),
     }));
   };
@@ -271,7 +432,10 @@ const usePanelActions = (
       panels: current.panels.map((panel) => {
         if (panel.id !== current.selectedPanelId) return panel;
 
-        return clampPanelToCanvas({ ...panel, width }, current.canvasHeight);
+        return clampPanelToCanvas(
+          { ...panel, width },
+          getPanelCanvasHeight(current, panel),
+        );
       }),
     }));
   };
@@ -347,14 +511,17 @@ const usePanelActions = (
   };
 
   return {
+    handleAddCanvas,
     handleAddPanel,
+    handleCanvasSelect,
     handleCanvasHeightChange,
+    handleCanvasCommonPromptChange,
     handleCommonPromptChange,
     handleDeletePanel,
     handleDuplicatePanel,
     handleMovePanelDown,
     handleMovePanelUp,
-    handlePanelGapColorChange,
+    handleCanvasBackgroundColorChange,
     handlePanelGapChange,
     handlePanelSelect,
     handleReferenceImageRemove,

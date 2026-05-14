@@ -1,6 +1,7 @@
 import { WEBTOON_CANVAS_WIDTH } from '@shared/project-state';
 
 const CANVAS_WIDTH = WEBTOON_CANVAS_WIDTH;
+const CANVAS_CONNECTOR_HEIGHT = 56;
 const DYNAMIC_STYLE_ELEMENT_ID = 'webtoon-panel-studio-dynamic-styles';
 const MAX_REFERENCE_IMAGES = 4;
 
@@ -11,6 +12,7 @@ const defaultCommonPrompt = [
 ].join('\n');
 
 export {
+  CANVAS_CONNECTOR_HEIGHT,
   CANVAS_WIDTH,
   defaultCommonPrompt,
   DYNAMIC_STYLE_ELEMENT_ID,

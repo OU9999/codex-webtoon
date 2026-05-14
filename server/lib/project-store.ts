@@ -11,9 +11,12 @@ import {
 import { dirname, join, resolve } from 'node:path';
 import { config } from '../config.js';
 import {
+  getNormalizedPanelCanvasId,
   normalizeCanvasHeight,
   normalizePanelGapColor,
   normalizePanelGeometry,
+  normalizeProjectCanvases,
+  normalizeSelectedCanvasId,
 } from '../../shared/project-state.js';
 import {
   buildReferenceImageLookup,
@@ -299,11 +302,26 @@ const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
   return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
 };
 
+const isWebtoonCanvas = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  const canvas = value as Record<string, unknown>;
+  return (
+    typeof canvas.id === 'string' &&
+    typeof canvas.title === 'string' &&
+    typeof canvas.height === 'number' &&
+    (canvas.commonPrompt === undefined ||
+      typeof canvas.commonPrompt === 'string') &&
+    (canvas.backgroundColor === undefined ||
+      typeof canvas.backgroundColor === 'string')
+  );
+};
+
 const isPanel = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false;
   const p = value as Record<string, unknown>;
   return (
     typeof p.id === 'string' &&
+    (p.canvasId === undefined || typeof p.canvasId === 'string') &&
     typeof p.title === 'string' &&
     (p.x === undefined || typeof p.x === 'number') &&
     (p.y === undefined || typeof p.y === 'number') &&
@@ -329,6 +347,11 @@ const isProjectState = (value: unknown): value is ProjectState => {
   const obj = value as Record<string, unknown>;
   return (
     typeof obj.commonPrompt === 'string' &&
+    (obj.canvases === undefined ||
+      (Array.isArray(obj.canvases) && obj.canvases.every(isWebtoonCanvas))) &&
+    (obj.selectedCanvasId === undefined ||
+      obj.selectedCanvasId === null ||
+      typeof obj.selectedCanvasId === 'string') &&
     Array.isArray(obj.panels) &&
     obj.panels.every(isPanel) &&
     (obj.selectedPanelId === null || typeof obj.selectedPanelId === 'string') &&
@@ -344,18 +367,46 @@ const isProjectState = (value: unknown): value is ProjectState => {
 
 const normalizeProjectState = (state: ProjectState): ProjectState => {
   const referenceLookup = buildReferenceImageLookup(state.panels);
-  const canvasHeight = normalizeCanvasHeight(
+  const canvases = normalizeProjectCanvases(
+    (state as { canvases?: unknown }).canvases,
+    state.panels,
+    state.panelGap,
+    (state as { canvasHeight?: unknown }).canvasHeight,
+    (state as { panelGapColor?: unknown }).panelGapColor,
+  );
+  const validCanvasIds = new Set(canvases.map((canvas) => canvas.id));
+  const fallbackCanvasId = canvases[0]?.id ?? '';
+  const legacyCanvasHeight = normalizeCanvasHeight(
     (state as { canvasHeight?: unknown }).canvasHeight,
     state.panels,
     state.panelGap,
   );
   const selectedPanelId = state.selectedBubbleId ? null : state.selectedPanelId;
-  let fallbackY = 0;
+  const selectedCanvasId = normalizeSelectedCanvasId(
+    (state as { selectedCanvasId?: unknown }).selectedCanvasId,
+    canvases,
+    state.panels,
+    selectedPanelId,
+  );
+  const fallbackYByCanvas = new Map<string, number>(
+    canvases.map((canvas) => [canvas.id, 0]),
+  );
 
   return {
-    ...state,
+    commonPrompt: state.commonPrompt,
+    canvases,
+    selectedCanvasId,
     selectedPanelId,
     panels: state.panels.map((panel) => {
+      const canvasId = getNormalizedPanelCanvasId(
+        panel,
+        validCanvasIds,
+        fallbackCanvasId,
+      );
+      const canvasHeight =
+        canvases.find((canvas) => canvas.id === canvasId)?.height ??
+        legacyCanvasHeight;
+      const fallbackY = fallbackYByCanvas.get(canvasId) ?? 0;
       const rawReferences = (panel as { referenceImages?: unknown })
         .referenceImages;
       const referenceImages = Array.isArray(rawReferences)
@@ -365,11 +416,15 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
           )
         : [];
       const geometry = normalizePanelGeometry(panel, fallbackY, canvasHeight);
-      fallbackY += geometry.height + state.panelGap;
+      fallbackYByCanvas.set(
+        canvasId,
+        fallbackY + geometry.height + state.panelGap,
+      );
 
-      return { ...panel, ...geometry, referenceImages };
+      return { ...panel, canvasId, ...geometry, referenceImages };
     }),
-    canvasHeight,
+    selectedBubbleId: state.selectedBubbleId,
+    panelGap: state.panelGap,
     panelGapColor: normalizePanelGapColor(
       (state as { panelGapColor?: unknown }).panelGapColor,
     ),

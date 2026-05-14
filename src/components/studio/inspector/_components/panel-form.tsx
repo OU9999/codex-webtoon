@@ -26,6 +26,8 @@ const PanelForm = () => {
     isGenerating,
     selectedCandidate,
     selectedPanel,
+    selectedPanelCanvas,
+    selectedPanelCanvasPanels,
     state,
   } = useStudioContext();
 
@@ -37,14 +39,14 @@ const PanelForm = () => {
   );
   const maxPanelHeight = Math.max(
     MIN_PANEL_HEIGHT,
-    state.canvasHeight - selectedPanel.y,
+    (selectedPanelCanvas?.height ?? MIN_PANEL_HEIGHT) - selectedPanel.y,
   );
-  const panelIndex = state.panels.findIndex(
+  const panelIndex = selectedPanelCanvasPanels.findIndex(
     (panel) => panel.id === selectedPanel.id,
   );
   const meta =
     panelIndex >= 0
-      ? `PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${state.panels.length}`
+      ? `${selectedPanelCanvas?.title ?? 'Canvas'} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
 
   return (
