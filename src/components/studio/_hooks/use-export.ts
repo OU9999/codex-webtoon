@@ -5,8 +5,13 @@ import {
   drawEmptyPanel,
   getBubbleCanvasFont,
 } from '../_lib/bubble-renderer';
+import { getCanvasBackgroundStops } from '../_lib/canvas-background';
 import { getCanvasPanels } from '../_lib/canvas-state';
-import { CANVAS_CONNECTOR_HEIGHT, CANVAS_WIDTH } from '../_lib/constants';
+import {
+  CANVAS_CONNECTOR_HEIGHT,
+  CANVAS_WIDTH,
+  CANVAS_WORKSPACE_BACKGROUND_COLOR,
+} from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
 import type { Panel, StudioState } from '../_lib/types';
 
@@ -96,19 +101,32 @@ const getExportHeight = (state: StudioState): number => {
 const drawCanvasConnector = (
   ctx: CanvasRenderingContext2D,
   y: number,
-  fromColor: string,
-  toColor: string,
 ): void => {
-  const gradient = ctx.createLinearGradient(
-    0,
-    y,
-    0,
-    y + CANVAS_CONNECTOR_HEIGHT,
-  );
-  gradient.addColorStop(0, fromColor);
-  gradient.addColorStop(1, toColor);
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = CANVAS_WORKSPACE_BACKGROUND_COLOR;
   ctx.fillRect(0, y, CANVAS_WIDTH, CANVAS_CONNECTOR_HEIGHT);
+};
+
+const drawCanvasBackground = (
+  ctx: CanvasRenderingContext2D,
+  y: number,
+  height: number,
+  previousColor: string | null,
+  currentColor: string,
+  nextColor: string | null,
+): void => {
+  const stops = getCanvasBackgroundStops({
+    currentColor,
+    height,
+    previousColor,
+    nextColor,
+  });
+  const gradient = ctx.createLinearGradient(0, y, 0, y + height);
+  gradient.addColorStop(0, stops.topColor);
+  gradient.addColorStop(stops.edgeStartRatio, stops.centerColor);
+  gradient.addColorStop(stops.edgeEndRatio, stops.centerColor);
+  gradient.addColorStop(1, stops.bottomColor);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, y, CANVAS_WIDTH, height);
 };
 
 const useExport = (state: StudioState) => {
@@ -129,25 +147,30 @@ const useExport = (state: StudioState) => {
       let canvasOffsetY = 0;
 
       for (const [canvasIndex, projectCanvas] of state.canvases.entries()) {
+        const previousCanvas = state.canvases[canvasIndex - 1] ?? null;
+        const nextCanvas = state.canvases[canvasIndex + 1] ?? null;
         const canvasBackgroundColor = normalizePanelGapColor(
           projectCanvas.backgroundColor,
         );
+        const previousBackgroundColor = previousCanvas
+          ? normalizePanelGapColor(previousCanvas.backgroundColor)
+          : null;
+        const nextBackgroundColor = nextCanvas
+          ? normalizePanelGapColor(nextCanvas.backgroundColor)
+          : null;
         if (canvasIndex > 0) {
-          const previousCanvas = state.canvases[canvasIndex - 1];
-          const previousBackgroundColor = normalizePanelGapColor(
-            previousCanvas?.backgroundColor,
-          );
-          drawCanvasConnector(
-            ctx,
-            canvasOffsetY,
-            previousBackgroundColor,
-            canvasBackgroundColor,
-          );
+          drawCanvasConnector(ctx, canvasOffsetY);
           canvasOffsetY += CANVAS_CONNECTOR_HEIGHT;
         }
 
-        ctx.fillStyle = canvasBackgroundColor;
-        ctx.fillRect(0, canvasOffsetY, CANVAS_WIDTH, projectCanvas.height);
+        drawCanvasBackground(
+          ctx,
+          canvasOffsetY,
+          projectCanvas.height,
+          previousBackgroundColor,
+          canvasBackgroundColor,
+          nextBackgroundColor,
+        );
 
         for (const panel of getCanvasPanels(state, projectCanvas.id)) {
           const panelY = canvasOffsetY + panel.y;

@@ -66,7 +66,7 @@ const Content = () => {
 
   return (
     <section
-      className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pt-4 pb-12 md:px-7 md:pt-5 md:pb-14"
+      className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-canvas bg-[radial-gradient(circle,rgb(26_31_48/0.07)_1px,transparent_1px)] bg-[length:24px_24px] px-3 pt-4 pb-12 md:px-7 md:pt-5 md:pb-14"
       data-canvas-scroll-container
       aria-label="Webtoon canvas"
       onPointerDown={handleWorkspacePointerDown}
@@ -94,25 +94,25 @@ const Content = () => {
               {canvasIndex > 0 && (
                 <div
                   className={cn(
-                    'mx-auto h-14 w-full max-w-[720px]',
+                    'mx-auto h-14 w-full',
                     getCanvasConnectorClassName(),
                     getCanvasConnectorClassName(canvasIndex),
                   )}
                   aria-hidden="true"
                 />
               )}
-              <header className="mx-auto mb-2 flex max-w-[720px] items-center justify-between gap-3 font-mono text-[10px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
-                <span>{canvas.title}</span>
-                <span>
-                  {canvasPanels.length} cuts · 720×{canvas.height}px
-                </span>
-              </header>
               <section
                 className={cn(
                   'webtoon-stage mx-auto w-full max-w-[720px]',
+                  !isSelectedCanvas &&
+                    canvasIndex > 0 &&
+                    'border-t-transparent',
+                  !isSelectedCanvas &&
+                    canvasIndex < state.canvases.length - 1 &&
+                    'border-b-transparent',
                   getStageClassName(),
                   getCanvasStageClassName(canvas),
-                  isSelectedCanvas && 'ring-2 ring-brand/20',
+                  isSelectedCanvas && 'border-brand ring-2 ring-brand',
                 )}
                 aria-label={`${canvas.title} panel stage`}
                 data-canvas-id={canvas.id}
@@ -152,17 +152,19 @@ const Content = () => {
                     />
                   )),
                 )}
-                <button
-                  type="button"
-                  className="canvas-resize-handle"
-                  aria-label={`Resize ${canvas.title} height (${canvas.height}px)`}
-                  data-canvas-id={canvas.id}
-                  data-canvas-height={canvas.height}
-                  onPointerDown={handleCanvasResizePointerDown}
-                >
-                  <GripHorizontal className="size-4" aria-hidden="true" />
-                  <span>{canvas.height}px</span>
-                </button>
+                {isSelectedCanvas && (
+                  <button
+                    type="button"
+                    className="canvas-resize-handle"
+                    aria-label={`Resize ${canvas.title} height (${canvas.height}px)`}
+                    data-canvas-id={canvas.id}
+                    data-canvas-height={canvas.height}
+                    onPointerDown={handleCanvasResizePointerDown}
+                  >
+                    <GripHorizontal className="size-4" aria-hidden="true" />
+                    <span>{canvas.height}px</span>
+                  </button>
+                )}
               </section>
             </article>
           );

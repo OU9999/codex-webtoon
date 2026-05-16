@@ -7,45 +7,44 @@ import {
 } from './class-names';
 import { getThoughtTailDots, resolveBubbleStyle } from './bubble-style';
 import { normalizePanelGapColor } from '@shared/project-state';
+import { getCanvasBackgroundStops } from './canvas-background';
 import { getCanvasPanels } from './canvas-state';
 import { CANVAS_WIDTH } from './constants';
 import type { StudioState } from './types';
 
 const buildDynamicStyles = (state: StudioState): string => {
   const rules = [
-    [
-      `.${getCanvasConnectorClassName()}{`,
-      'background:var(--bg-canvas);',
-      '}',
-    ].join(''),
+    [`.${getCanvasConnectorClassName()}{`, 'background:transparent;', '}'].join(
+      '',
+    ),
     `.${getStripGapClassName(state.panelGap)}{gap:${state.panelGap}px}`,
   ];
 
   state.canvases.forEach((canvas, index) => {
+    const previousCanvas = state.canvases[index - 1] ?? null;
+    const nextCanvas = state.canvases[index + 1] ?? null;
     const backgroundColor = normalizePanelGapColor(canvas.backgroundColor);
+    const previousColor = previousCanvas
+      ? normalizePanelGapColor(previousCanvas.backgroundColor)
+      : null;
+    const nextColor = nextCanvas
+      ? normalizePanelGapColor(nextCanvas.backgroundColor)
+      : null;
+    const backgroundStops = getCanvasBackgroundStops({
+      currentColor: backgroundColor,
+      height: canvas.height,
+      previousColor,
+      nextColor,
+    });
     rules.push(
       [
         `.${getCanvasStageClassName(canvas)}{`,
         `aspect-ratio:${CANVAS_WIDTH}/${canvas.height};`,
         `background-color:${backgroundColor};`,
+        `background-image:linear-gradient(180deg,${backgroundStops.topColor} 0%,${backgroundStops.centerColor} ${backgroundStops.edgeStartPercent},${backgroundStops.centerColor} ${backgroundStops.edgeEndPercent},${backgroundStops.bottomColor} 100%);`,
         '}',
       ].join(''),
     );
-
-    if (index > 0) {
-      const previousCanvas = state.canvases[index - 1];
-      const previousColor = normalizePanelGapColor(
-        previousCanvas?.backgroundColor,
-      );
-
-      rules.push(
-        [
-          `.${getCanvasConnectorClassName(index)}{`,
-          `background:linear-gradient(180deg,${previousColor} 0%,${backgroundColor} 100%);`,
-          '}',
-        ].join(''),
-      );
-    }
 
     getCanvasPanels(state, canvas.id).forEach((panel) => {
       const left = (panel.x / CANVAS_WIDTH) * 100;
