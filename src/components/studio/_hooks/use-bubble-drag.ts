@@ -157,6 +157,7 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
 
     setState((current) => ({
       ...current,
+      selectedCanvasId: panel.canvasId,
       selectedPanelId: null,
       selectedBubbleId: bubble.id,
     }));

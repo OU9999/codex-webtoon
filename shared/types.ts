@@ -115,8 +115,17 @@ interface ReferenceImageRef {
   candidateId: string;
 }
 
+interface WebtoonCanvas {
+  id: string;
+  title: string;
+  height: number;
+  commonPrompt: string;
+  backgroundColor: string;
+}
+
 interface Panel {
   id: string;
+  canvasId?: string;
   title: string;
   x: number;
   y: number;
@@ -132,10 +141,12 @@ interface Panel {
 
 interface ProjectState {
   commonPrompt: string;
+  canvases?: WebtoonCanvas[];
+  selectedCanvasId?: string | null;
   panels: Panel[];
   selectedPanelId: string | null;
   selectedBubbleId: string | null;
-  canvasHeight: number;
+  canvasHeight?: number;
   panelGap: number;
   panelGapColor: string;
   variantCount: number;
@@ -163,4 +174,5 @@ export type {
   ProjectSummary,
   ReferenceImageRef,
   ServerAdvertisement,
+  WebtoonCanvas,
 };

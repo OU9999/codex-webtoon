@@ -1,5 +1,11 @@
 import { useState } from 'react';
 import { buildFinalPrompt } from '../_lib/prompt';
+import {
+  getCanvasPanels,
+  getPanelCanvas,
+  getSelectedCanvas,
+  getSelectedCanvasPanels,
+} from '../_lib/canvas-state';
 import type {
   BubbleDragStartPayload,
   CanvasResizeStartPayload,
@@ -31,6 +37,8 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
       initialState,
     });
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
+  const selectedCanvas = getSelectedCanvas(state);
+  const selectedCanvasPanels = getSelectedCanvasPanels(state);
 
   const selectedPanelCandidate = state.selectedPanelId
     ? (state.panels.find((panel) => panel.id === state.selectedPanelId) ?? null)
@@ -47,6 +55,12 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
       null)
     : null;
   const selectedPanel = state.selectedBubbleId ? null : selectedPanelCandidate;
+  const selectedPanelCanvas = selectedPanel
+    ? getPanelCanvas(state, selectedPanel)
+    : null;
+  const selectedPanelCanvasPanels = selectedPanelCanvas
+    ? getCanvasPanels(state, selectedPanelCanvas.id)
+    : [];
   const selectedCandidate = selectedPanel?.candidates.find(
     (candidate) => candidate.id === selectedPanel.selectedCandidateId,
   );
@@ -54,7 +68,8 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     (bubble) => bubble.id === state.selectedBubbleId,
   );
   const finalPrompt = buildFinalPrompt({
-    commonPrompt: state.commonPrompt,
+    projectCommonPrompt: state.commonPrompt,
+    canvasCommonPrompt: selectedPanelCanvas?.commonPrompt ?? '',
     panel: selectedPanel ?? undefined,
   });
 
@@ -145,7 +160,11 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
 
   return {
     state,
+    selectedCanvas,
+    selectedCanvasPanels,
     selectedPanel,
+    selectedPanelCanvas,
+    selectedPanelCanvasPanels,
     selectedBubblePanel,
     selectedCandidate,
     selectedBubble,

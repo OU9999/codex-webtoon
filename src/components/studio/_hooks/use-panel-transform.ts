@@ -5,6 +5,7 @@ import {
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
 import { clamp } from '../_lib/canvas-primitives';
+import { getPanelCanvasHeight } from '../_lib/canvas-state';
 import type {
   Bubble,
   PanelResizeHandle,
@@ -67,6 +68,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
 
     setState((current) => ({
       ...current,
+      selectedCanvasId: panel.canvasId,
       selectedPanelId: panel.id,
       selectedBubbleId: null,
     }));
@@ -113,6 +115,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
           if (panel.id !== transform.panelId) return panel;
 
           if (transform.mode === 'move') {
+            const canvasHeight = getPanelCanvasHeight(current, panel);
             const x = quantize(
               clamp(
                 pointerX - transform.offsetX,
@@ -124,7 +127,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
               clamp(
                 pointerY - transform.offsetY,
                 0,
-                current.canvasHeight - panel.height,
+                canvasHeight - panel.height,
               ),
             );
             const deltaX = x - panel.x;
@@ -143,6 +146,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
           const startTop = transform.startY;
           const startRight = transform.startX + transform.startWidth;
           const startBottom = transform.startY + transform.startHeight;
+          const canvasHeight = getPanelCanvasHeight(current, panel);
           const left = handleTouchesWest(resizeHandle)
             ? clamp(pointerX, 0, startRight - MIN_PANEL_WIDTH)
             : startLeft;
@@ -153,7 +157,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
             ? clamp(pointerY, 0, startBottom - MIN_PANEL_HEIGHT)
             : startTop;
           const bottom = handleTouchesSouth(resizeHandle)
-            ? clamp(pointerY, startTop + MIN_PANEL_HEIGHT, current.canvasHeight)
+            ? clamp(pointerY, startTop + MIN_PANEL_HEIGHT, canvasHeight)
             : startBottom;
 
           const x = quantize(left);

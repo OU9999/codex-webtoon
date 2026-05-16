@@ -25,6 +25,7 @@ const LayerSection = () => {
               key={bubble.id}
               bubble={bubble}
               isActive={bubble.id === state.selectedBubbleId}
+              panelId={selectedPanel.id}
               onSelect={handleBubbleSelect}
             />
           ))

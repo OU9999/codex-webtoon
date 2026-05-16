@@ -1,13 +1,13 @@
 import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   MIN_PANEL_HEIGHT,
   MIN_PANEL_WIDTH,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
+import { PromptTextarea } from '../../_components/prompt-textarea';
 import { RangeField } from '../../_components/range-field';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
@@ -26,6 +26,8 @@ const PanelForm = () => {
     isGenerating,
     selectedCandidate,
     selectedPanel,
+    selectedPanelCanvas,
+    selectedPanelCanvasPanels,
     state,
   } = useStudioContext();
 
@@ -37,14 +39,14 @@ const PanelForm = () => {
   );
   const maxPanelHeight = Math.max(
     MIN_PANEL_HEIGHT,
-    state.canvasHeight - selectedPanel.y,
+    (selectedPanelCanvas?.height ?? MIN_PANEL_HEIGHT) - selectedPanel.y,
   );
-  const panelIndex = state.panels.findIndex(
+  const panelIndex = selectedPanelCanvasPanels.findIndex(
     (panel) => panel.id === selectedPanel.id,
   );
   const meta =
     panelIndex >= 0
-      ? `PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${state.panels.length}`
+      ? `${selectedPanelCanvas?.title ?? 'Canvas'} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
 
   return (
@@ -79,11 +81,10 @@ const PanelForm = () => {
         onValueChange={handleSelectedPanelHeightChange}
       />
       <FieldBlock label="컷별 프롬프트">
-        <Textarea
+        <PromptTextarea
           value={selectedPanel.prompt}
           onChange={handleSelectedPanelPromptChange}
           rows={6}
-          className="resize-y bg-background leading-relaxed"
         />
       </FieldBlock>
       <RangeField

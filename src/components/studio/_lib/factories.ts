@@ -1,10 +1,35 @@
-import { WEBTOON_CANVAS_WIDTH } from '@shared/project-state';
-import type { Bubble, BubbleType, CreatePanelOverrides, Panel } from './types';
+import {
+  DEFAULT_CANVAS_HEIGHT,
+  DEFAULT_CANVAS_ID,
+  DEFAULT_PANEL_GAP_COLOR,
+  WEBTOON_CANVAS_WIDTH,
+} from '@shared/project-state';
+import type {
+  Bubble,
+  BubbleType,
+  CreateCanvasOverrides,
+  CreatePanelOverrides,
+  Panel,
+  WebtoonCanvas,
+} from './types';
 import { DEFAULT_BUBBLE_STYLE, getBubbleShapePatch } from './bubble-style';
+
+const createWebtoonCanvas = (
+  overrides: CreateCanvasOverrides = {},
+): WebtoonCanvas => {
+  return {
+    id: crypto.randomUUID(),
+    title: overrides.title ?? 'Canvas',
+    height: overrides.height ?? DEFAULT_CANVAS_HEIGHT,
+    commonPrompt: overrides.commonPrompt ?? '',
+    backgroundColor: overrides.backgroundColor ?? DEFAULT_PANEL_GAP_COLOR,
+  };
+};
 
 const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
   return {
     id: crypto.randomUUID(),
+    canvasId: overrides.canvasId ?? DEFAULT_CANVAS_ID,
     title: overrides.title ?? 'New panel',
     x: overrides.x ?? 0,
     y: overrides.y ?? 0,
@@ -68,4 +93,4 @@ const createBubble = (type: BubbleType): Bubble => {
   };
 };
 
-export { createBubble, createPanel };
+export { createBubble, createPanel, createWebtoonCanvas };

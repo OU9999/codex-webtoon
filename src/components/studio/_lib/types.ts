@@ -40,6 +40,14 @@ interface ReferenceImageRef {
   candidateId: string;
 }
 
+interface WebtoonCanvas {
+  id: string;
+  title: string;
+  height: number;
+  commonPrompt: string;
+  backgroundColor: string;
+}
+
 interface Bubble {
   id: string;
   type: BubbleType;
@@ -72,6 +80,7 @@ interface Bubble {
 
 interface Panel {
   id: string;
+  canvasId: string;
   title: string;
   x: number;
   y: number;
@@ -87,10 +96,11 @@ interface Panel {
 
 interface StudioState {
   commonPrompt: string;
+  canvases: WebtoonCanvas[];
+  selectedCanvasId: string;
   panels: Panel[];
   selectedPanelId: string | null;
   selectedBubbleId: string | null;
-  canvasHeight: number;
   panelGap: number;
   panelGapColor: string;
   variantCount: number;
@@ -104,6 +114,7 @@ interface StudioStateSetter {
 }
 
 interface CanvasResize {
+  canvasId: string;
   rect: DOMRect;
   canvasHeight: number;
   historyStart: StudioState;
@@ -116,12 +127,18 @@ interface CanvasResize {
 
 interface CanvasResizeStartPayload {
   event: ReactPointerEvent<HTMLElement>;
+  canvasId: string;
   canvasHeight: number;
 }
+
+interface CreateCanvasOverrides extends Partial<
+  Pick<WebtoonCanvas, 'title' | 'height' | 'commonPrompt' | 'backgroundColor'>
+> {}
 
 interface CreatePanelOverrides extends Partial<
   Pick<
     Panel,
+    | 'canvasId'
     | 'title'
     | 'x'
     | 'y'
@@ -221,6 +238,7 @@ export type {
   CanvasResizeStartPayload,
   Candidate,
   CandidateProvider,
+  CreateCanvasOverrides,
   CreatePanelOverrides,
   LayerAction,
   LayerActionId,
@@ -232,4 +250,5 @@ export type {
   ReferenceImageRef,
   StudioState,
   StudioStateSetter,
+  WebtoonCanvas,
 };

@@ -36,11 +36,15 @@ const BubbleActionButton = ({
 };
 
 const BubbleActions = () => {
-  const { handleLayerAdd, selectedPanel, state } = useStudioContext();
-  const isDisabled = state.panels.length === 0;
+  const { handleLayerAdd, selectedCanvasPanels, selectedPanel } =
+    useStudioContext();
+  const isDisabled = selectedCanvasPanels.length === 0;
   const layerCount = selectedPanel
     ? selectedPanel.bubbles.length
-    : state.panels.reduce((count, panel) => count + panel.bubbles.length, 0);
+    : selectedCanvasPanels.reduce(
+        (count, panel) => count + panel.bubbles.length,
+        0,
+      );
   const meta = `${layerCount} layers`;
 
   return (

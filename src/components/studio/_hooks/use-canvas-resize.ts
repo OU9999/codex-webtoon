@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { MIN_CANVAS_HEIGHT } from '@shared/project-state';
 import { clamp } from '../_lib/canvas-primitives';
+import { getCanvasPanels } from '../_lib/canvas-state';
 import { getMinimumCanvasHeightForContent } from '../_lib/panel-geometry';
 import type {
   CanvasResize,
@@ -59,6 +60,7 @@ const useCanvasResize = (setState: StudioStateSetter) => {
 
   const handleCanvasResizeStart = ({
     event,
+    canvasId,
     canvasHeight,
   }: CanvasResizeStartPayload): void => {
     event.preventDefault();
@@ -69,9 +71,12 @@ const useCanvasResize = (setState: StudioStateSetter) => {
 
     const stage = event.currentTarget.closest<HTMLElement>('.webtoon-stage');
     if (!stage) return;
-    const scrollContainer = stage.parentElement;
+    const scrollContainer = stage.closest<HTMLElement>(
+      '[data-canvas-scroll-container]',
+    );
 
     resizeRef.current = {
+      canvasId,
       rect: stage.getBoundingClientRect(),
       canvasHeight,
       historyStart: setState.getSnapshot(),
@@ -92,9 +97,18 @@ const useCanvasResize = (setState: StudioStateSetter) => {
 
       setState.transient((current) => ({
         ...current,
-        canvasHeight: Math.max(
-          requestedCanvasHeight,
-          getMinimumCanvasHeightForContent(current.panels),
+        canvases: current.canvases.map((canvas) =>
+          canvas.id === resize.canvasId
+            ? {
+                ...canvas,
+                height: Math.max(
+                  requestedCanvasHeight,
+                  getMinimumCanvasHeightForContent(
+                    getCanvasPanels(current, canvas.id),
+                  ),
+                ),
+              }
+            : canvas,
         ),
       }));
     };

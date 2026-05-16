@@ -1,94 +1,120 @@
 import {
   getBubbleClassName,
+  getCanvasConnectorClassName,
+  getCanvasStageClassName,
   getPanelClassName,
-  getStageClassName,
   getStripGapClassName,
 } from './class-names';
 import { getThoughtTailDots, resolveBubbleStyle } from './bubble-style';
 import { normalizePanelGapColor } from '@shared/project-state';
+import { getCanvasBackgroundStops } from './canvas-background';
+import { getCanvasPanels } from './canvas-state';
 import { CANVAS_WIDTH } from './constants';
 import type { StudioState } from './types';
 
 const buildDynamicStyles = (state: StudioState): string => {
-  const panelGapColor = normalizePanelGapColor(state.panelGapColor);
   const rules = [
-    [
-      `.${getStageClassName()}{`,
-      `aspect-ratio:${CANVAS_WIDTH}/${state.canvasHeight};`,
-      `background-color:${panelGapColor};`,
-      '}',
-    ].join(''),
+    [`.${getCanvasConnectorClassName()}{`, 'background:transparent;', '}'].join(
+      '',
+    ),
     `.${getStripGapClassName(state.panelGap)}{gap:${state.panelGap}px}`,
   ];
 
-  state.panels.forEach((panel) => {
-    const left = (panel.x / CANVAS_WIDTH) * 100;
-    const top = (panel.y / state.canvasHeight) * 100;
-    const width = (panel.width / CANVAS_WIDTH) * 100;
-    const height = (panel.height / state.canvasHeight) * 100;
-
+  state.canvases.forEach((canvas, index) => {
+    const previousCanvas = state.canvases[index - 1] ?? null;
+    const nextCanvas = state.canvases[index + 1] ?? null;
+    const backgroundColor = normalizePanelGapColor(canvas.backgroundColor);
+    const previousColor = previousCanvas
+      ? normalizePanelGapColor(previousCanvas.backgroundColor)
+      : null;
+    const nextColor = nextCanvas
+      ? normalizePanelGapColor(nextCanvas.backgroundColor)
+      : null;
+    const backgroundStops = getCanvasBackgroundStops({
+      currentColor: backgroundColor,
+      height: canvas.height,
+      previousColor,
+      nextColor,
+    });
     rules.push(
       [
-        `.${getPanelClassName(panel)}{`,
-        `left:${left}%;`,
-        `top:${top}%;`,
-        `width:${width}%;`,
-        `height:${height}%;`,
+        `.${getCanvasStageClassName(canvas)}{`,
+        `aspect-ratio:${CANVAS_WIDTH}/${canvas.height};`,
+        `background-color:${backgroundColor};`,
+        `background-image:linear-gradient(180deg,${backgroundStops.topColor} 0%,${backgroundStops.centerColor} ${backgroundStops.edgeStartPercent},${backgroundStops.centerColor} ${backgroundStops.edgeEndPercent},${backgroundStops.bottomColor} 100%);`,
         '}',
       ].join(''),
     );
 
-    panel.bubbles.forEach((bubble) => {
-      const style = resolveBubbleStyle(bubble);
-      const strokeDasharray =
-        style.borderStyle === 'dashed'
-          ? '10 7'
-          : style.borderStyle === 'dotted'
-            ? '2 6'
-            : 'none';
-      const left = ((panel.x + bubble.x) / CANVAS_WIDTH) * 100;
-      const top = ((panel.y + bubble.y) / state.canvasHeight) * 100;
-      const width = (bubble.width / CANVAS_WIDTH) * 100;
-      const height = (bubble.height / state.canvasHeight) * 100;
-      const viewportSize = (bubble.fontSize / CANVAS_WIDTH) * 100;
-      const thoughtTailDots = getThoughtTailDots(bubble);
+    getCanvasPanels(state, canvas.id).forEach((panel) => {
+      const left = (panel.x / CANVAS_WIDTH) * 100;
+      const top = (panel.y / canvas.height) * 100;
+      const width = (panel.width / CANVAS_WIDTH) * 100;
+      const height = (panel.height / canvas.height) * 100;
 
       rules.push(
         [
-          `.${getBubbleClassName(panel, bubble)}{`,
+          `.${getPanelClassName(panel)}{`,
           `left:${left}%;`,
           `top:${top}%;`,
           `width:${width}%;`,
           `height:${height}%;`,
-          `font-size:clamp(12px,${viewportSize}vw,${bubble.fontSize}px);`,
-          `--bubble-fill:${style.fillColor};`,
-          `--bubble-text:${style.textColor};`,
-          `--bubble-border:${style.borderColor};`,
-          `--bubble-border-width:${style.borderWidth}px;`,
-          `--bubble-border-style:${style.borderStyle};`,
-          `--bubble-stroke-dasharray:${strokeDasharray};`,
-          `--bubble-radius:${style.borderRadius};`,
-          `--bubble-radius-tl:${style.radiusTopLeft}px;`,
-          `--bubble-radius-tr:${style.radiusTopRight}px;`,
-          `--bubble-radius-br:${style.radiusBottomRight}px;`,
-          `--bubble-radius-bl:${style.radiusBottomLeft}px;`,
-          `--bubble-tail-side:${style.tailSide};`,
-          `--bubble-tail-position:${style.tailPosition}%;`,
-          `--bubble-tail-width:${style.tailWidth}px;`,
-          `--bubble-tail-height:${style.tailHeight}px;`,
-          `--bubble-tail-skew:${style.tailSkew}deg;`,
-          `--bubble-tail-tip-x:${style.tailTipX}%;`,
-          `--bubble-tail-tip-y:${style.tailTipY}%;`,
-          `--bubble-thought-tail-opacity:${thoughtTailDots ? 1 : 0};`,
-          `--bubble-thought-dot-large-x:${thoughtTailDots?.large.x ?? 82}%;`,
-          `--bubble-thought-dot-large-y:${thoughtTailDots?.large.y ?? 112}%;`,
-          `--bubble-thought-dot-small-x:${thoughtTailDots?.small.x ?? 89}%;`,
-          `--bubble-thought-dot-small-y:${thoughtTailDots?.small.y ?? 126}%;`,
-          `--bubble-font-family:${style.cssFontFamily};`,
-          `--bubble-font-weight:${style.cssFontWeight};`,
           '}',
         ].join(''),
       );
+
+      panel.bubbles.forEach((bubble) => {
+        const style = resolveBubbleStyle(bubble);
+        const strokeDasharray =
+          style.borderStyle === 'dashed'
+            ? '10 7'
+            : style.borderStyle === 'dotted'
+              ? '2 6'
+              : 'none';
+        const left = ((panel.x + bubble.x) / CANVAS_WIDTH) * 100;
+        const top = ((panel.y + bubble.y) / canvas.height) * 100;
+        const width = (bubble.width / CANVAS_WIDTH) * 100;
+        const height = (bubble.height / canvas.height) * 100;
+        const viewportSize = (bubble.fontSize / CANVAS_WIDTH) * 100;
+        const thoughtTailDots = getThoughtTailDots(bubble);
+
+        rules.push(
+          [
+            `.${getBubbleClassName(panel, bubble)}{`,
+            `left:${left}%;`,
+            `top:${top}%;`,
+            `width:${width}%;`,
+            `height:${height}%;`,
+            `font-size:clamp(12px,${viewportSize}vw,${bubble.fontSize}px);`,
+            `--bubble-fill:${style.fillColor};`,
+            `--bubble-text:${style.textColor};`,
+            `--bubble-border:${style.borderColor};`,
+            `--bubble-border-width:${style.borderWidth}px;`,
+            `--bubble-border-style:${style.borderStyle};`,
+            `--bubble-stroke-dasharray:${strokeDasharray};`,
+            `--bubble-radius:${style.borderRadius};`,
+            `--bubble-radius-tl:${style.radiusTopLeft}px;`,
+            `--bubble-radius-tr:${style.radiusTopRight}px;`,
+            `--bubble-radius-br:${style.radiusBottomRight}px;`,
+            `--bubble-radius-bl:${style.radiusBottomLeft}px;`,
+            `--bubble-tail-side:${style.tailSide};`,
+            `--bubble-tail-position:${style.tailPosition}%;`,
+            `--bubble-tail-width:${style.tailWidth}px;`,
+            `--bubble-tail-height:${style.tailHeight}px;`,
+            `--bubble-tail-skew:${style.tailSkew}deg;`,
+            `--bubble-tail-tip-x:${style.tailTipX}%;`,
+            `--bubble-tail-tip-y:${style.tailTipY}%;`,
+            `--bubble-thought-tail-opacity:${thoughtTailDots ? 1 : 0};`,
+            `--bubble-thought-dot-large-x:${thoughtTailDots?.large.x ?? 82}%;`,
+            `--bubble-thought-dot-large-y:${thoughtTailDots?.large.y ?? 112}%;`,
+            `--bubble-thought-dot-small-x:${thoughtTailDots?.small.x ?? 89}%;`,
+            `--bubble-thought-dot-small-y:${thoughtTailDots?.small.y ?? 126}%;`,
+            `--bubble-font-family:${style.cssFontFamily};`,
+            `--bubble-font-weight:${style.cssFontWeight};`,
+            '}',
+          ].join(''),
+        );
+      });
     });
   });
 
