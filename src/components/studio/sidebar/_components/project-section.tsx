@@ -1,10 +1,10 @@
 import { ImageIcon, Plus, SquarePen } from 'lucide-react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { getCanvasPanels } from '../../_lib/canvas-state';
 import { FieldBlock } from '../../_components/field-block';
+import { PromptTextarea } from '../../_components/prompt-textarea';
 import { useStudioContext } from '../../studio-context';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
 
@@ -65,11 +65,11 @@ const ProjectSection = () => {
         </span>
       </section>
       <FieldBlock label="프로젝트 공용 프롬프트">
-        <Textarea
+        <PromptTextarea
           value={state.commonPrompt}
           onChange={handleCommonPromptChange}
           rows={5}
-          className="max-h-40 min-h-24 resize-y bg-background font-mono text-[11px] leading-relaxed"
+          className="max-h-40 min-h-24"
         />
         <p className="text-right font-mono text-[9.5px] text-fg-muted">
           {state.commonPrompt.length} chars

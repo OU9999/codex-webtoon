@@ -1,9 +1,9 @@
 import { Plus, Rows3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { useStudioContext } from '@/components/studio/studio-context';
 import { MIN_CANVAS_HEIGHT } from '@shared/project-state';
 import { FieldBlock } from '@/components/studio/_components/field-block';
+import { PromptTextarea } from '@/components/studio/_components/prompt-textarea';
 import { RangeField } from '@/components/studio/_components/range-field';
 import { SidebarCollapsibleSection } from '../sidebar-collapsible-section';
 import { PanelListItem } from './_components/panel-list-item';
@@ -42,11 +42,11 @@ const PanelList = () => {
           onValueChange={handleCanvasHeightChange}
         />
         <FieldBlock label="캔버스 공용 프롬프트" compact>
-          <Textarea
+          <PromptTextarea
             value={selectedCanvas?.commonPrompt ?? ''}
             onChange={handleCanvasCommonPromptChange}
             rows={3}
-            className="max-h-32 min-h-18 resize-y bg-elevated font-mono text-[11px] leading-relaxed"
+            className="max-h-32 min-h-18"
             disabled={!selectedCanvas}
           />
           <p className="text-right font-mono text-[9.5px] text-fg-muted">

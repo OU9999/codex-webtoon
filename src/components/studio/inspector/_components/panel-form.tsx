@@ -1,13 +1,13 @@
 import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import {
   MIN_PANEL_HEIGHT,
   MIN_PANEL_WIDTH,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
 import { FieldBlock } from '../../_components/field-block';
+import { PromptTextarea } from '../../_components/prompt-textarea';
 import { RangeField } from '../../_components/range-field';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
@@ -81,11 +81,10 @@ const PanelForm = () => {
         onValueChange={handleSelectedPanelHeightChange}
       />
       <FieldBlock label="컷별 프롬프트">
-        <Textarea
+        <PromptTextarea
           value={selectedPanel.prompt}
           onChange={handleSelectedPanelPromptChange}
           rows={6}
-          className="resize-y bg-background leading-relaxed"
         />
       </FieldBlock>
       <RangeField
