@@ -34,13 +34,15 @@
     "build": "pnpm build:ui && pnpm build:server",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "tsx --test tests/*.test.ts",
     "start": "node build/server/server.js",
     "wps": "tsx bin/wps.ts",
     "preview": "vite preview --config vite-config.ts --host 127.0.0.1",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-dialog": "^1.1.15",
     "express": "^5.1.0",
     "openai": "^5.8.2",
     "ulid": "^3.0.2"
@@ -71,7 +73,7 @@
     "vite": "^8.0.11"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
