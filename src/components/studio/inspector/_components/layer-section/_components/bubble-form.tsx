@@ -1,5 +1,6 @@
 import type { ChangeEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { MessageCircle, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,11 +25,11 @@ import { InspectorSection } from '../../inspector-section';
 
 interface SelectOption<Value extends string> {
   value: Value;
-  label: string;
+  labelKey: string;
 }
 
 interface BubbleColorPreset {
-  label: string;
+  labelKey: string;
   value: string;
   className: string;
 }
@@ -37,33 +38,50 @@ const SELECT_CLASS_NAME =
   'h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 const FONT_FAMILY_OPTIONS: readonly SelectOption<BubbleFontFamily>[] = [
-  { value: 'inter', label: 'Inter Tight' },
-  { value: 'mono', label: 'IBM Plex Mono' },
-  { value: 'display', label: 'Bagel Fat One' },
-  { value: 'serif', label: 'Serif' },
+  { value: 'inter', labelKey: 'styles.fontFamily.inter' },
+  { value: 'mono', labelKey: 'styles.fontFamily.mono' },
+  { value: 'display', labelKey: 'styles.fontFamily.display' },
+  { value: 'serif', labelKey: 'styles.fontFamily.serif' },
 ];
 
 const FONT_WEIGHT_OPTIONS: readonly SelectOption<BubbleFontWeight>[] = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'bold', label: 'Bold' },
+  { value: 'regular', labelKey: 'styles.fontWeight.regular' },
+  { value: 'medium', labelKey: 'styles.fontWeight.medium' },
+  { value: 'bold', labelKey: 'styles.fontWeight.bold' },
 ];
 
 const BORDER_STYLE_OPTIONS: readonly SelectOption<BubbleBorderStyle>[] = [
-  { value: 'solid', label: 'Solid' },
-  { value: 'dashed', label: 'Dashed' },
-  { value: 'dotted', label: 'Dotted' },
+  { value: 'solid', labelKey: 'styles.border.solid' },
+  { value: 'dashed', labelKey: 'styles.border.dashed' },
+  { value: 'dotted', labelKey: 'styles.border.dotted' },
 ];
 
 const FILL_COLOR_PRESETS: readonly BubbleColorPreset[] = [
-  { label: 'White', value: '#ffffff', className: 'bg-white' },
-  { label: 'Ivory', value: '#fbf9f0', className: 'bg-[#fbf9f0]' },
-  { label: 'Blue', value: '#e6eef6', className: 'bg-[#e6eef6]' },
-  { label: 'Yellow', value: '#fff4cf', className: 'bg-[#fff4cf]' },
-  { label: 'Pink', value: '#ffe8ef', className: 'bg-[#ffe8ef]' },
+  { labelKey: 'styles.color.white', value: '#ffffff', className: 'bg-white' },
+  {
+    labelKey: 'styles.color.ivory',
+    value: '#fbf9f0',
+    className: 'bg-[#fbf9f0]',
+  },
+  {
+    labelKey: 'styles.color.blue',
+    value: '#e6eef6',
+    className: 'bg-[#e6eef6]',
+  },
+  {
+    labelKey: 'styles.color.yellow',
+    value: '#fff4cf',
+    className: 'bg-[#fff4cf]',
+  },
+  {
+    labelKey: 'styles.color.pink',
+    value: '#ffe8ef',
+    className: 'bg-[#ffe8ef]',
+  },
 ];
 
 const BubbleForm = () => {
+  const { t } = useTranslation();
   const {
     handleBubbleBorderColorChange,
     handleBubbleBorderStyleChange,
@@ -80,11 +98,11 @@ const BubbleForm = () => {
   } = useStudioContext();
 
   if (!selectedBubble || !selectedBubblePanel) {
-    return <EmptyState>No layer selected</EmptyState>;
+    return <EmptyState>{t('inspector.bubble.noLayerSelected')}</EmptyState>;
   }
 
   const style = resolveBubbleStyle(selectedBubble);
-  const meta = selectedBubble.type.toUpperCase();
+  const meta = t(`bubbles.type.${selectedBubble.type}`);
 
   const handleFillPresetSelect = (
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -105,11 +123,11 @@ const BubbleForm = () => {
   return (
     <InspectorSection
       icon={<MessageCircle className="size-4" />}
-      title="Bubble"
+      title={t('inspector.bubble.title')}
       meta={meta}
       contentClassName="grid gap-3"
     >
-      <FieldBlock label="텍스트" compact>
+      <FieldBlock label={t('inspector.bubble.text')} compact>
         <Textarea
           value={selectedBubble.text}
           onChange={handleBubbleTextChange}
@@ -118,7 +136,7 @@ const BubbleForm = () => {
       </FieldBlock>
 
       <RangeField
-        label="글자 크기"
+        label={t('inspector.bubble.fontSize')}
         value={selectedBubble.fontSize}
         suffix="px"
         min={14}
@@ -127,7 +145,7 @@ const BubbleForm = () => {
       />
 
       <section className="grid grid-cols-2 gap-3">
-        <FieldBlock label="글씨체" compact>
+        <FieldBlock label={t('inspector.bubble.fontFamily')} compact>
           <select
             value={style.fontFamily}
             onChange={handleBubbleFontFamilyChange}
@@ -135,12 +153,12 @@ const BubbleForm = () => {
           >
             {FONT_FAMILY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
         </FieldBlock>
-        <FieldBlock label="굵기" compact>
+        <FieldBlock label={t('inspector.bubble.fontWeight')} compact>
           <select
             value={style.fontWeight}
             onChange={handleBubbleFontWeightChange}
@@ -148,14 +166,14 @@ const BubbleForm = () => {
           >
             {FONT_WEIGHT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
         </FieldBlock>
       </section>
 
-      <FieldBlock label="채우기" compact>
+      <FieldBlock label={t('inspector.bubble.fill')} compact>
         <section className="grid grid-cols-[52px_minmax(0,1fr)] gap-2">
           <Input
             type="color"
@@ -163,7 +181,10 @@ const BubbleForm = () => {
             onChange={handleBubbleFillColorChange}
             className="h-9 bg-background p-1"
           />
-          <nav className="flex items-center gap-1.5" aria-label="Fill colors">
+          <nav
+            className="flex items-center gap-1.5"
+            aria-label={t('inspector.bubble.fill')}
+          >
             {FILL_COLOR_PRESETS.map((preset) => (
               <button
                 key={preset.value}
@@ -177,7 +198,7 @@ const BubbleForm = () => {
                 )}
                 onClick={handleFillPresetSelect}
               >
-                <span className="sr-only">{preset.label}</span>
+                <span className="sr-only">{t(preset.labelKey)}</span>
               </button>
             ))}
           </nav>
@@ -185,7 +206,7 @@ const BubbleForm = () => {
       </FieldBlock>
 
       <section className="grid grid-cols-2 gap-3">
-        <FieldBlock label="글자색" compact>
+        <FieldBlock label={t('inspector.bubble.textColor')} compact>
           <Input
             type="color"
             value={style.textColor}
@@ -193,7 +214,7 @@ const BubbleForm = () => {
             className="h-9 bg-background p-1"
           />
         </FieldBlock>
-        <FieldBlock label="선 색" compact>
+        <FieldBlock label={t('inspector.bubble.borderColor')} compact>
           <Input
             type="color"
             value={style.borderColor}
@@ -204,7 +225,7 @@ const BubbleForm = () => {
       </section>
 
       <section className="grid grid-cols-2 gap-3">
-        <FieldBlock label="선 스타일" compact>
+        <FieldBlock label={t('inspector.bubble.borderStyle')} compact>
           <select
             value={style.borderStyle}
             onChange={handleBubbleBorderStyleChange}
@@ -212,12 +233,12 @@ const BubbleForm = () => {
           >
             {BORDER_STYLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </option>
             ))}
           </select>
         </FieldBlock>
-        <FieldBlock label="모양" compact>
+        <FieldBlock label={t('inspector.bubble.shape')} compact>
           <select
             value={getLayerActionIdForBubble(selectedBubble)}
             onChange={handleBubblePresetChange}
@@ -225,7 +246,7 @@ const BubbleForm = () => {
           >
             {layerActions.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {t(`layerActions.${option.id}`)}
               </option>
             ))}
           </select>
@@ -239,7 +260,7 @@ const BubbleForm = () => {
         onClick={handleSelectedBubbleDelete}
       >
         <Trash2 className="size-4" />
-        Delete layer
+        {t('inspector.bubble.deleteLayer')}
       </Button>
     </InspectorSection>
   );

@@ -1,6 +1,7 @@
 import { Check, ImagePlus, Images, Link, Upload, X } from 'lucide-react';
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -54,6 +55,11 @@ interface ReferenceTriggerPreviewProps {
   items: ReferenceImageItem[];
 }
 
+interface ExternalReferenceLabels {
+  externalImage: string;
+  uploadedImage: string;
+}
+
 const MAX_EXTERNAL_IMAGE_BYTES = 10 * 1024 * 1024;
 const SUPPORTED_FILE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
@@ -77,28 +83,28 @@ const isSupportedRemoteImageUrl = (value: string): boolean => {
   }
 };
 
-const getRemoteImageTitle = (imageUrl: string): string => {
+const getRemoteImageTitle = (imageUrl: string, fallback: string): string => {
   try {
     return new URL(imageUrl).hostname;
   } catch {
-    return 'External image';
+    return fallback;
   }
 };
 
-const readFileAsDataUrl = (file: File): Promise<string> =>
+const readFileAsDataUrl = (file: File, errorMessage: string): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.addEventListener('load', () => {
       if (typeof reader.result !== 'string') {
-        reject(new Error('이미지를 읽을 수 없습니다.'));
+        reject(new Error(errorMessage));
         return;
       }
 
       resolve(reader.result);
     });
     reader.addEventListener('error', () => {
-      reject(new Error('이미지를 읽을 수 없습니다.'));
+      reject(new Error(errorMessage));
     });
     reader.readAsDataURL(file);
   });
@@ -129,6 +135,7 @@ const buildCandidateReferenceItems = (
 
 const buildExternalReferenceItem = (
   reference: ReferenceImageRef,
+  labels: ExternalReferenceLabels,
 ): ReferenceImageItem | null => {
   if (!isExternalReferenceImage(reference)) return null;
   if (!reference.imageUrl) return null;
@@ -139,8 +146,8 @@ const buildExternalReferenceItem = (
     title:
       reference.title?.trim() ||
       (reference.imageUrl.startsWith('data:')
-        ? 'Uploaded image'
-        : getRemoteImageTitle(reference.imageUrl)),
+        ? labels.uploadedImage
+        : getRemoteImageTitle(reference.imageUrl, labels.externalImage)),
     meta: 'EXT',
     source: 'external',
   };
@@ -149,8 +156,9 @@ const buildExternalReferenceItem = (
 const findReferenceItem = (
   items: ReferenceImageItem[],
   reference: ReferenceImageRef,
+  labels: ExternalReferenceLabels,
 ): ReferenceImageItem | null => {
-  const externalItem = buildExternalReferenceItem(reference);
+  const externalItem = buildExternalReferenceItem(reference, labels);
   if (externalItem) return externalItem;
 
   return (
@@ -161,16 +169,19 @@ const findReferenceItem = (
 const selectedReferenceItems = (
   items: ReferenceImageItem[],
   references: ReferenceImageRef[],
+  labels: ExternalReferenceLabels,
 ): ReferenceImageItem[] => {
   return references.flatMap((reference) => {
-    const item = findReferenceItem(items, reference);
+    const item = findReferenceItem(items, reference, labels);
     return item ? [item] : [];
   });
 };
 
 const ReferenceTriggerPreview = ({ items }: ReferenceTriggerPreviewProps) => {
+  const { t } = useTranslation();
+
   if (items.length === 0) {
-    return <span className="text-fg-muted">none</span>;
+    return <span className="text-fg-muted">{t('referenceImages.none')}</span>;
   }
 
   return (
@@ -193,6 +204,8 @@ const ReferenceTriggerPreview = ({ items }: ReferenceTriggerPreviewProps) => {
 };
 
 const ReferenceImageTile = ({ item, onRemove }: ReferenceImageTileProps) => {
+  const { t } = useTranslation();
+
   const handleRemove = (): void => {
     onRemove(item.reference);
   };
@@ -207,7 +220,7 @@ const ReferenceImageTile = ({ item, onRemove }: ReferenceImageTileProps) => {
           {item.title}
         </strong>
         <small className="block font-mono text-[9.5px] font-semibold text-fg-muted uppercase">
-          {item.meta} · {item.source}
+          {item.meta} · {t(`referenceImages.${item.source}`)}
         </small>
       </span>
       <Button
@@ -216,7 +229,7 @@ const ReferenceImageTile = ({ item, onRemove }: ReferenceImageTileProps) => {
         size="icon"
         className="size-6 rounded-[4px] text-fg-muted hover:bg-hover hover:text-destructive"
         onClick={handleRemove}
-        aria-label="Remove reference image"
+        aria-label={t('referenceImages.remove')}
       >
         <X className="size-3.5" />
       </Button>
@@ -263,6 +276,7 @@ const ReferenceImageOptionButton = ({
 };
 
 const ReferenceImageDialog = () => {
+  const { t } = useTranslation();
   const { patchSelectedPanel, selectedPanel, state } = useStudioContext();
   const [isOpen, setIsOpen] = useState(false);
   const [draftReferences, setDraftReferences] = useState<ReferenceImageRef[]>(
@@ -274,11 +288,20 @@ const ReferenceImageDialog = () => {
   if (!selectedPanel) return null;
 
   const items = buildCandidateReferenceItems(state.panels);
+  const externalLabels = {
+    externalImage: t('referenceImages.externalImage'),
+    uploadedImage: t('referenceImages.uploadedImage'),
+  };
   const selectedItems = selectedReferenceItems(
     items,
     selectedPanel.referenceImages,
+    externalLabels,
   );
-  const draftItems = selectedReferenceItems(items, draftReferences);
+  const draftItems = selectedReferenceItems(
+    items,
+    draftReferences,
+    externalLabels,
+  );
   const draftKeys = new Set(draftReferences.map(getReferenceImageKey));
   const selectedMeta = `${selectedPanel.referenceImages.length}/${MAX_REFERENCE_IMAGES}`;
   const draftMeta = `${draftReferences.length}/${MAX_REFERENCE_IMAGES}`;
@@ -345,18 +368,21 @@ const ReferenceImageDialog = () => {
     const imageUrl = externalUrl.trim();
     if (!imageUrl) return;
     if (isAtLimit) {
-      setExternalError('레퍼런스는 최대 4개까지 사용할 수 있습니다.');
+      setExternalError(t('referenceImages.errors.max'));
       return;
     }
     if (!isSupportedRemoteImageUrl(imageUrl)) {
-      setExternalError('http 또는 https 이미지 URL을 입력하세요.');
+      setExternalError(t('referenceImages.errors.invalidUrl'));
       return;
     }
 
     handleReferenceAdd(
       normalizeExternalReferenceImage({
         imageUrl,
-        title: getRemoteImageTitle(imageUrl),
+        title: getRemoteImageTitle(
+          imageUrl,
+          t('referenceImages.externalImage'),
+        ),
         createdAt: new Date().toISOString(),
       }),
     );
@@ -371,20 +397,23 @@ const ReferenceImageDialog = () => {
     event.currentTarget.value = '';
     if (!file) return;
     if (isAtLimit) {
-      setExternalError('레퍼런스는 최대 4개까지 사용할 수 있습니다.');
+      setExternalError(t('referenceImages.errors.max'));
       return;
     }
     if (!SUPPORTED_FILE_TYPES.has(file.type)) {
-      setExternalError('PNG, JPEG, WebP 이미지만 업로드할 수 있습니다.');
+      setExternalError(t('referenceImages.errors.unsupportedFile'));
       return;
     }
     if (file.size > MAX_EXTERNAL_IMAGE_BYTES) {
-      setExternalError('외부 이미지는 10MB 이하만 사용할 수 있습니다.');
+      setExternalError(t('referenceImages.errors.tooLarge'));
       return;
     }
 
     try {
-      const imageUrl = await readFileAsDataUrl(file);
+      const imageUrl = await readFileAsDataUrl(
+        file,
+        t('referenceImages.errors.readFailed'),
+      );
       handleReferenceAdd(
         normalizeExternalReferenceImage({
           id: createExternalReferenceId(),
@@ -396,7 +425,9 @@ const ReferenceImageDialog = () => {
       setExternalError(null);
     } catch (err) {
       setExternalError(
-        err instanceof Error ? err.message : '이미지를 읽을 수 없습니다.',
+        err instanceof Error
+          ? err.message
+          : t('referenceImages.errors.readFailed'),
       );
     }
   };
@@ -412,7 +443,7 @@ const ReferenceImageDialog = () => {
         >
           <span className="flex min-w-0 items-center gap-2">
             <Images className="size-3.5 shrink-0" />
-            <span>Reference images</span>
+            <span>{t('referenceImages.trigger')}</span>
           </span>
           <span className="flex shrink-0 items-center gap-2">
             <ReferenceTriggerPreview items={selectedItems} />
@@ -422,9 +453,9 @@ const ReferenceImageDialog = () => {
       </DialogTrigger>
       <DialogContent className="min-h-[min(84vh,820px)] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
-          <DialogTitle>Reference images</DialogTitle>
+          <DialogTitle>{t('referenceImages.title')}</DialogTitle>
           <DialogDescription>
-            선택한 이미지는 다음 패널 생성의 시각 레퍼런스로 함께 전달됩니다.
+            {t('referenceImages.description')}
           </DialogDescription>
         </DialogHeader>
 
@@ -432,7 +463,7 @@ const ReferenceImageDialog = () => {
           <aside className="grid min-h-0 content-start gap-3 border-b border-rim-subtle bg-panel/60 p-4 md:border-r md:border-b-0">
             <header className="flex items-center justify-between gap-2">
               <span className="font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                Selected
+                {t('referenceImages.selected')}
               </span>
               <span className="font-mono text-[9.5px] font-semibold text-fg-muted">
                 {draftMeta}
@@ -440,7 +471,7 @@ const ReferenceImageDialog = () => {
             </header>
             <section className="grid max-h-[220px] gap-2 overflow-y-auto pr-1 md:max-h-[420px]">
               {draftItems.length === 0 && (
-                <EmptyState>No references</EmptyState>
+                <EmptyState>{t('referenceImages.emptySelected')}</EmptyState>
               )}
               {draftItems.map((item) => (
                 <ReferenceImageTile
@@ -459,7 +490,7 @@ const ReferenceImageDialog = () => {
                 onClick={handleReferencesClear}
               >
                 <X className="size-3.5" />
-                Clear all
+                {t('referenceImages.clearAll')}
               </Button>
             )}
           </aside>
@@ -468,11 +499,11 @@ const ReferenceImageDialog = () => {
             <section className="grid gap-2 rounded-[4px] border border-rim-subtle bg-background p-3">
               <header className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                  External image
+                  {t('referenceImages.externalImage')}
                 </span>
                 {isAtLimit && (
                   <span className="font-mono text-[9.5px] font-semibold text-fg-muted uppercase">
-                    Max
+                    {t('referenceImages.max')}
                   </span>
                 )}
               </header>
@@ -488,7 +519,7 @@ const ReferenceImageDialog = () => {
                     disabled={isAtLimit}
                     placeholder="https://..."
                     className="h-8 rounded-[4px] border-rim bg-elevated pl-7 font-mono text-[10.5px]"
-                    aria-label="External reference image URL"
+                    aria-label={t('referenceImages.externalUrlLabel')}
                   />
                 </label>
                 <Button
@@ -499,7 +530,7 @@ const ReferenceImageDialog = () => {
                   className="h-8 rounded-[4px] border-rim bg-elevated px-2 font-mono text-[10px] font-semibold uppercase hover:bg-hover"
                 >
                   <ImagePlus className="size-3.5" />
-                  Add
+                  {t('referenceImages.addExternal')}
                 </Button>
               </form>
               <label
@@ -511,7 +542,7 @@ const ReferenceImageDialog = () => {
                 aria-disabled={isAtLimit}
               >
                 <Upload className="size-3.5" />
-                Upload png / jpg / webp
+                {t('referenceImages.upload')}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
@@ -530,7 +561,7 @@ const ReferenceImageDialog = () => {
             <section className="grid min-h-0 gap-2">
               <header className="flex items-center justify-between gap-2">
                 <span className="font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                  Candidate pool
+                  {t('referenceImages.candidatePool')}
                 </span>
                 <span className="font-mono text-[9.5px] font-semibold text-fg-muted">
                   {items.length}
@@ -538,9 +569,13 @@ const ReferenceImageDialog = () => {
               </header>
               <section
                 className="grid max-h-[360px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 md:grid-cols-5"
-                aria-label="Available reference images"
+                aria-label={t('referenceImages.availableLabel')}
               >
-                {items.length === 0 && <EmptyState>No candidates</EmptyState>}
+                {items.length === 0 && (
+                  <EmptyState>
+                    {t('referenceImages.emptyCandidates')}
+                  </EmptyState>
+                )}
                 {items.map((item) => {
                   const key = getReferenceImageKey(item.reference);
                   const isSelected = draftKeys.has(key);
@@ -568,7 +603,7 @@ const ReferenceImageDialog = () => {
               size="sm"
               className="h-8 rounded-[4px] border-rim bg-elevated px-3 font-mono text-[10px] font-semibold uppercase hover:bg-hover"
             >
-              취소
+              {t('common.cancel')}
             </Button>
           </DialogClose>
           <Button
@@ -577,7 +612,7 @@ const ReferenceImageDialog = () => {
             className="h-8 rounded-[4px] px-4 font-mono text-[10px] font-semibold uppercase"
             onClick={handleConfirm}
           >
-            확인
+            {t('common.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

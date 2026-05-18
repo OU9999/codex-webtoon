@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { FolderPlus, Loader2, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
@@ -17,6 +18,7 @@ interface ProjectPickerProps {
 }
 
 const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
+  const { t } = useTranslation();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,9 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
       const items = await listProjects();
       setProjects(items);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load projects.');
+      setError(
+        err instanceof Error ? err.message : t('projectPicker.loadFailed'),
+      );
     } finally {
       setLoading(false);
     }
@@ -67,7 +71,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
 
   const handleDeleteProject = async (name: string): Promise<void> => {
     const confirmed = window.confirm(
-      `"${name}" 프로젝트를 삭제할까요? 모든 패널, 후보, 이미지가 함께 사라집니다.`,
+      t('projectPicker.deleteConfirm', { name }),
     );
     if (!confirmed) return;
 
@@ -78,7 +82,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
       setProjects((current) => current.filter((p) => p.name !== name));
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : '프로젝트 삭제에 실패했습니다.',
+        err instanceof Error ? err.message : t('projectPicker.deleteFailed'),
       );
     } finally {
       setDeletingName(null);
@@ -105,8 +109,8 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <AppHeader
-        subtitle="no project open"
-        actionsLabel="Project actions"
+        subtitle={t('projectPicker.noProjectOpen')}
+        actionsLabel={t('projectPicker.actionsLabel')}
         actions={
           <AuthBadge
             status={auth.status}
@@ -122,7 +126,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
           {loading ? (
             <p className="flex items-center gap-2 py-16 text-[12px] text-fg-muted">
               <Loader2 className="size-4 animate-spin" />
-              불러오는 중…
+              {t('projectPicker.loading')}
             </p>
           ) : (
             <>
@@ -141,10 +145,10 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
                   </span>
                   <span>
                     <span className="block text-[13.5px] font-semibold tracking-[-0.005em]">
-                      New project
+                      {t('projectPicker.newProject')}
                     </span>
                     <span className="mt-px block font-mono text-[11px] text-white/75">
-                      empty canvas
+                      {t('projectPicker.emptyCanvas')}
                     </span>
                   </span>
                 </button>
@@ -155,7 +159,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
                     ref={searchRef}
                     value={query}
                     onChange={handleQueryChange}
-                    placeholder="search recent…"
+                    placeholder={t('projectPicker.searchPlaceholder')}
                     className="h-10 min-w-0 flex-1 border-0 bg-transparent font-mono text-[12px] text-foreground outline-none placeholder:text-fg-muted"
                   />
                   <span className="font-mono text-[11px] text-fg-muted">
@@ -186,10 +190,12 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
       <footer className="flex h-[22px] shrink-0 items-center gap-[14px] border-t border-rim bg-elevated px-3 font-mono text-[10.5px] text-fg-muted">
         <span className="inline-flex items-center gap-[6px]">
           <span className="size-[6px] rounded-full bg-status-green" />
-          local
+          {t('common.local')}
         </span>
         <span>
-          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+          {t('projectPicker.footer.projectCount', {
+            count: projects.length,
+          })}
         </span>
         <span className="flex-1" />
         <span>v0.3.2</span>

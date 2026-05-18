@@ -47,7 +47,7 @@ const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
 const createBubble = (type: BubbleType): Bubble => {
   const defaults: Record<BubbleType, Omit<Bubble, 'id' | 'type'>> = {
     speech: {
-      text: '대사',
+      text: 'Dialogue',
       x: 58,
       y: 40,
       width: 210,
@@ -55,7 +55,7 @@ const createBubble = (type: BubbleType): Bubble => {
       fontSize: 24,
     },
     monologue: {
-      text: '독백',
+      text: 'Narration',
       x: 46,
       y: 56,
       width: 250,
@@ -64,7 +64,7 @@ const createBubble = (type: BubbleType): Bubble => {
       ...getBubbleShapePatch('square'),
     },
     thought: {
-      text: '생각',
+      text: 'Thought',
       x: 390,
       y: 54,
       width: 210,
@@ -73,7 +73,7 @@ const createBubble = (type: BubbleType): Bubble => {
       borderStyle: 'dashed',
     },
     sfx: {
-      text: '탁',
+      text: 'Tap',
       x: 420,
       y: 170,
       width: 150,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ApiClientError, generateCandidates } from '@/api/client';
 import type { Candidate as ApiCandidate } from '@shared/types';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
@@ -23,6 +24,7 @@ const useGeneratePanel = (
   finalPrompt: string,
   projectName: string,
 ) => {
+  const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
@@ -30,7 +32,7 @@ const useGeneratePanel = (
     if (!selectedPanel) return;
     if (isGenerating) return;
     if (!finalPrompt.trim()) {
-      setGenerationError('프롬프트를 입력하세요.');
+      setGenerationError(t('studioErrors.missingPrompt'));
       return;
     }
 
@@ -49,7 +51,7 @@ const useGeneratePanel = (
       });
       const newCandidates = apiCandidates.map(toLocalCandidate);
       if (newCandidates.length === 0) {
-        setGenerationError('이미지 생성 결과가 비어 있습니다.');
+        setGenerationError(t('studioErrors.emptyGeneration'));
         return;
       }
 
@@ -71,7 +73,7 @@ const useGeneratePanel = (
           ? err.message
           : err instanceof Error
             ? err.message
-            : '이미지 생성에 실패했습니다.';
+            : t('studioErrors.generateFailed');
       setGenerationError(message);
     } finally {
       setIsGenerating(false);

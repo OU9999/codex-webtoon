@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CircleAlert,
   CircleCheck,
@@ -28,30 +29,31 @@ interface BadgeContent {
 
 const pickContent = (status: AuthStatus | null): BadgeContent => {
   if (!status) {
-    return { icon: Loader2, label: '인증 확인 중', tone: 'idle' };
+    return { icon: Loader2, label: 'auth.badgeChecking', tone: 'idle' };
   }
   if (status.recommendedProvider === 'oauth') {
-    return { icon: ShieldCheck, label: 'OAuth', tone: 'ready' };
+    return { icon: ShieldCheck, label: 'auth.oauth', tone: 'ready' };
   }
   if (status.recommendedProvider === 'openai') {
-    return { icon: KeyRound, label: 'API Key', tone: 'ready' };
+    return { icon: KeyRound, label: 'auth.apiKey', tone: 'ready' };
   }
   if (status.oauth.state === 'pending') {
-    return { icon: Loader2, label: 'OAuth 준비 중', tone: 'idle' };
+    return { icon: Loader2, label: 'auth.oauthPreparing', tone: 'idle' };
   }
   if (status.oauth.state === 'failed') {
-    return { icon: CircleAlert, label: 'OAuth 실패', tone: 'warn' };
+    return { icon: CircleAlert, label: 'auth.oauthFailed', tone: 'warn' };
   }
-  return { icon: ShieldOff, label: '인증 필요', tone: 'warn' };
+  return { icon: ShieldOff, label: 'auth.required', tone: 'warn' };
 };
 
 const tonePalette: Record<BadgeContent['tone'], string> = {
-  ready: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
-  warn: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  idle: 'border-slate-500/40 bg-slate-500/10 text-slate-300',
+  ready: 'border-status-green/40 bg-status-green/10 text-status-green',
+  warn: 'border-status-yellow/50 bg-status-yellow/10 text-status-yellow',
+  idle: 'border-rim bg-elevated text-fg-muted',
 };
 
 const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const content = pickContent(status);
   const Icon = content.icon;
@@ -64,18 +66,18 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
       <Badge
         variant="outline"
         className={cn(
-          'h-8 cursor-pointer gap-1.5 rounded-full px-3',
+          'h-[30px] cursor-pointer gap-1.5 rounded-[4px] px-2.5 font-mono text-[10px] font-semibold transition-colors hover:border-rim-strong hover:bg-hover hover:text-foreground',
           tonePalette[content.tone],
         )}
         onClick={handleToggle}
       >
         <Icon className={cn('size-3.5', animate && 'animate-spin')} />
-        <span className="text-xs">{content.label}</span>
+        <span>{t(content.label)}</span>
       </Badge>
       {open && (
         <aside className="absolute top-10 right-0 z-30 w-80 space-y-3 rounded-md border border-slate-700 bg-slate-900 p-4 text-xs text-slate-200 shadow-xl">
           <header className="flex items-center justify-between">
-            <strong className="text-sm">인증 상태</strong>
+            <strong className="text-sm">{t('auth.status')}</strong>
             <Button
               type="button"
               variant="ghost"
@@ -87,7 +89,7 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
               <RefreshCw
                 className={cn('size-3.5', loading && 'animate-spin')}
               />
-              새로고침
+              {t('auth.refresh')}
             </Button>
           </header>
           {error && (
@@ -97,20 +99,24 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
           )}
           {status && (
             <dl className="space-y-1 leading-relaxed">
-              <Row label="OAuth" value={status.oauth.state} />
+              <Row label={t('auth.oauth')} value={status.oauth.state} />
               <Row
-                label="Codex"
+                label={t('auth.codex')}
                 value={
                   status.codex.authed
-                    ? 'authed'
+                    ? t('auth.authed')
                     : status.codex.probe === 'missing'
-                      ? 'CLI 없음'
-                      : 'unauthed'
+                      ? t('auth.cliMissing')
+                      : t('auth.unauthed')
                 }
               />
               <Row
-                label="API Key"
-                value={status.apiKey.available ? '사용 가능' : '없음'}
+                label={t('auth.apiKey')}
+                value={
+                  status.apiKey.available
+                    ? t('auth.apiKeyAvailable')
+                    : t('auth.apiKeyMissing')
+                }
               />
             </dl>
           )}
@@ -118,21 +124,15 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
             <div className="space-y-1.5 rounded border border-amber-700/40 bg-amber-950/30 p-2">
               <p className="font-medium text-amber-200">
                 {status.codex.probe === 'missing'
-                  ? 'Codex CLI를 먼저 설치하세요.'
-                  : 'Codex 인증이 필요합니다.'}
+                  ? t('auth.installCodex')
+                  : t('auth.loginRequired')}
               </p>
               <code className="block rounded bg-slate-950/50 px-2 py-1 font-mono text-[11px] text-slate-300">
                 {status.codex.probe === 'missing'
                   ? 'npm i -g @openai/codex'
                   : status.loginCommand}
               </code>
-              <p className="text-slate-400">
-                또는{' '}
-                <code className="rounded bg-slate-950/50 px-1">
-                  OPENAI_API_KEY
-                </code>{' '}
-                환경 변수를 설정하세요.
-              </p>
+              <p className="text-slate-400">{t('auth.setEnv')}</p>
             </div>
           )}
           {status?.oauth.lastError && status.oauth.state !== 'ready' && (

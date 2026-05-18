@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { normalizePanelGapColor } from '@shared/project-state';
 import {
   drawBubbleToCanvas,
@@ -410,6 +411,7 @@ const downloadCanvasPngs = async (
 };
 
 const useExport = (state: StudioState) => {
+  const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -452,7 +454,9 @@ const useExport = (state: StudioState) => {
       );
       return true;
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'PNG export failed.');
+      setExportError(
+        err instanceof Error ? err.message : t('exportDialog.exportFailed'),
+      );
       return false;
     } finally {
       setIsExporting(false);

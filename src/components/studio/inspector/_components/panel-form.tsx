@@ -1,4 +1,5 @@
 import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,6 +15,7 @@ import { InspectorSection } from './inspector-section';
 import { ReferenceImageDialog } from './reference-image-dialog';
 
 const PanelForm = () => {
+  const { t } = useTranslation();
   const {
     dismissGenerationError,
     finalPrompt,
@@ -47,16 +49,16 @@ const PanelForm = () => {
   );
   const meta =
     panelIndex >= 0
-      ? `${selectedPanelCanvas?.title ?? 'Canvas'} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
+      ? `${selectedPanelCanvas?.title ?? t('defaults.canvasTitle')} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
 
   return (
     <InspectorSection
       icon={<SquarePen className="size-4" />}
-      title="Selected Cut"
+      title={t('inspector.panelForm.selectedCut')}
       meta={meta}
     >
-      <FieldBlock label="패널 이름" compact>
+      <FieldBlock label={t('inspector.panelForm.name')} compact>
         <Input
           value={selectedPanel.title}
           onChange={handleSelectedPanelTitleChange}
@@ -64,7 +66,7 @@ const PanelForm = () => {
         />
       </FieldBlock>
       <RangeField
-        label="패널 너비"
+        label={t('inspector.panelForm.width')}
         value={selectedPanel.width}
         suffix="px"
         min={MIN_PANEL_WIDTH}
@@ -73,7 +75,7 @@ const PanelForm = () => {
         onValueChange={handleSelectedPanelWidthChange}
       />
       <RangeField
-        label="패널 높이"
+        label={t('inspector.panelForm.height')}
         value={selectedPanel.height}
         suffix="px"
         min={MIN_PANEL_HEIGHT}
@@ -81,7 +83,7 @@ const PanelForm = () => {
         step={10}
         onValueChange={handleSelectedPanelHeightChange}
       />
-      <FieldBlock label="컷별 프롬프트">
+      <FieldBlock label={t('inspector.panelForm.prompt')}>
         <ReferenceImageDialog />
         <PromptTextarea
           value={selectedPanel.prompt}
@@ -90,9 +92,9 @@ const PanelForm = () => {
         />
       </FieldBlock>
       <RangeField
-        label="변형 수"
+        label={t('inspector.panelForm.variantCount')}
         value={state.variantCount}
-        suffix="개"
+        suffix={t('inspector.panelForm.variantSuffix')}
         min={1}
         max={4}
         step={1}
@@ -112,10 +114,10 @@ const PanelForm = () => {
             <Sparkles className="size-4" />
           )}
           {isGenerating
-            ? 'Generating'
+            ? t('inspector.panelForm.generating')
             : selectedCandidate
-              ? 'Regenerate cut'
-              : 'Generate cut'}
+              ? t('inspector.panelForm.regenerate')
+              : t('inspector.panelForm.generate')}
           <kbd className="ml-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide opacity-80">
             ⌘↵
           </kbd>
@@ -139,7 +141,7 @@ const PanelForm = () => {
         )}
         <details className="overflow-hidden rounded-md border bg-background">
           <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-muted-foreground">
-            최종 생성 조건
+            {t('inspector.panelForm.finalPrompt')}
           </summary>
           <pre className="max-h-[180px] overflow-auto border-t bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap">
             {finalPrompt}
