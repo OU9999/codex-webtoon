@@ -56,8 +56,9 @@ const normalizeNumber = (
   min: number,
   max: number,
 ): number => {
-  if (typeof value !== 'number') return fallback;
-  if (!Number.isFinite(value)) return fallback;
+  const normalizedFallback = clamp(Math.round(fallback), min, max);
+  if (typeof value !== 'number') return normalizedFallback;
+  if (!Number.isFinite(value)) return normalizedFallback;
 
   return clamp(Math.round(value), min, max);
 };
