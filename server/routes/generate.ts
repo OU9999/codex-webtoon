@@ -19,6 +19,11 @@ import {
   touchProject,
 } from '../lib/project-store.js';
 import { getOAuthHandle } from '../runtime-context.js';
+import {
+  getReferenceImageKey,
+  isExternalReferenceImage,
+  normalizeExternalReferenceImage,
+} from '../../shared/reference-images.js';
 import type { ApiError, ReferenceImageRef } from '../../shared/types.js';
 
 type ProviderRequest = 'auto' | 'openai' | 'oauth';
@@ -47,6 +52,15 @@ interface ParsedRequest {
 const MAX_COUNT = 4;
 const MAX_REFERENCE_IMAGES = 4;
 const GENERATION_TIMEOUT_MS = 180_000;
+const EXTERNAL_REFERENCE_FETCH_TIMEOUT_MS = 15_000;
+const MAX_EXTERNAL_REFERENCE_IMAGE_BYTES = 10 * 1024 * 1024;
+const DATA_REFERENCE_IMAGE_PATTERN =
+  /^data:(image\/(?:png|jpeg|webp));base64,([a-z0-9+/=\s]+)$/i;
+const SUPPORTED_REFERENCE_IMAGE_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+]);
 
 class GenerateValidationError extends Error {
   constructor(
@@ -112,28 +126,73 @@ const parseReferenceImages = (value: unknown): ReferenceImageRef[] => {
     }
 
     const reference = item as Record<string, unknown>;
-    if (
-      typeof reference.panelId !== 'string' ||
-      !reference.panelId.trim() ||
-      typeof reference.candidateId !== 'string' ||
-      !reference.candidateId.trim()
+    let parsedReference: ReferenceImageRef;
+    if (reference.source === 'external') {
+      if (
+        typeof reference.imageUrl !== 'string' ||
+        !reference.imageUrl.trim()
+      ) {
+        throw new GenerateValidationError(
+          'referenceImages',
+          'external reference images must include imageUrl.',
+        );
+      }
+
+      const imageUrl = reference.imageUrl.trim();
+      if (!isSupportedExternalReferenceImageUrl(imageUrl)) {
+        throw new GenerateValidationError(
+          'referenceImages',
+          'external reference image URLs must be http(s) URLs or png/jpeg/webp data URLs.',
+        );
+      }
+
+      parsedReference = normalizeExternalReferenceImage({
+        id: typeof reference.id === 'string' ? reference.id : undefined,
+        imageUrl,
+        title:
+          typeof reference.title === 'string' ? reference.title : undefined,
+        createdAt:
+          typeof reference.createdAt === 'string'
+            ? reference.createdAt
+            : undefined,
+      });
+    } else if (
+      typeof reference.panelId === 'string' &&
+      reference.panelId.trim() &&
+      typeof reference.candidateId === 'string' &&
+      reference.candidateId.trim()
     ) {
+      parsedReference = {
+        source: 'candidate',
+        panelId: reference.panelId.trim(),
+        candidateId: reference.candidateId.trim(),
+      };
+    } else {
       throw new GenerateValidationError(
         'referenceImages',
-        'referenceImages entries must include panelId and candidateId.',
+        'referenceImages entries must include panelId and candidateId or external imageUrl.',
       );
     }
 
-    const panelId = reference.panelId.trim();
-    const candidateId = reference.candidateId.trim();
-    const key = `${panelId}:${candidateId}`;
+    const key = getReferenceImageKey(parsedReference);
     if (seen.has(key)) continue;
 
-    references.push({ panelId, candidateId });
+    references.push(parsedReference);
     seen.add(key);
   }
 
   return references;
+};
+
+const isSupportedExternalReferenceImageUrl = (imageUrl: string): boolean => {
+  if (DATA_REFERENCE_IMAGE_PATTERN.test(imageUrl)) return true;
+
+  try {
+    const url = new URL(imageUrl);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 };
 
 const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
@@ -246,22 +305,121 @@ interface GeneratedPng {
   model: string;
 }
 
-interface ReferenceImageBuffer extends ReferenceImageRef {
+interface ReferenceImageBuffer {
+  reference: ReferenceImageRef;
   buffer: Buffer;
+  mediaType: string;
 }
 
-const readReferenceImages = (
+const getReferenceFileExtension = (mediaType: string): string => {
+  if (mediaType === 'image/jpeg') return 'jpg';
+  if (mediaType === 'image/webp') return 'webp';
+  return 'png';
+};
+
+const assertReferenceImageSize = (buffer: Buffer): void => {
+  if (buffer.length === 0) {
+    throw new Error('External reference image is empty.');
+  }
+  if (buffer.length > MAX_EXTERNAL_REFERENCE_IMAGE_BYTES) {
+    throw new Error('External reference image must be 10MB or smaller.');
+  }
+};
+
+const parseDataReferenceImage = (
+  imageUrl: string,
+): { buffer: Buffer; mediaType: string } | null => {
+  const match = imageUrl.match(DATA_REFERENCE_IMAGE_PATTERN);
+  if (!match) return null;
+
+  const [, mediaType, base64] = match;
+  if (!mediaType || !base64) return null;
+
+  const buffer = Buffer.from(base64.replace(/\s/g, ''), 'base64');
+  assertReferenceImageSize(buffer);
+  return { buffer, mediaType: mediaType.toLowerCase() };
+};
+
+const fetchExternalReferenceImage = async (
+  imageUrl: string,
+): Promise<{ buffer: Buffer; mediaType: string }> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    EXTERNAL_REFERENCE_FETCH_TIMEOUT_MS,
+  );
+
+  try {
+    const response = await fetch(imageUrl, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`External reference image returned ${response.status}.`);
+    }
+
+    const mediaType = response.headers
+      .get('content-type')
+      ?.split(';')[0]
+      ?.trim()
+      .toLowerCase();
+    if (!mediaType || !SUPPORTED_REFERENCE_IMAGE_TYPES.has(mediaType)) {
+      throw new Error('External reference image must be png, jpeg, or webp.');
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    assertReferenceImageSize(buffer);
+    return { buffer, mediaType };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const readExternalReferenceImage = async (
+  reference: ReferenceImageRef,
+): Promise<ReferenceImageBuffer> => {
+  if (!reference.imageUrl) {
+    throw new Error('External reference image is missing imageUrl.');
+  }
+
+  const dataImage = parseDataReferenceImage(reference.imageUrl);
+  const image =
+    dataImage ?? (await fetchExternalReferenceImage(reference.imageUrl));
+
+  return {
+    reference,
+    buffer: image.buffer,
+    mediaType: image.mediaType,
+  };
+};
+
+const readReferenceImage = async (
   projectDir: string,
-  references: ReferenceImageRef[],
-): ReferenceImageBuffer[] =>
-  references.map((reference) => ({
-    ...reference,
+  reference: ReferenceImageRef,
+): Promise<ReferenceImageBuffer> => {
+  if (isExternalReferenceImage(reference)) {
+    return readExternalReferenceImage(reference);
+  }
+
+  if (!reference.panelId || !reference.candidateId) {
+    throw new Error('Candidate reference image is missing identifiers.');
+  }
+
+  return {
+    reference,
     buffer: readCandidatePng({
       projectDir,
       panelId: reference.panelId,
       candidateId: reference.candidateId,
     }),
-  }));
+    mediaType: 'image/png',
+  };
+};
+
+const readReferenceImages = async (
+  projectDir: string,
+  references: ReferenceImageRef[],
+): Promise<ReferenceImageBuffer[]> =>
+  Promise.all(
+    references.map((reference) => readReferenceImage(projectDir, reference)),
+  );
 
 const generatePng = async (
   resolved: ReturnType<typeof resolveProvider>,
@@ -277,7 +435,7 @@ const generatePng = async (
         size,
         referenceImageDataUrls: referenceImages.map(
           (reference) =>
-            `data:image/png;base64,${reference.buffer.toString('base64')}`,
+            `data:${reference.mediaType};base64,${reference.buffer.toString('base64')}`,
         ),
         signal,
       });
@@ -289,9 +447,13 @@ const generatePng = async (
     if (referenceImages.length > 0) {
       const image = await Promise.all(
         referenceImages.map((reference, index) =>
-          toFile(reference.buffer, `reference-${index + 1}.png`, {
-            type: 'image/png',
-          }),
+          toFile(
+            reference.buffer,
+            `reference-${index + 1}.${getReferenceFileExtension(reference.mediaType)}`,
+            {
+              type: reference.mediaType,
+            },
+          ),
         ),
       );
       const response = await client.images.edit(
@@ -408,7 +570,10 @@ generateRouter.post('/', async (req, res) => {
 
   let referenceImages: ReferenceImageBuffer[];
   try {
-    referenceImages = readReferenceImages(projectDir, parsed.referenceImages);
+    referenceImages = await readReferenceImages(
+      projectDir,
+      parsed.referenceImages,
+    );
   } catch (err) {
     sendGenerationError(res, err);
     return;

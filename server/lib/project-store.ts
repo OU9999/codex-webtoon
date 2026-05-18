@@ -20,13 +20,13 @@ import {
 } from '../../shared/project-state.js';
 import {
   buildReferenceImageLookup,
+  isReferenceImageRef,
   normalizeReferenceImageRefs,
 } from '../../shared/reference-images.js';
 import type {
   ProjectMeta,
   ProjectState,
   ProjectSummary,
-  ReferenceImageRef,
 } from '../../shared/types.js';
 
 const PROJECT_FILE = 'project.json';
@@ -294,12 +294,6 @@ const isCandidate = (value: unknown): boolean => {
     typeof c.height === 'number' &&
     typeof c.provider === 'string'
   );
-};
-
-const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
-  if (!value || typeof value !== 'object') return false;
-  const ref = value as Record<string, unknown>;
-  return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
 };
 
 const isWebtoonCanvas = (value: unknown): boolean => {

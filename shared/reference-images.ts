@@ -15,8 +15,23 @@ interface CandidateImageLocation {
   candidateId: string;
 }
 
+interface ExternalReferenceImageInput {
+  id?: string;
+  imageUrl: string;
+  title?: string;
+  createdAt?: string;
+}
+
 const CANDIDATE_IMAGE_URL_PATTERN =
   /\/candidates\/([^/?#]+)\/([^/?#]+)\.png(?:[?#].*)?$/;
+
+const isExternalReferenceImage = (reference: ReferenceImageRef): boolean =>
+  reference.source === 'external';
+
+const isCandidateReferenceImage = (reference: ReferenceImageRef): boolean =>
+  reference.source !== 'external' &&
+  typeof reference.panelId === 'string' &&
+  typeof reference.candidateId === 'string';
 
 const decodeUrlPart = (value: string): string | null => {
   try {
@@ -26,8 +41,30 @@ const decodeUrlPart = (value: string): string | null => {
   }
 };
 
-const getReferenceImageKey = (reference: ReferenceImageRef): string =>
-  `${reference.panelId}:${reference.candidateId}`;
+const normalizeExternalReferenceImage = (
+  reference: ExternalReferenceImageInput,
+): ReferenceImageRef => {
+  const imageUrl = reference.imageUrl.trim();
+  const id = reference.id?.trim() || imageUrl;
+  const title = reference.title?.trim();
+  const createdAt = reference.createdAt?.trim();
+
+  return {
+    source: 'external',
+    id,
+    imageUrl,
+    ...(title ? { title } : {}),
+    ...(createdAt ? { createdAt } : {}),
+  };
+};
+
+const getReferenceImageKey = (reference: ReferenceImageRef): string => {
+  if (isExternalReferenceImage(reference)) {
+    return `external:${reference.id ?? reference.imageUrl ?? ''}`;
+  }
+
+  return `candidate:${reference.panelId ?? ''}:${reference.candidateId ?? ''}`;
+};
 
 const parseCandidateImageUrl = (
   imageUrl: string,
@@ -50,12 +87,15 @@ const getCandidateReference = (
   candidate: CandidateImageSource,
 ): ReferenceImageRef => {
   const location = parseCandidateImageUrl(candidate.imageUrl);
-  if (!location) return { panelId, candidateId: candidate.id };
+  if (!location) {
+    return { source: 'candidate', panelId, candidateId: candidate.id };
+  }
   if (location.candidateId !== candidate.id) {
-    return { panelId, candidateId: candidate.id };
+    return { source: 'candidate', panelId, candidateId: candidate.id };
   }
 
   return {
+    source: 'candidate',
     panelId: location.panelId,
     candidateId: location.candidateId,
   };
@@ -87,6 +127,30 @@ const normalizeReferenceImageRefs = (
   const seen = new Set<string>();
 
   references.forEach((reference) => {
+    if (isExternalReferenceImage(reference)) {
+      if (
+        typeof reference.imageUrl !== 'string' ||
+        !reference.imageUrl.trim()
+      ) {
+        return;
+      }
+
+      const externalReference = normalizeExternalReferenceImage({
+        id: reference.id,
+        imageUrl: reference.imageUrl,
+        title: reference.title,
+        createdAt: reference.createdAt,
+      });
+      const externalKey = getReferenceImageKey(externalReference);
+      if (seen.has(externalKey)) return;
+
+      seen.add(externalKey);
+      normalized.push(externalReference);
+      return;
+    }
+
+    if (!isCandidateReferenceImage(reference)) return;
+
     const canonical = lookup.get(getReferenceImageKey(reference));
     if (!canonical) return;
 
@@ -100,11 +164,36 @@ const normalizeReferenceImageRefs = (
   return normalized;
 };
 
+const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
+  if (!value || typeof value !== 'object') return false;
+  const reference = value as Record<string, unknown>;
+
+  if (reference.source === 'external') {
+    return (
+      typeof reference.imageUrl === 'string' &&
+      (reference.id === undefined || typeof reference.id === 'string') &&
+      (reference.title === undefined || typeof reference.title === 'string') &&
+      (reference.createdAt === undefined ||
+        typeof reference.createdAt === 'string')
+    );
+  }
+
+  return (
+    (reference.source === undefined || reference.source === 'candidate') &&
+    typeof reference.panelId === 'string' &&
+    typeof reference.candidateId === 'string'
+  );
+};
+
 export {
   buildReferenceImageLookup,
   getCandidateReference,
   getReferenceImageKey,
+  isCandidateReferenceImage,
+  isExternalReferenceImage,
+  isReferenceImageRef,
   normalizeReferenceImageRefs,
+  normalizeExternalReferenceImage,
   parseCandidateImageUrl,
 };
-export type { CandidateImageLocation };
+export type { CandidateImageLocation, ExternalReferenceImageInput };

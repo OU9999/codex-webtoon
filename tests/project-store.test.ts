@@ -106,6 +106,22 @@ test('saveState and loadState round-trip project data through disk', async () =>
     await storePromise;
   const project = createProject('State Round Trip');
   const state = createProjectState();
+  const panel = state.panels[0];
+  assert.ok(panel);
+  panel.referenceImages = [
+    {
+      source: 'candidate',
+      panelId: 'panel-1',
+      candidateId: 'candidate-1',
+    },
+    {
+      source: 'external',
+      id: 'external-1',
+      imageUrl: 'https://example.com/reference.png',
+      title: 'reference.png',
+      createdAt: '2026-05-18T00:00:00.000Z',
+    },
+  ];
 
   saveState(project.name, state);
 
@@ -115,6 +131,7 @@ test('saveState and loadState round-trip project data through disk', async () =>
   assert.equal(loaded.selectedCanvasId, 'main');
   assert.equal(loaded.panels[0]?.title, 'Opening');
   assert.equal(loaded.panels[0]?.bubbles[0]?.text, 'We start here.');
+  assert.deepEqual(loaded.panels[0]?.referenceImages, panel.referenceImages);
   assert.equal(loaded.variantCount, 2);
 
   const summary = listProjects().find(
