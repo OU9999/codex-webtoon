@@ -5,6 +5,7 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { getBubbleClassName } from '@/components/studio/_lib/class-names';
 import {
@@ -42,6 +43,7 @@ const BubbleTextEditor = ({
   onChange,
   onEditEnd,
 }: BubbleTextEditorProps) => {
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleBlur = (): void => {
@@ -87,7 +89,7 @@ const BubbleTextEditor = ({
   return (
     <textarea
       ref={textareaRef}
-      aria-label="말풍선 텍스트 수정"
+      aria-label={t('bubbles.transform.editText')}
       className="bubble-text-editor relative z-20 h-full w-full resize-none border-0 bg-transparent p-0 text-center leading-[1.18] [font-weight:inherit] [text-wrap:balance] [overflow-wrap:anywhere] whitespace-pre-wrap [color:inherit] caret-brand outline-none [font:inherit]"
       value={value}
       onBlur={handleBlur}

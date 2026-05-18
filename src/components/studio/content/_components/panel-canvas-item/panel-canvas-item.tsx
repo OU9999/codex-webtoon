@@ -1,5 +1,6 @@
 import { ImagePlus } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { getPanelClassName } from '@/components/studio/_lib/class-names';
 import type {
@@ -11,7 +12,7 @@ import type {
 interface PanelResizeHandleControl {
   handle: PanelResizeHandle;
   className: string;
-  label: string;
+  labelKey: string;
 }
 
 interface PanelCanvasItemProps {
@@ -23,14 +24,14 @@ interface PanelCanvasItemProps {
 }
 
 const PANEL_RESIZE_HANDLES: PanelResizeHandleControl[] = [
-  { handle: 'nw', className: 'nw', label: 'Resize panel northwest' },
-  { handle: 'n', className: 'n', label: 'Resize panel north' },
-  { handle: 'ne', className: 'ne', label: 'Resize panel northeast' },
-  { handle: 'e', className: 'e', label: 'Resize panel east' },
-  { handle: 'se', className: 'se', label: 'Resize panel southeast' },
-  { handle: 's', className: 's', label: 'Resize panel south' },
-  { handle: 'sw', className: 'sw', label: 'Resize panel southwest' },
-  { handle: 'w', className: 'w', label: 'Resize panel west' },
+  { handle: 'nw', className: 'nw', labelKey: 'panelCanvas.resizeNorthwest' },
+  { handle: 'n', className: 'n', labelKey: 'panelCanvas.resizeNorth' },
+  { handle: 'ne', className: 'ne', labelKey: 'panelCanvas.resizeNortheast' },
+  { handle: 'e', className: 'e', labelKey: 'panelCanvas.resizeEast' },
+  { handle: 'se', className: 'se', labelKey: 'panelCanvas.resizeSoutheast' },
+  { handle: 's', className: 's', labelKey: 'panelCanvas.resizeSouth' },
+  { handle: 'sw', className: 'sw', labelKey: 'panelCanvas.resizeSouthwest' },
+  { handle: 'w', className: 'w', labelKey: 'panelCanvas.resizeWest' },
 ];
 
 const PanelCanvasItem = ({
@@ -40,6 +41,7 @@ const PanelCanvasItem = ({
   isSelected,
   onTransformStart,
 }: PanelCanvasItemProps) => {
+  const { t } = useTranslation();
   const selectedCandidate = panel.candidates.find(
     (item) => item.id === panel.selectedCandidateId,
   );
@@ -85,7 +87,7 @@ const PanelCanvasItem = ({
         ) : (
           <p className="empty-panel">
             <ImagePlus className="size-9" />
-            <span>빈 패널</span>
+            <span>{t('panelCanvas.empty')}</span>
           </p>
         )}
       </figure>
@@ -100,7 +102,7 @@ const PanelCanvasItem = ({
             <button
               key={control.handle}
               type="button"
-              aria-label={control.label}
+              aria-label={t(control.labelKey)}
               className={cn('panel-resize-handle', control.className)}
               data-resize-handle={control.handle}
               onPointerDown={handleResizePointerDown}

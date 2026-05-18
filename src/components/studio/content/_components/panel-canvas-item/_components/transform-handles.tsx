@@ -1,4 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type {
   Bubble,
@@ -10,7 +11,7 @@ import type {
 interface ResizeHandleDefinition {
   anchor: BubbleResizeAnchor;
   className: string;
-  label: string;
+  labelKey: string;
 }
 
 interface TransformResizeHandleProps extends ResizeHandleDefinition {
@@ -29,14 +30,30 @@ interface TransformHandlesProps {
 }
 
 const RESIZE_HANDLES: readonly ResizeHandleDefinition[] = [
-  { anchor: 'nw', className: 'is-nw', label: '왼쪽 위 크기 조절' },
-  { anchor: 'n', className: 'is-n', label: '위쪽 크기 조절' },
-  { anchor: 'ne', className: 'is-ne', label: '오른쪽 위 크기 조절' },
-  { anchor: 'e', className: 'is-e', label: '오른쪽 크기 조절' },
-  { anchor: 'se', className: 'is-se', label: '오른쪽 아래 크기 조절' },
-  { anchor: 's', className: 'is-s', label: '아래쪽 크기 조절' },
-  { anchor: 'sw', className: 'is-sw', label: '왼쪽 아래 크기 조절' },
-  { anchor: 'w', className: 'is-w', label: '왼쪽 크기 조절' },
+  {
+    anchor: 'nw',
+    className: 'is-nw',
+    labelKey: 'bubbles.transform.resizeNorthwest',
+  },
+  { anchor: 'n', className: 'is-n', labelKey: 'bubbles.transform.resizeNorth' },
+  {
+    anchor: 'ne',
+    className: 'is-ne',
+    labelKey: 'bubbles.transform.resizeNortheast',
+  },
+  { anchor: 'e', className: 'is-e', labelKey: 'bubbles.transform.resizeEast' },
+  {
+    anchor: 'se',
+    className: 'is-se',
+    labelKey: 'bubbles.transform.resizeSoutheast',
+  },
+  { anchor: 's', className: 'is-s', labelKey: 'bubbles.transform.resizeSouth' },
+  {
+    anchor: 'sw',
+    className: 'is-sw',
+    labelKey: 'bubbles.transform.resizeSouthwest',
+  },
+  { anchor: 'w', className: 'is-w', labelKey: 'bubbles.transform.resizeWest' },
 ];
 
 const TransformResizeHandle = ({
@@ -44,10 +61,12 @@ const TransformResizeHandle = ({
   bubble,
   canvasHeight,
   className,
-  label,
+  labelKey,
   panel,
   onDragStart,
 }: TransformResizeHandleProps) => {
+  const { t } = useTranslation();
+
   const handlePointerDown = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void => {
@@ -67,7 +86,7 @@ const TransformResizeHandle = ({
       className={cn('transform-handle', className)}
       onPointerDown={handlePointerDown}
     >
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{t(labelKey)}</span>
     </button>
   );
 };
@@ -79,6 +98,8 @@ const TransformHandles = ({
   hasTailTip,
   onDragStart,
 }: TransformHandlesProps) => {
+  const { t } = useTranslation();
+
   const handleTailPointerDown = (
     event: ReactPointerEvent<HTMLButtonElement>,
   ): void => {
@@ -86,7 +107,10 @@ const TransformHandles = ({
   };
 
   return (
-    <aside className="transform-controls" aria-label="말풍선 변형 핸들">
+    <aside
+      className="transform-controls"
+      aria-label={t('bubbles.transform.controls')}
+    >
       <span className="transform-box" aria-hidden="true" />
       {RESIZE_HANDLES.map((handle) => (
         <TransformResizeHandle
@@ -95,7 +119,7 @@ const TransformHandles = ({
           bubble={bubble}
           canvasHeight={canvasHeight}
           className={handle.className}
-          label={handle.label}
+          labelKey={handle.labelKey}
           panel={panel}
           onDragStart={onDragStart}
         />
@@ -106,7 +130,7 @@ const TransformHandles = ({
           className="tail-tip-handle"
           onPointerDown={handleTailPointerDown}
         >
-          <span className="sr-only">말풍선 꼬리 끝점 조절</span>
+          <span className="sr-only">{t('bubbles.transform.tailTip')}</span>
         </button>
       )}
     </aside>

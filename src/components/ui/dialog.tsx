@@ -1,6 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import type * as React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
@@ -31,6 +32,8 @@ const DialogContent = ({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) => {
+  const { t } = useTranslation();
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -46,7 +49,7 @@ const DialogContent = ({
         {children}
         <DialogPrimitive.Close className="absolute top-3 right-3 grid size-7 place-items-center rounded-[4px] text-fg-muted transition-colors hover:bg-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand/25 focus-visible:outline-none">
           <X className="size-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{t('common.close')}</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>

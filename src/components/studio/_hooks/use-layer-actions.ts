@@ -1,4 +1,5 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getBubbleTailSidePatch,
   isBubbleBorderStyle,
@@ -121,6 +122,8 @@ const getLayerAddTarget = (
 };
 
 const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
+  const { t } = useTranslation();
+
   const patchBubble = (
     panelId: string,
     bubbleId: string,
@@ -182,7 +185,11 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     type: BubbleType,
     patch: Partial<Bubble> = {},
   ): void => {
-    const bubble = { ...createBubble(type), ...patch };
+    const bubble = {
+      ...createBubble(type),
+      text: t(`bubbles.defaultText.${type}`),
+      ...patch,
+    };
     setState((current) => {
       const target = getLayerAddTarget(current, bubble);
       if (!target) return current;

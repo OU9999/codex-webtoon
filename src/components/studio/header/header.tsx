@@ -6,6 +6,7 @@ import {
   Save,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
 import { Badge } from '@/components/ui/badge';
@@ -17,26 +18,36 @@ import type { SaveStatus } from '../_hooks/use-studio-state';
 
 interface SaveBadgeContent {
   icon: ReactNode;
-  label: string;
+  labelKey: string;
 }
+
+const HEADER_ACTION_CLASS_NAME =
+  'h-[30px] rounded-[4px] border-rim bg-elevated px-2.5 font-mono text-[10px] font-semibold text-fg-secondary uppercase hover:border-rim-strong hover:bg-hover hover:text-foreground';
 
 const saveBadge = (status: SaveStatus): SaveBadgeContent | null => {
   if (status === 'saving') {
     return {
       icon: <Loader2 className="size-3.5 animate-spin" />,
-      label: '저장 중',
+      labelKey: 'header.saving',
     };
   }
   if (status === 'saved') {
-    return { icon: <CircleCheck className="size-3.5" />, label: '저장됨' };
+    return {
+      icon: <CircleCheck className="size-3.5" />,
+      labelKey: 'header.saved',
+    };
   }
   if (status === 'error') {
-    return { icon: <CircleAlert className="size-3.5" />, label: '저장 실패' };
+    return {
+      icon: <CircleAlert className="size-3.5" />,
+      labelKey: 'header.saveError',
+    };
   }
   return null;
 };
 
 const Header = () => {
+  const { t } = useTranslation();
   const { handleProjectJsonExport, projectName, saveStatus, onBack } =
     useStudioContext();
 
@@ -46,12 +57,17 @@ const Header = () => {
   return (
     <AppHeader
       subtitle={projectName}
-      actionsLabel="Export actions"
+      actionsLabel={t('header.actionsLabel')}
       actions={
         <>
-          <Button type="button" variant="outline" onClick={onBack}>
-            <FolderOpen className="size-4" />
-            프로젝트
+          <Button
+            type="button"
+            variant="outline"
+            className={HEADER_ACTION_CLASS_NAME}
+            onClick={onBack}
+          >
+            <FolderOpen className="size-3.5" />
+            {t('header.backToProjects')}
           </Button>
           <AuthBadge
             status={auth.status}
@@ -62,19 +78,20 @@ const Header = () => {
           {badge && (
             <Badge
               variant="outline"
-              className="h-8 gap-1.5 rounded-full px-3 text-xs text-muted-foreground"
+              className="h-[30px] gap-1.5 rounded-[4px] border-rim bg-elevated px-2.5 font-mono text-[10px] font-semibold text-fg-secondary"
             >
               {badge.icon}
-              {badge.label}
+              {t(badge.labelKey)}
             </Badge>
           )}
           <Button
             type="button"
             variant="outline"
+            className={HEADER_ACTION_CLASS_NAME}
             onClick={handleProjectJsonExport}
           >
-            <Save className="size-4" />
-            JSON
+            <Save className="size-3.5" />
+            {t('header.exportJson')}
           </Button>
           <ExportDialog />
         </>

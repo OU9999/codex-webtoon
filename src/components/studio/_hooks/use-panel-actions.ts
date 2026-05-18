@@ -1,4 +1,5 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   MIN_CANVAS_HEIGHT,
   normalizePanelGapColor,
@@ -113,6 +114,8 @@ const usePanelActions = (
   state: StudioState,
   setState: Dispatch<SetStateAction<StudioState>>,
 ) => {
+  const { t } = useTranslation();
+
   const patchSelectedPanel = (patch: Partial<Panel>): void => {
     setState((current) => ({
       ...current,
@@ -172,7 +175,9 @@ const usePanelActions = (
       const canvasHeight = Math.max(canvas.height, rawY + panelHeight);
       const panel = createPanel({
         canvasId: canvas.id,
-        title: `Panel ${canvasPanels.length + 1}`,
+        title: t('defaults.newPanelTitle', {
+          count: canvasPanels.length + 1,
+        }),
         y: clamp(rawY, 0, canvasHeight - panelHeight),
         height: panelHeight,
       });
@@ -207,7 +212,7 @@ const usePanelActions = (
       const canvasHeight = Math.max(selectedCanvasHeight, y + selected.height);
       const duplicate = createPanel({
         canvasId: selected.canvasId,
-        title: `${selected.title} copy`,
+        title: t('defaults.copyTitle', { title: selected.title }),
         x,
         y,
         width: selected.width,
@@ -376,7 +381,9 @@ const usePanelActions = (
 
   const handleAddCanvas = (): void => {
     const canvas = createWebtoonCanvas({
-      title: `Canvas ${state.canvases.length + 1}`,
+      title: t('defaults.newCanvasTitle', {
+        count: state.canvases.length + 1,
+      }),
     });
 
     setState((current) => ({

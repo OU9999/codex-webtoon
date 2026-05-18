@@ -1,5 +1,6 @@
 import { ImageIcon, Plus, SquarePen } from 'lucide-react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getCanvasPanels } from '../../_lib/canvas-state';
@@ -9,6 +10,7 @@ import { useStudioContext } from '../../studio-context';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
 
 const ProjectSection = () => {
+  const { t } = useTranslation();
   const {
     projectName,
     selectedCanvas,
@@ -18,7 +20,10 @@ const ProjectSection = () => {
     handleCommonPromptChange,
   } = useStudioContext();
 
-  const projectMeta = `${state.canvases.length} canvases · ${state.panels.length} cuts`;
+  const projectMeta = t('sidebar.project.meta', {
+    canvasCount: state.canvases.length,
+    panelCount: state.panels.length,
+  });
   const firstCanvas = state.canvases[0] ?? null;
   const firstCanvasPanels = firstCanvas
     ? getCanvasPanels(state, firstCanvas.id)
@@ -40,7 +45,7 @@ const ProjectSection = () => {
   return (
     <SidebarCollapsibleSection
       icon={<SquarePen className="size-4" />}
-      title="Project"
+      title={t('sidebar.project.title')}
       meta={projectMeta}
     >
       <section className="mb-3 flex items-center gap-2.5">
@@ -64,7 +69,7 @@ const ProjectSection = () => {
           </span>
         </span>
       </section>
-      <FieldBlock label="프로젝트 공용 프롬프트">
+      <FieldBlock label={t('sidebar.project.commonPrompt')}>
         <PromptTextarea
           value={state.commonPrompt}
           onChange={handleCommonPromptChange}
@@ -72,13 +77,13 @@ const ProjectSection = () => {
           className="max-h-40 min-h-24"
         />
         <p className="text-right font-mono text-[9.5px] text-fg-muted">
-          {state.commonPrompt.length} chars
+          {t('common.charCount', { count: state.commonPrompt.length })}
         </p>
       </FieldBlock>
       <section className="mb-3 grid gap-2">
         <header className="flex items-center justify-between gap-3">
           <span className="font-mono text-[9.5px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
-            Canvases
+            {t('sidebar.project.canvases')}
           </span>
           <Button
             type="button"
@@ -88,10 +93,13 @@ const ProjectSection = () => {
             className="h-7 rounded-[4px] px-2 font-mono text-[10px] font-semibold uppercase"
           >
             <Plus className="size-3.5" />
-            Add
+            {t('sidebar.project.addCanvas')}
           </Button>
         </header>
-        <nav className="grid gap-1.5" aria-label="Project canvases">
+        <nav
+          className="grid gap-1.5"
+          aria-label={t('sidebar.project.navLabel')}
+        >
           {state.canvases.map((canvas, index) => {
             const isSelected = canvas.id === selectedCanvas?.id;
             const canvasPanels = getCanvasPanels(state, canvas.id);
@@ -127,7 +135,10 @@ const ProjectSection = () => {
                     {canvas.title}
                   </strong>
                   <small className="block truncate font-mono text-[9.5px] font-semibold text-fg-muted">
-                    {canvasPanels.length} cuts / {canvas.height}px
+                    {t('sidebar.project.panelMeta', {
+                      count: canvasPanels.length,
+                      height: canvas.height,
+                    })}
                   </small>
                 </span>
               </button>

@@ -1,4 +1,5 @@
 import { ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { Panel } from '@/components/studio/_lib/types';
 
@@ -15,6 +16,7 @@ const PanelListItem = ({
   isActive,
   onSelect,
 }: PanelListItemProps) => {
+  const { t } = useTranslation();
   const selectedCandidate = panel.candidates.find(
     (candidate) => candidate.id === panel.selectedCandidateId,
   );
@@ -70,7 +72,11 @@ const PanelListItem = ({
             {panel.title}
           </strong>
           <small className="block truncate font-mono text-[9.5px] font-semibold text-fg-muted">
-            {panel.width}x{panel.height} / {panel.bubbles.length} layers
+            {t('sidebar.panelList.itemMeta', {
+              width: panel.width,
+              height: panel.height,
+              count: panel.bubbles.length,
+            })}
           </small>
         </span>
       </button>

@@ -1,4 +1,5 @@
 import { History, Undo2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useStudioContext } from '../../studio-context';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
@@ -12,20 +13,21 @@ const formatHistoryTime = (createdAt: number): string => {
 };
 
 const HistorySection = () => {
+  const { t } = useTranslation();
   const { canUndo, handleUndo, historyEntries } = useStudioContext();
-  const meta = `${historyEntries.length} edits`;
+  const meta = t('sidebar.history.meta', { count: historyEntries.length });
 
   return (
     <SidebarCollapsibleSection
       icon={<History className="size-4" />}
-      title="History"
+      title={t('sidebar.history.title')}
       meta={meta}
       defaultOpen={false}
       contentClassName="p-2"
     >
       <header className="mb-2 flex items-center justify-between gap-2">
         <span className="font-mono text-[9.5px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
-          Latest edits
+          {t('sidebar.history.latestEdits')}
         </span>
         <Button
           type="button"
@@ -36,12 +38,12 @@ const HistorySection = () => {
           className="h-6 rounded-[3px] px-2 font-mono text-[9.5px] font-semibold uppercase"
         >
           <Undo2 className="size-3.5" />
-          Undo
+          {t('sidebar.history.undo')}
         </Button>
       </header>
       <section
         className="grid max-h-[132px] gap-1 overflow-y-auto pr-1"
-        aria-label="Edit history"
+        aria-label={t('sidebar.history.editHistoryLabel')}
       >
         {historyEntries.length > 0 ? (
           historyEntries.slice(0, 6).map((entry) => (
@@ -60,7 +62,7 @@ const HistorySection = () => {
           ))
         ) : (
           <p className="rounded-[4px] border border-dashed border-rim bg-background px-2.5 py-2 text-[11px] text-fg-muted">
-            No edits yet
+            {t('sidebar.history.noEdits')}
           </p>
         )}
       </section>

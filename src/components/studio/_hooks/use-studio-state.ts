@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { SetStateAction } from 'react';
 
 import { ApiClientError, saveProjectState } from '@/api/client';
+import { i18n } from '@/i18n/i18n';
 import type { ProjectState } from '@shared/types';
 import type { StudioState, StudioStateSetter } from '../_lib/types';
 
@@ -47,13 +48,13 @@ const findChangedPanelLabel = (
 ): string | null => {
   for (const panel of next.panels) {
     const previousPanel = previous.panels.find((item) => item.id === panel.id);
-    if (!previousPanel) return '패널 추가';
+    if (!previousPanel) return i18n.t('history.panelAdded');
 
     if (
       previousPanel.title !== panel.title ||
       previousPanel.prompt !== panel.prompt
     ) {
-      return '패널 내용 수정';
+      return i18n.t('history.panelContentUpdated');
     }
 
     if (
@@ -62,22 +63,24 @@ const findChangedPanelLabel = (
       previousPanel.width !== panel.width ||
       previousPanel.height !== panel.height
     ) {
-      return '패널 위치/크기 변경';
+      return i18n.t('history.panelMoved');
     }
 
     if (previousPanel.bubbles.length !== panel.bubbles.length) {
       return previousPanel.bubbles.length < panel.bubbles.length
-        ? '말풍선 추가'
-        : '말풍선 삭제';
+        ? i18n.t('history.bubbleAdded')
+        : i18n.t('history.bubbleDeleted');
     }
 
     for (const bubble of panel.bubbles) {
       const previousBubble = previousPanel.bubbles.find(
         (item) => item.id === bubble.id,
       );
-      if (!previousBubble) return '말풍선 추가';
+      if (!previousBubble) return i18n.t('history.bubbleAdded');
 
-      if (previousBubble.text !== bubble.text) return '말풍선 텍스트 수정';
+      if (previousBubble.text !== bubble.text) {
+        return i18n.t('history.bubbleTextUpdated');
+      }
 
       if (
         previousBubble.x !== bubble.x ||
@@ -85,11 +88,11 @@ const findChangedPanelLabel = (
         previousBubble.width !== bubble.width ||
         previousBubble.height !== bubble.height
       ) {
-        return '말풍선 위치/크기 변경';
+        return i18n.t('history.bubbleMoved');
       }
 
       if (JSON.stringify(previousBubble) !== JSON.stringify(bubble)) {
-        return '말풍선 스타일 수정';
+        return i18n.t('history.bubbleStyleUpdated');
       }
     }
 
@@ -98,7 +101,7 @@ const findChangedPanelLabel = (
       previousPanel.selectedCandidateId !== panel.selectedCandidateId ||
       previousPanel.deletedCandidates.length !== panel.deletedCandidates.length
     ) {
-      return '후보 이미지 변경';
+      return i18n.t('history.imageUpdated');
     }
   }
 
@@ -108,34 +111,38 @@ const findChangedPanelLabel = (
 const getHistoryLabel = (previous: StudioState, next: StudioState): string => {
   if (previous.panels.length !== next.panels.length) {
     return previous.panels.length < next.panels.length
-      ? '패널 추가'
-      : '패널 삭제';
+      ? i18n.t('history.panelAdded')
+      : i18n.t('history.panelDeleted');
   }
 
   const previousBubbleCount = countBubbles(previous);
   const nextBubbleCount = countBubbles(next);
   if (previousBubbleCount !== nextBubbleCount) {
     return previousBubbleCount < nextBubbleCount
-      ? '말풍선 추가'
-      : '말풍선 삭제';
+      ? i18n.t('history.bubbleAdded')
+      : i18n.t('history.bubbleDeleted');
   }
 
-  if (previous.commonPrompt !== next.commonPrompt) return '공용 프롬프트 수정';
+  if (previous.commonPrompt !== next.commonPrompt) {
+    return i18n.t('history.commonPromptUpdated');
+  }
 
   if (
     canvasesChanged(previous, next) ||
     previous.panelGap !== next.panelGap ||
     previous.panelGapColor !== next.panelGapColor
   ) {
-    return '캔버스 설정 변경';
+    return i18n.t('history.canvasUpdated');
   }
 
   const panelLabel = findChangedPanelLabel(previous, next);
   if (panelLabel) return panelLabel;
 
-  if (previous.variantCount !== next.variantCount) return '생성 설정 변경';
+  if (previous.variantCount !== next.variantCount) {
+    return i18n.t('history.generationUpdated');
+  }
 
-  return '편집';
+  return i18n.t('history.edit');
 };
 
 const shouldRecordHistory = (

@@ -1,5 +1,6 @@
 import { GripHorizontal, GripVertical } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getCanvasPanels } from '../_lib/canvas-state';
@@ -13,6 +14,7 @@ import { BubbleLayer } from './_components/panel-canvas-item/_components/bubble-
 import { PanelCanvasItem } from './_components/panel-canvas-item/panel-canvas-item';
 
 const Content = () => {
+  const { t } = useTranslation();
   const {
     editingBubbleId,
     state,
@@ -68,14 +70,17 @@ const Content = () => {
     <section
       className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overscroll-contain bg-canvas bg-[radial-gradient(circle,rgb(26_31_48/0.07)_1px,transparent_1px)] bg-[length:24px_24px] px-3 pt-4 pb-12 md:px-7 md:pt-5 md:pb-14"
       data-canvas-scroll-container
-      aria-label="Webtoon canvas"
+      aria-label={t('content.webtoonCanvas')}
       onPointerDown={handleWorkspacePointerDown}
     >
       <header className="mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-4 text-xs text-muted-foreground">
         <h2>
-          <span>Project canvases</span>
+          <span>{t('content.projectCanvases')}</span>
           <strong className="mt-0.5 block text-xl text-foreground">
-            {state.canvases.length} canvases · {state.panels.length} panels
+            {t('content.projectMeta', {
+              canvasCount: state.canvases.length,
+              panelCount: state.panels.length,
+            })}
           </strong>
         </h2>
         <Badge variant="outline" className="h-8 rounded-full px-3">
@@ -84,7 +89,10 @@ const Content = () => {
         </Badge>
       </header>
 
-      <section className="grid justify-items-center" aria-label="Canvas stack">
+      <section
+        className="grid justify-items-center"
+        aria-label={t('content.canvasStack')}
+      >
         {state.canvases.map((canvas, canvasIndex) => {
           const canvasPanels = getCanvasPanels(state, canvas.id);
           const isSelectedCanvas = canvas.id === selectedCanvas?.id;
@@ -114,13 +122,13 @@ const Content = () => {
                   getCanvasStageClassName(canvas),
                   isSelectedCanvas && 'border-brand ring-2 ring-brand',
                 )}
-                aria-label={`${canvas.title} panel stage`}
+                aria-label={t('content.stageLabel', { title: canvas.title })}
                 data-canvas-id={canvas.id}
                 onPointerDown={handleCanvasPointerDown}
               >
                 {canvasPanels.length === 0 && (
                   <p className="absolute inset-0 grid place-items-center font-mono text-[10.5px] font-semibold tracking-[0.06em] text-fg-muted uppercase">
-                    No cuts
+                    {t('content.noPanels')}
                   </p>
                 )}
                 {canvasPanels.map((panel, index) => (
@@ -156,7 +164,10 @@ const Content = () => {
                   <button
                     type="button"
                     className="canvas-resize-handle"
-                    aria-label={`Resize ${canvas.title} height (${canvas.height}px)`}
+                    aria-label={t('content.canvasResizeLabel', {
+                      title: canvas.title,
+                      height: canvas.height,
+                    })}
                     data-canvas-id={canvas.id}
                     data-canvas-height={canvas.height}
                     onPointerDown={handleCanvasResizePointerDown}

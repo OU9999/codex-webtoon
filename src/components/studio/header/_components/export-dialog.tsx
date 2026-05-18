@@ -1,6 +1,7 @@
 import { Download, FileImage, Rows3, Scissors, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,8 +36,8 @@ interface ExportModeOptionProps {
   onSelect: (mode: PngExportMode) => void;
 }
 
-const formatPixels = (value: number): string =>
-  `${Math.round(value).toLocaleString()}px`;
+const formatPixels = (value: number, language: string): string =>
+  `${Math.round(value).toLocaleString(language)}px`;
 
 const getManualSplitHeight = (value: string): number => {
   const parsed = Number(value);
@@ -91,6 +92,7 @@ const ExportModeOption = ({
 };
 
 const ExportDialog = () => {
+  const { i18n, t } = useTranslation();
   const { exportError, handleWebtoonPngExport, isExporting, state } =
     useStudioContext();
   const [isOpen, setIsOpen] = useState(false);
@@ -101,6 +103,10 @@ const ExportDialog = () => {
 
   const totalHeight = getExportHeight(state);
   const resolvedManualSplitHeight = getManualSplitHeight(manualSplitHeight);
+  const autoSplitHeight = formatPixels(
+    DEFAULT_AUTO_SPLIT_HEIGHT,
+    i18n.language,
+  );
   const partCount = getPngExportPartCount(state, {
     mode,
     manualSplitHeight: resolvedManualSplitHeight,
@@ -135,33 +141,35 @@ const ExportDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" disabled={isExporting}>
-          <Download className="size-4" />
-          {isExporting ? 'Exporting' : 'PNG'}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isExporting}
+          className="h-[30px] rounded-[4px] border-rim bg-elevated px-2.5 font-mono text-[10px] font-semibold text-fg-secondary uppercase hover:border-rim-strong hover:bg-hover hover:text-foreground"
+        >
+          <Download className="size-3.5" />
+          {isExporting ? t('exportDialog.exporting') : t('header.exportPng')}
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[min(94vw,760px)] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
-          <DialogTitle>PNG 저장</DialogTitle>
-          <DialogDescription>
-            긴 웹툰은 자동으로 나누어 저장하면 브라우저 canvas 한계를 피할 수
-            있습니다.
-          </DialogDescription>
+          <DialogTitle>{t('exportDialog.title')}</DialogTitle>
+          <DialogDescription>{t('exportDialog.description')}</DialogDescription>
         </DialogHeader>
 
         <section className="grid gap-4 overflow-y-auto p-4">
           <section className="grid grid-cols-3 gap-2 rounded-[4px] border border-rim-subtle bg-panel/60 p-3">
             <span>
               <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                Total
+                {t('exportDialog.totalHeight')}
               </strong>
               <span className="mt-1 block text-[12px] font-black text-foreground">
-                {formatPixels(totalHeight)}
+                {formatPixels(totalHeight, i18n.language)}
               </span>
             </span>
             <span>
               <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                Canvas
+                {t('exportDialog.canvasCount')}
               </strong>
               <span className="mt-1 block text-[12px] font-black text-foreground">
                 {state.canvases.length}
@@ -169,7 +177,7 @@ const ExportDialog = () => {
             </span>
             <span>
               <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                Files
+                {t('exportDialog.fileCount')}
               </strong>
               <span className="mt-1 block text-[12px] font-black text-foreground">
                 {partCount}
@@ -180,32 +188,34 @@ const ExportDialog = () => {
           <section className="grid gap-2">
             <ExportModeOption
               mode="auto-split"
-              title="자동 split"
-              description={`${formatPixels(DEFAULT_AUTO_SPLIT_HEIGHT)} 단위로 자동 분할`}
+              title={t('exportDialog.autoSplitTitle')}
+              description={t('exportDialog.autoSplitDescription', {
+                height: autoSplitHeight,
+              })}
               icon={<Scissors className="size-4" />}
               isSelected={mode === 'auto-split'}
               onSelect={handleModeSelect}
             />
             <ExportModeOption
               mode="canvas-split"
-              title="캔버스별 저장"
-              description="각 캔버스를 개별 PNG로 저장"
+              title={t('exportDialog.canvasSplitTitle')}
+              description={t('exportDialog.canvasSplitDescription')}
               icon={<Rows3 className="size-4" />}
               isSelected={mode === 'canvas-split'}
               onSelect={handleModeSelect}
             />
             <ExportModeOption
               mode="manual-split"
-              title="직접 분할"
-              description="입력한 높이 기준으로 PNG를 나누어 저장"
+              title={t('exportDialog.manualSplitTitle')}
+              description={t('exportDialog.manualSplitDescription')}
               icon={<Settings2 className="size-4" />}
               isSelected={mode === 'manual-split'}
               onSelect={handleModeSelect}
             />
             <ExportModeOption
               mode="single"
-              title="전체 1장"
-              description="기존 방식 그대로 긴 PNG 1장으로 저장"
+              title={t('exportDialog.singleTitle')}
+              description={t('exportDialog.singleDescription')}
               icon={<FileImage className="size-4" />}
               isSelected={mode === 'single'}
               onSelect={handleModeSelect}
@@ -215,7 +225,7 @@ const ExportDialog = () => {
           {mode === 'manual-split' && (
             <label className="grid gap-2 rounded-[4px] border border-rim-subtle bg-background p-3">
               <span className="font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                Split height
+                {t('exportDialog.manualSplitHeight')}
               </span>
               <Input
                 type="number"
@@ -227,7 +237,12 @@ const ExportDialog = () => {
                 className="h-8 rounded-[4px] border-rim bg-elevated font-mono text-[10.5px]"
               />
               <span className="text-[10.5px] text-fg-muted">
-                적용값 {formatPixels(resolvedManualSplitHeight)}
+                {t('exportDialog.manualAppliedValue', {
+                  height: formatPixels(
+                    resolvedManualSplitHeight,
+                    i18n.language,
+                  ),
+                })}
               </span>
             </label>
           )}
@@ -251,7 +266,7 @@ const ExportDialog = () => {
               disabled={isExporting}
               className="h-8 rounded-[4px] border-rim bg-elevated px-3 font-mono text-[10px] font-semibold uppercase hover:bg-hover"
             >
-              취소
+              {t('common.cancel')}
             </Button>
           </DialogClose>
           <Button
@@ -262,7 +277,7 @@ const ExportDialog = () => {
             onClick={handleExport}
           >
             <Download className="size-3.5" />
-            저장
+            {t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

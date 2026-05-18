@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Candidate } from '@/components/studio/_lib/types';
@@ -16,6 +17,8 @@ const CandidateCard = ({
   onDelete,
   onSelect,
 }: CandidateCardProps) => {
+  const { t } = useTranslation();
+
   const handleSelect = (): void => {
     onSelect(candidate.id);
   };
@@ -48,7 +51,7 @@ const CandidateCard = ({
         size="icon"
         className="absolute top-1 right-1 size-6 rounded-full bg-background/90 text-destructive hover:bg-background"
         onClick={handleDelete}
-        aria-label="Delete candidate"
+        aria-label={t('inspector.candidateGrid.deleteCandidate')}
       >
         <Trash2 className="size-3.5" />
       </Button>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ApiClientError, getAuthStatus } from '@/api/client';
 import type { AuthStatus } from '../../shared/types';
 
@@ -12,6 +13,7 @@ interface UseAuthStatusResult {
 const POLL_WHILE_PENDING_MS = 4000;
 
 const useAuthStatus = (): UseAuthStatusResult => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<AuthStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ const useAuthStatus = (): UseAuthStatusResult => {
             ? err.message
             : err instanceof Error
               ? err.message
-              : '인증 상태 조회 실패';
+              : t('auth.statusLoadFailed');
         setError(message);
       } finally {
         if (!cancelled) setLoading(false);
@@ -60,7 +62,7 @@ const useAuthStatus = (): UseAuthStatusResult => {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [tick]);
+  }, [tick, t]);
 
   return { status, loading, error, refresh };
 };

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { ApiClientError, loadProjectState } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { ProjectPicker } from '@/components/project-picker/project-picker';
 import { Studio } from '@/components/studio/studio';
+import { i18n } from '@/i18n/i18n';
 import {
-  DEFAULT_CANVAS_TITLE,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_PANEL_GAP_COLOR,
   getNormalizedPanelCanvasId,
@@ -22,7 +23,6 @@ import {
   normalizeReferenceImageRefs,
 } from '@shared/reference-images';
 import type { StudioState } from '@/components/studio/_lib/types';
-import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import {
   createPanel,
   createWebtoonCanvas,
@@ -32,37 +32,35 @@ import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
 const createDefaultState = (): StudioState => {
   const panelGap = 28;
   const canvas = createWebtoonCanvas({
-    title: DEFAULT_CANVAS_TITLE,
+    title: i18n.t('defaults.canvasTitle'),
     height: DEFAULT_CANVAS_HEIGHT,
   });
   const panels = [
     createPanel({
       canvasId: canvas.id,
-      title: 'Opening beat',
+      title: i18n.t('defaults.panels.openingTitle'),
       y: 0,
       height: 420,
-      prompt:
-        '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
+      prompt: i18n.t('defaults.panels.openingPrompt'),
     }),
     createPanel({
       canvasId: canvas.id,
-      title: 'Reaction close-up',
+      title: i18n.t('defaults.panels.reactionTitle'),
       y: 420 + panelGap,
       height: 330,
-      prompt:
-        '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
+      prompt: i18n.t('defaults.panels.reactionPrompt'),
     }),
     createPanel({
       canvasId: canvas.id,
-      title: 'Long pause',
+      title: i18n.t('defaults.panels.longPauseTitle'),
       y: 420 + panelGap + 330 + panelGap,
       height: 560,
-      prompt: '',
+      prompt: i18n.t('defaults.panels.longPausePrompt'),
     }),
   ];
 
   return {
-    commonPrompt: defaultCommonPrompt,
+    commonPrompt: i18n.t('defaults.commonPrompt'),
     canvases: [canvas],
     selectedCanvasId: canvas.id,
     panels,
@@ -152,6 +150,7 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
 };
 
 const ProjectShell = () => {
+  const { t } = useTranslation();
   const [projectName, setProjectName] = useState<string | null>(null);
   const [initialState, setInitialState] = useState<StudioState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -204,7 +203,7 @@ const ProjectShell = () => {
             ? err.message
             : err instanceof Error
               ? err.message
-              : '프로젝트를 여는 중 오류가 발생했습니다.';
+              : i18n.t('projectShell.loadError');
         setError(message);
       } finally {
         if (gen === loadGenRef.current) setLoading(false);
@@ -219,7 +218,7 @@ const ProjectShell = () => {
       <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-200">
         <p className="flex items-center gap-2 text-sm">
           <Loader2 className="size-4 animate-spin" />
-          프로젝트를 불러오는 중…
+          {t('projectShell.loading')}
         </p>
       </main>
     );
@@ -231,11 +230,11 @@ const ProjectShell = () => {
         <p className="text-sm text-red-300">{error}</p>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={handleBack}>
-            프로젝트 목록으로
+            {t('projectShell.backToList')}
           </Button>
           <Button type="button" onClick={handleRetry}>
             <RotateCcw className="size-4" />
-            다시 시도
+            {t('projectShell.retry')}
           </Button>
         </div>
       </main>

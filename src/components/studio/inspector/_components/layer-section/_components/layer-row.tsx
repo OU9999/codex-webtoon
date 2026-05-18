@@ -1,5 +1,6 @@
 import { Bot, MessageCircle, SquarePen, Type } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { Bubble, BubbleType } from '@/components/studio/_lib/types';
 
@@ -17,14 +18,9 @@ const TYPE_ICONS: Record<BubbleType, ReactNode> = {
   sfx: <Type className="size-3.5" />,
 };
 
-const TYPE_LABELS: Record<BubbleType, string> = {
-  speech: 'SPEECH',
-  monologue: 'BOX',
-  thought: 'THOUGHT',
-  sfx: 'SFX',
-};
-
 const LayerRow = ({ bubble, isActive, panelId, onSelect }: LayerRowProps) => {
+  const { t } = useTranslation();
+
   const handleSelect = (): void => {
     onSelect(bubble.id, panelId);
   };
@@ -40,7 +36,7 @@ const LayerRow = ({ bubble, isActive, panelId, onSelect }: LayerRowProps) => {
     >
       <span className="text-fg-muted">{TYPE_ICONS[bubble.type]}</span>
       <span className="font-mono text-[9.5px] tracking-[0.08em]">
-        {TYPE_LABELS[bubble.type]}
+        {t(`bubbles.type.${bubble.type}`)}
       </span>
       <span className="truncate text-[11.5px] text-fg-secondary">
         {bubble.text}

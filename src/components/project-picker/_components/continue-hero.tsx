@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import type { ProjectSummary } from '@shared/types';
 import { formatRelativeTime } from '../_lib/relative-time';
@@ -9,6 +10,8 @@ interface ContinueHeroProps {
 }
 
 const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
+  const { i18n, t } = useTranslation();
+
   const handleOpen = (): void => {
     onOpen(project.name);
   };
@@ -33,7 +36,7 @@ const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
       </div>
       <div className="flex min-w-0 flex-col justify-center gap-2 px-7 py-6">
         <p className="font-mono text-[9.5px] tracking-[0.1em] text-fg-muted uppercase">
-          continue
+          {t('projectPicker.continueHero.continue')}
         </p>
         <h2 className="text-[26px] leading-[1.1] font-semibold tracking-[-0.02em] text-foreground">
           {project.name}
@@ -41,7 +44,11 @@ const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
         <p className="flex flex-wrap items-center gap-1.5 text-[11.5px] text-fg-secondary">
           <span className="font-mono">{project.path}</span>
           <span className="text-fg-faint">·</span>
-          <span>edited {formatRelativeTime(project.updatedAt)}</span>
+          <span>
+            {t('projectPicker.continueHero.edited', {
+              time: formatRelativeTime(project.updatedAt, i18n.language),
+            })}
+          </span>
         </p>
         <div className="mt-3">
           <button
@@ -50,7 +57,7 @@ const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
             className="inline-flex h-[34px] items-center gap-1.5 rounded bg-brand px-3.5 text-[12px] font-semibold text-on-brand transition-colors hover:bg-brand-hover"
           >
             <ChevronRight className="size-[13px]" />
-            open project
+            {t('projectPicker.continueHero.open')}
           </button>
         </div>
       </div>

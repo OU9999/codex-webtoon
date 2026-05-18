@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react';
 import { FolderPlus, Loader2, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 import type { ProjectSummary } from '@shared/types';
@@ -24,6 +25,8 @@ const RecentProjects = ({
   onDelete,
   onNewProject,
 }: RecentProjectsProps) => {
+  const { i18n, t } = useTranslation();
+
   const handleOpenClick = (event: MouseEvent<HTMLButtonElement>): void => {
     const name = event.currentTarget.dataset.projectName;
     if (name) onOpen(name);
@@ -39,7 +42,7 @@ const RecentProjects = ({
     <section className="flex flex-col gap-3">
       <header className="flex items-center gap-2.5">
         <span className="font-mono text-[9.5px] tracking-[0.1em] text-fg-muted uppercase">
-          recent
+          {t('projectPicker.recent')}
         </span>
         <span className="h-px flex-1 bg-rim" />
         <span className="rounded-full border border-rim bg-elevated px-2 py-px font-mono text-[10.5px] text-fg-muted">
@@ -53,10 +56,10 @@ const RecentProjects = ({
             <FolderPlus className="size-6" />
           </span>
           <p className="text-[14px] font-semibold text-fg-secondary">
-            no projects yet
+            {t('projectPicker.emptyState.noProjects')}
           </p>
           <p className="text-[11.5px] text-fg-muted">
-            create your first project to get started
+            {t('projectPicker.emptyState.createFirst')}
           </p>
           <button
             type="button"
@@ -64,12 +67,12 @@ const RecentProjects = ({
             className="mt-2 inline-flex h-[30px] items-center gap-1.5 rounded bg-brand px-3 text-[12px] font-semibold text-on-brand transition-colors hover:bg-brand-hover"
           >
             <FolderPlus className="size-[13px]" />
-            new project
+            {t('projectPicker.newProject')}
           </button>
         </div>
       ) : projects.length === 0 ? (
         <p className="rounded-lg border border-rim bg-elevated px-4 py-8 text-center text-[11.5px] text-fg-muted">
-          no projects match your search.
+          {t('projectPicker.searchNoMatch')}
         </p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-rim bg-elevated">
@@ -80,9 +83,9 @@ const RecentProjects = ({
             )}
           >
             <span />
-            <span>name</span>
-            <span>updated</span>
-            <span>path</span>
+            <span>{t('projectPicker.row.name')}</span>
+            <span>{t('projectPicker.row.updated')}</span>
+            <span>{t('projectPicker.row.path')}</span>
             <span />
           </div>
           {projects.map((project) => {
@@ -103,7 +106,9 @@ const RecentProjects = ({
                   onClick={handleOpenClick}
                   disabled={isDeleting}
                   className="absolute inset-0"
-                  aria-label={`Open ${project.name}`}
+                  aria-label={t('projectPicker.row.openLabel', {
+                    name: project.name,
+                  })}
                 />
                 <span className="pointer-events-none grid size-10 place-items-center overflow-hidden rounded border border-rim bg-canvas font-mono text-base font-semibold text-fg-faint">
                   {project.thumbnailUrl ? (
@@ -120,7 +125,7 @@ const RecentProjects = ({
                   {project.name}
                 </span>
                 <span className="pointer-events-none text-[11px] text-fg-secondary">
-                  {formatRelativeTime(project.updatedAt)}
+                  {formatRelativeTime(project.updatedAt, i18n.language)}
                 </span>
                 <span className="pointer-events-none truncate font-mono text-[11px] text-fg-muted">
                   {project.path}
@@ -130,7 +135,9 @@ const RecentProjects = ({
                   data-project-name={project.name}
                   onClick={handleDeleteClick}
                   disabled={isDeleting}
-                  aria-label={`Delete ${project.name}`}
+                  aria-label={t('projectPicker.row.deleteLabel', {
+                    name: project.name,
+                  })}
                   className="relative grid size-5 place-items-center rounded text-fg-muted opacity-0 transition group-hover:opacity-100 hover:bg-status-red/15 hover:text-status-red focus-visible:opacity-100"
                 >
                   {isDeleting ? (

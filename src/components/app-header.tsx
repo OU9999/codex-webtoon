@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { HeaderLogo } from '@/components/studio/header/_components/header-logo';
 
 interface AppHeaderProps {
@@ -29,6 +30,7 @@ const AppHeader = ({ actions, actionsLabel, subtitle }: AppHeaderProps) => (
       className="flex flex-wrap items-center gap-2"
       aria-label={actionsLabel}
     >
+      <LanguageSwitcher />
       {actions}
     </nav>
   </header>
