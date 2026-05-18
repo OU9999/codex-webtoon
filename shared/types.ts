@@ -111,8 +111,13 @@ interface Candidate {
 }
 
 interface ReferenceImageRef {
-  panelId: string;
-  candidateId: string;
+  source?: 'candidate' | 'external';
+  panelId?: string;
+  candidateId?: string;
+  id?: string;
+  imageUrl?: string;
+  title?: string;
+  createdAt?: string;
 }
 
 interface WebtoonCanvas {

@@ -1,19 +1,88 @@
-# image2-webtoon-ui
+# webtoon-panel-studio
 
 Local-first AI webtoon panel editor.
 
-This repository will start as a local MVP for building a vertical webtoon canvas where users can create panels, generate selected cuts, keep panel-level candidates, and edit speech bubbles as separate layers.
+Build a vertical webtoon canvas, generate selected panels, keep panel-level
+candidates, and edit speech bubbles as separate layers. The app runs locally and
+stores projects on the user's machine.
 
-## Run
+## Requirements
+
+- Node.js 22.13.0 or newer
+- pnpm 11
+
+## Use The CLI
+
+After the package is published:
+
+```bash
+pnpm dlx webtoon-panel-studio
+```
+
+The server starts at <http://127.0.0.1:4321/> by default.
+
+Available commands:
+
+```bash
+pnpm dlx webtoon-panel-studio serve
+pnpm dlx webtoon-panel-studio status
+pnpm dlx webtoon-panel-studio help
+```
+
+## Authentication
+
+Image generation uses the first available provider:
+
+- Codex OAuth, when the Codex CLI is installed and authenticated.
+- OpenAI API key, from `OPENAI_API_KEY` or the local config file.
+
+API key config file:
+
+```json
+{
+  "openaiApiKey": "sk-..."
+}
+```
+
+Default config path:
+
+```text
+~/.config/webtoon-panel-studio/config.json
+```
+
+## Environment
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | unset | OpenAI API key fallback. |
+| `WPS_HOST` | `127.0.0.1` | Local server host. |
+| `WPS_PORT` | `4321` | Local server port. |
+| `WPS_CONFIG_DIR` | `~/.config/webtoon-panel-studio` | Config and server advertisement directory. |
+| `WPS_PROJECTS_ROOT` | `~/WebtoonProjects` | Local project storage root. |
+| `WPS_OAUTH` | `auto` | OAuth mode: `auto`, `on`, or `off`. |
+| `WPS_OAUTH_PROXY_PORT` | `10531` | Local OAuth proxy port. |
+| `WPS_OAUTH_STARTUP_TIMEOUT_MS` | `20000` | OAuth proxy startup timeout. |
+
+## Development
+
+Use the pinned Node.js version before installing dependencies:
+
+```bash
+nvm use
+```
+
+Tools that read `.node-version` can switch to the same `22.13.0` baseline
+automatically.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Open <http://127.0.0.1:5173/>.
+The Vite dev server runs at <http://127.0.0.1:5173/> and the API server runs
+at <http://127.0.0.1:4321/>.
 
-## Current MVP
+## Features
 
 - Vertical webtoon canvas with selectable panels
 - Add, duplicate, delete, reorder, and resize panels
@@ -32,6 +101,9 @@ Open <http://127.0.0.1:5173/>.
 ## Checks
 
 ```bash
+pnpm format:check
 pnpm typecheck
+pnpm test
 pnpm build
+pnpm audit --prod
 ```

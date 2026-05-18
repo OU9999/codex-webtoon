@@ -90,10 +90,14 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
 
   const spawnProxy = (): void => {
     console.log(`[wps] starting openai-oauth on port ${options.port}…`);
-    const proc = spawnBin('npx', ['openai-oauth', '--port', String(options.port)], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
+    const proc = spawnBin(
+      'npx',
+      ['openai-oauth', '--port', String(options.port)],
+      {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env },
+      },
+    );
     child = proc;
 
     proc.stdout?.on('data', (chunk: Buffer) => {

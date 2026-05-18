@@ -3,7 +3,6 @@ import { CandidateGrid } from './_components/candidate-grid/candidate-grid';
 import { BubbleForm } from './_components/layer-section/_components/bubble-form';
 import { LayerSection } from './_components/layer-section/layer-section';
 import { PanelForm } from './_components/panel-form';
-import { ReferenceImageSection } from './_components/reference-image-section';
 
 const Inspector = () => {
   const { selectedBubble, selectedBubblePanel, selectedPanel } =
@@ -15,7 +14,6 @@ const Inspector = () => {
       {selectedPanel && !selectedBubble && (
         <>
           <PanelForm />
-          <ReferenceImageSection />
           <CandidateGrid />
           <LayerSection />
         </>

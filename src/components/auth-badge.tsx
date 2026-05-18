@@ -73,7 +73,7 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
         <span className="text-xs">{content.label}</span>
       </Badge>
       {open && (
-        <aside className="absolute right-0 top-10 z-30 w-80 space-y-3 rounded-md border border-slate-700 bg-slate-900 p-4 text-xs text-slate-200 shadow-xl">
+        <aside className="absolute top-10 right-0 z-30 w-80 space-y-3 rounded-md border border-slate-700 bg-slate-900 p-4 text-xs text-slate-200 shadow-xl">
           <header className="flex items-center justify-between">
             <strong className="text-sm">인증 상태</strong>
             <Button
@@ -127,7 +127,10 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
                   : status.loginCommand}
               </code>
               <p className="text-slate-400">
-                또는 <code className="rounded bg-slate-950/50 px-1">OPENAI_API_KEY</code>{' '}
+                또는{' '}
+                <code className="rounded bg-slate-950/50 px-1">
+                  OPENAI_API_KEY
+                </code>{' '}
                 환경 변수를 설정하세요.
               </p>
             </div>
@@ -154,9 +157,7 @@ const Row = ({ label, value, hint }: RowProps) => (
     <dt className="text-slate-500">{label}</dt>
     <dd className="flex flex-col items-end">
       <span className="font-medium text-slate-100">{value}</span>
-      {hint && (
-        <span className="text-[10px] text-slate-500">{hint}</span>
-      )}
+      {hint && <span className="text-[10px] text-slate-500">{hint}</span>}
     </dd>
   </section>
 );

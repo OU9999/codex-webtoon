@@ -29,9 +29,7 @@ const config = {
     proxyPort: Number(process.env.WPS_OAUTH_PROXY_PORT ?? 10531),
     restartDelayMs: 3000,
     maxRestarts: 3,
-    startupTimeoutMs: Number(
-      process.env.WPS_OAUTH_STARTUP_TIMEOUT_MS ?? 20000,
-    ),
+    startupTimeoutMs: Number(process.env.WPS_OAUTH_STARTUP_TIMEOUT_MS ?? 20000),
   },
 } as const;
 

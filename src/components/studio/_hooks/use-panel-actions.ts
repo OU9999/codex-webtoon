@@ -4,6 +4,7 @@ import {
   normalizePanelGapColor,
   WEBTOON_CANVAS_WIDTH,
 } from '@shared/project-state';
+import { getReferenceImageKey } from '@shared/reference-images';
 import { createPanel, createWebtoonCanvas } from '../_lib/factories';
 import { clamp } from '../_lib/canvas-primitives';
 import { MAX_REFERENCE_IMAGES } from '../_lib/constants';
@@ -21,9 +22,7 @@ import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
 const isSameReferenceImage = (
   reference: ReferenceImageRef,
   target: ReferenceImageRef,
-): boolean =>
-  reference.panelId === target.panelId &&
-  reference.candidateId === target.candidateId;
+): boolean => getReferenceImageKey(reference) === getReferenceImageKey(target);
 
 const removeReferenceImage = (
   references: ReferenceImageRef[],

@@ -18,12 +18,10 @@ import {
 } from '@shared/project-state';
 import {
   buildReferenceImageLookup,
+  isReferenceImageRef,
   normalizeReferenceImageRefs,
 } from '@shared/reference-images';
-import type {
-  ReferenceImageRef,
-  StudioState,
-} from '@/components/studio/_lib/types';
+import type { StudioState } from '@/components/studio/_lib/types';
 import { defaultCommonPrompt } from '@/components/studio/_lib/constants';
 import {
   createPanel,
@@ -74,12 +72,6 @@ const createDefaultState = (): StudioState => {
     panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
   };
-};
-
-const isReferenceImageRef = (value: unknown): value is ReferenceImageRef => {
-  if (!value || typeof value !== 'object') return false;
-  const ref = value as Record<string, unknown>;
-  return typeof ref.panelId === 'string' && typeof ref.candidateId === 'string';
 };
 
 const normalizeLoadedState = (loaded: StudioState): StudioState => {

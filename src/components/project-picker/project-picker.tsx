@@ -108,18 +108,12 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
         subtitle="no project open"
         actionsLabel="Project actions"
         actions={
-          <>
-            <AuthBadge
-              status={auth.status}
-              loading={auth.loading}
-              error={auth.error}
-              onRefresh={auth.refresh}
-            />
-            <Button type="button" onClick={handleNewProject}>
-              <FolderPlus className="size-4" />
-              New project
-            </Button>
-          </>
+          <AuthBadge
+            status={auth.status}
+            loading={auth.loading}
+            error={auth.error}
+            onRefresh={auth.refresh}
+          />
         }
       />
 
