@@ -65,6 +65,15 @@ Default config path:
 
 ## Development
 
+Use the pinned Node.js version before installing dependencies:
+
+```bash
+nvm use
+```
+
+Tools that read `.node-version` can switch to the same `22.13.0` baseline
+automatically.
+
 ```bash
 pnpm install
 pnpm dev
