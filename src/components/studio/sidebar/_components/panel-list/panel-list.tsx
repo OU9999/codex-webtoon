@@ -81,7 +81,7 @@ const PanelList = () => {
         className="h-7 justify-start rounded-[4px] px-2 font-mono text-[10px] font-semibold uppercase"
       >
         <Plus className="size-3.5" />
-        Add cut
+        Add panel
       </Button>
       <ol className="grid max-h-[min(42vh,360px)] content-start gap-1.5 overflow-y-auto">
         {selectedCanvasPanels.map((panel, index) => (

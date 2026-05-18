@@ -36,9 +36,7 @@ const codexAuthPaths = (): CodexAuthPaths => {
 const codexLoginStatus = async (
   timeoutMs = 2000,
 ): Promise<'authed' | 'unauthed' | 'missing'> => {
-  const candidates = isWin
-    ? ['codex.cmd', 'codex.exe', 'codex']
-    : ['codex'];
+  const candidates = isWin ? ['codex.cmd', 'codex.exe', 'codex'] : ['codex'];
 
   for (const bin of candidates) {
     try {

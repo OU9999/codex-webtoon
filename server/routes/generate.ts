@@ -342,7 +342,10 @@ const sendGenerationError = (res: Response, err: unknown): void => {
     return;
   }
   if (err instanceof GenerationTimeoutError) {
-    const body: ApiError = { error: 'generation_timeout', message: err.message };
+    const body: ApiError = {
+      error: 'generation_timeout',
+      message: err.message,
+    };
     res.status(504).json(body);
     return;
   }
@@ -422,7 +425,8 @@ generateRouter.post('/', async (req, res) => {
       outcome.status === 'fulfilled',
   );
   const firstRejection = outcomes.find(
-    (outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected',
+    (outcome): outcome is PromiseRejectedResult =>
+      outcome.status === 'rejected',
   );
 
   if (fulfilled.length === 0) {

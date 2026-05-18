@@ -11,10 +11,7 @@ import { pathToFileURL } from 'node:url';
 import { config } from './config.js';
 import { detectCodexAuth } from './lib/auth/codex-detect.js';
 import { rootFromMetaUrl } from './lib/find-root.js';
-import {
-  disabledHandle,
-  startOAuthProxy,
-} from './lib/auth/oauth-launcher.js';
+import { disabledHandle, startOAuthProxy } from './lib/auth/oauth-launcher.js';
 import type { OAuthHandle } from './lib/auth/oauth-launcher.js';
 import { projectsStaticRoot } from './lib/image-store.js';
 import { createRateLimiter, requireJsonBody } from './lib/middleware.js';
@@ -169,9 +166,7 @@ const startServer = async () => {
     console.log(`[wps] oauth: disabled — ${oauthHandle.lastError}`);
   } else {
     oauthHandle.readyPromise
-      .then(() =>
-        console.log(`[wps] oauth: ready at ${oauthHandle.url}`),
-      )
+      .then(() => console.log(`[wps] oauth: ready at ${oauthHandle.url}`))
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[wps] oauth: failed — ${msg}`);
