@@ -11,7 +11,7 @@ import { PromptTextarea } from '../../_components/prompt-textarea';
 import { RangeField } from '../../_components/range-field';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
-import { ReferenceImagePopover } from './reference-image-popover';
+import { ReferenceImageDialog } from './reference-image-dialog';
 
 const PanelForm = () => {
   const {
@@ -82,7 +82,7 @@ const PanelForm = () => {
         onValueChange={handleSelectedPanelHeightChange}
       />
       <FieldBlock label="컷별 프롬프트">
-        <ReferenceImagePopover />
+        <ReferenceImageDialog />
         <PromptTextarea
           value={selectedPanel.prompt}
           onChange={handleSelectedPanelPromptChange}
