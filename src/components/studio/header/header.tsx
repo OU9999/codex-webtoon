@@ -1,11 +1,9 @@
 import {
   CircleAlert,
   CircleCheck,
-  Download,
   FolderOpen,
   Loader2,
   Save,
-  Sparkles,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AppHeader } from '@/components/app-header';
@@ -14,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
 import { useStudioContext } from '../studio-context';
+import { ExportDialog } from './_components/export-dialog';
 import type { SaveStatus } from '../_hooks/use-studio-state';
 
 interface SaveBadgeContent {
@@ -38,21 +37,11 @@ const saveBadge = (status: SaveStatus): SaveBadgeContent | null => {
 };
 
 const Header = () => {
-  const {
-    handleGenerateSelectedPanel,
-    handleProjectJsonExport,
-    handleWebtoonPngExport,
-    isExporting,
-    isGenerating,
-    projectName,
-    saveStatus,
-    selectedPanel,
-    onBack,
-  } = useStudioContext();
+  const { handleProjectJsonExport, projectName, saveStatus, onBack } =
+    useStudioContext();
 
   const badge = saveBadge(saveStatus);
   const auth = useAuthStatus();
-  const generateDisabled = !selectedPanel || isGenerating;
 
   return (
     <AppHeader
@@ -87,27 +76,7 @@ const Header = () => {
             <Save className="size-4" />
             JSON
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleWebtoonPngExport}
-            disabled={isExporting}
-          >
-            <Download className="size-4" />
-            {isExporting ? 'Exporting' : 'PNG'}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleGenerateSelectedPanel}
-            disabled={generateDisabled}
-          >
-            {isGenerating ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Sparkles className="size-4" />
-            )}
-            {isGenerating ? 'Generating' : 'Generate'}
-          </Button>
+          <ExportDialog />
         </>
       }
     />
