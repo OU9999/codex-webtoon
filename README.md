@@ -1,5 +1,7 @@
 # webtoon-panel-studio
 
+**EN** | [KR](./README.kr.md)
+
 Local-first AI webtoon panel editor.
 
 Build a vertical webtoon canvas, generate selected panels, keep panel-level

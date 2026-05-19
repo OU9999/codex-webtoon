@@ -22,7 +22,8 @@
   "files": [
     "build",
     "dist",
-    "README.md"
+    "README.md",
+    "README.kr.md"
   ],
   "scripts": {
     "dev:ui": "vite --config vite-config.ts --host 127.0.0.1",
