@@ -25,11 +25,7 @@ import {
   normalizeExternalReferenceImage,
 } from '@shared/reference-images';
 import { useStudioContext } from '../../studio-context';
-import type {
-  Candidate,
-  Panel,
-  ReferenceImageRef,
-} from '@/components/studio/_lib/types';
+import type { Panel, ReferenceImageRef } from '@/components/studio/_lib/types';
 
 interface ReferenceImageItem {
   reference: ReferenceImageRef;
@@ -37,6 +33,14 @@ interface ReferenceImageItem {
   title: string;
   meta: string;
   source: 'candidate' | 'external';
+  isPrimary?: boolean;
+}
+
+interface CandidateReferenceGroup {
+  panelId: string;
+  panelIndex: number;
+  title: string;
+  items: ReferenceImageItem[];
 }
 
 interface ReferenceImageTileProps {
@@ -109,29 +113,45 @@ const readFileAsDataUrl = (file: File, errorMessage: string): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-const buildCandidateReferenceItems = (
+const buildCandidateReferenceGroups = (
   panels: Panel[],
-): ReferenceImageItem[] => {
-  const items = new Map<string, ReferenceImageItem>();
+): CandidateReferenceGroup[] => {
+  const seen = new Set<string>();
 
-  panels.forEach((panel, panelIndex) => {
-    panel.candidates.forEach((candidate: Candidate) => {
+  return panels.flatMap((panel, panelIndex) => {
+    const items = panel.candidates.flatMap((candidate, candidateIndex) => {
       const reference = getCandidateReference(panel.id, candidate);
       const key = getReferenceImageKey(reference);
-      if (items.has(key)) return;
+      if (seen.has(key)) return [];
 
-      items.set(key, {
-        reference,
-        imageUrl: candidate.imageUrl,
-        title: panel.title,
-        meta: `P${String(panelIndex + 1).padStart(2, '0')}`,
-        source: 'candidate',
-      });
+      seen.add(key);
+      return [
+        {
+          reference,
+          imageUrl: candidate.imageUrl,
+          title: panel.title,
+          meta: `C${String(candidateIndex + 1).padStart(2, '0')}`,
+          source: 'candidate' as const,
+          isPrimary: candidate.id === panel.selectedCandidateId,
+        },
+      ];
     });
-  });
+    if (items.length === 0) return [];
 
-  return Array.from(items.values());
+    return [
+      {
+        panelId: panel.id,
+        panelIndex,
+        title: panel.title,
+        items,
+      },
+    ];
+  });
 };
+
+const flattenCandidateReferenceGroups = (
+  groups: CandidateReferenceGroup[],
+): ReferenceImageItem[] => groups.flatMap((group) => group.items);
 
 const buildExternalReferenceItem = (
   reference: ReferenceImageRef,
@@ -243,6 +263,8 @@ const ReferenceImageOptionButton = ({
   item,
   onToggle,
 }: ReferenceImageOptionButtonProps) => {
+  const { t } = useTranslation();
+
   const handleToggle = (): void => {
     onToggle(item.reference);
   };
@@ -253,7 +275,7 @@ const ReferenceImageOptionButton = ({
       disabled={disabled}
       aria-pressed={isSelected}
       className={cn(
-        'group relative overflow-hidden rounded-[4px] border border-rim bg-background text-left transition-colors hover:border-brand disabled:cursor-not-allowed disabled:opacity-40',
+        'group relative w-[72px] shrink-0 overflow-hidden rounded-[4px] border border-rim bg-background text-left transition-colors hover:border-brand disabled:cursor-not-allowed disabled:opacity-40',
         isSelected && 'border-brand bg-brand-soft',
       )}
       onClick={handleToggle}
@@ -265,6 +287,11 @@ const ReferenceImageOptionButton = ({
       />
       <span className="absolute bottom-0 left-0 max-w-full bg-background/95 px-1.5 py-0.5 font-mono text-[9px] font-bold text-fg-muted">
         {item.meta}
+        {item.isPrimary && (
+          <strong className="ml-1 text-primary">
+            {t('referenceImages.primary')}
+          </strong>
+        )}
       </span>
       {isSelected && (
         <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-[3px] bg-brand text-on-brand">
@@ -287,7 +314,8 @@ const ReferenceImageDialog = () => {
 
   if (!selectedPanel) return null;
 
-  const items = buildCandidateReferenceItems(state.panels);
+  const candidateGroups = buildCandidateReferenceGroups(state.panels);
+  const items = flattenCandidateReferenceGroups(candidateGroups);
   const externalLabels = {
     externalImage: t('referenceImages.externalImage'),
     uploadedImage: t('referenceImages.uploadedImage'),
@@ -568,29 +596,51 @@ const ReferenceImageDialog = () => {
                 </span>
               </header>
               <section
-                className="grid max-h-[360px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4 md:grid-cols-5"
+                className="grid max-h-[360px] gap-2 overflow-y-auto pr-1"
                 aria-label={t('referenceImages.availableLabel')}
               >
-                {items.length === 0 && (
+                {candidateGroups.length === 0 && (
                   <EmptyState>
                     {t('referenceImages.emptyCandidates')}
                   </EmptyState>
                 )}
-                {items.map((item) => {
-                  const key = getReferenceImageKey(item.reference);
-                  const isSelected = draftKeys.has(key);
-                  const disabled = !isSelected && isAtLimit;
+                {candidateGroups.map((group) => (
+                  <article
+                    key={group.panelId}
+                    className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3 rounded-[4px] border border-rim-subtle bg-background p-2"
+                  >
+                    <header className="min-w-0 pt-1">
+                      <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
+                        {t('referenceImages.panelLabel', {
+                          count: group.panelIndex + 1,
+                        })}
+                      </strong>
+                      <span className="mt-0.5 block truncate text-[11px] font-black text-foreground">
+                        {group.title}
+                      </span>
+                      <small className="mt-1 block font-mono text-[9px] font-semibold text-fg-muted">
+                        {group.items.length} {t('referenceImages.candidate')}
+                      </small>
+                    </header>
+                    <section className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+                      {group.items.map((item) => {
+                        const key = getReferenceImageKey(item.reference);
+                        const isSelected = draftKeys.has(key);
+                        const disabled = !isSelected && isAtLimit;
 
-                  return (
-                    <ReferenceImageOptionButton
-                      key={key}
-                      disabled={disabled}
-                      isSelected={isSelected}
-                      item={item}
-                      onToggle={handleReferenceToggle}
-                    />
-                  );
-                })}
+                        return (
+                          <ReferenceImageOptionButton
+                            key={key}
+                            disabled={disabled}
+                            isSelected={isSelected}
+                            item={item}
+                            onToggle={handleReferenceToggle}
+                          />
+                        );
+                      })}
+                    </section>
+                  </article>
+                ))}
               </section>
             </section>
           </section>
