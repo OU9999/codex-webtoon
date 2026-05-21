@@ -3,7 +3,6 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { getPanelClassName } from '@/components/studio/_lib/class-names';
-import { getPanelImageFitClassName } from '@/components/studio/_lib/panel-fit';
 import type {
   Panel,
   PanelResizeHandle,
@@ -85,7 +84,7 @@ const PanelCanvasItem = ({
           <img
             src={selectedCandidate.imageUrl}
             alt=""
-            className={cn('h-full w-full', getPanelImageFitClassName(panel))}
+            className="h-full w-full object-cover"
           />
         ) : (
           <p className="empty-panel">

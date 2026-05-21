@@ -9,7 +9,6 @@ import {
 import { getCanvasPanels } from '../_lib/canvas-state';
 import { CANVAS_EDGE_BLEND_HEIGHT, CANVAS_WIDTH } from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
-import { getPanelFitMode, PANEL_CONTAIN_BACKGROUND } from '../_lib/panel-fit';
 import type { Panel, StudioState, WebtoonCanvas } from '../_lib/types';
 
 const FONT_LOAD_SAMPLE_TEXT = 'Aa가나';
@@ -109,27 +108,6 @@ const drawImageCover = (
   );
 };
 
-const drawImageContain = (
-  ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): void => {
-  const sourceRatio = image.naturalWidth / image.naturalHeight;
-  const targetRatio = width / height;
-  const drawWidth = sourceRatio > targetRatio ? width : height * sourceRatio;
-  const drawHeight = sourceRatio > targetRatio ? width / sourceRatio : height;
-  ctx.drawImage(
-    image,
-    x + (width - drawWidth) / 2,
-    y + (height - drawHeight) / 2,
-    drawWidth,
-    drawHeight,
-  );
-};
-
 const drawPanelImage = (
   ctx: CanvasRenderingContext2D,
   panel: Panel,
@@ -140,18 +118,7 @@ const drawPanelImage = (
   ctx.beginPath();
   ctx.rect(panel.x, panelY, panel.width, panel.height);
   ctx.clip();
-
-  const fitMode = getPanelFitMode(panel);
-  if (fitMode === 'fill') {
-    ctx.drawImage(image, panel.x, panelY, panel.width, panel.height);
-  } else if (fitMode === 'contain') {
-    ctx.fillStyle = PANEL_CONTAIN_BACKGROUND;
-    ctx.fillRect(panel.x, panelY, panel.width, panel.height);
-    drawImageContain(ctx, image, panel.x, panelY, panel.width, panel.height);
-  } else {
-    drawImageCover(ctx, image, panel.x, panelY, panel.width, panel.height);
-  }
-
+  drawImageCover(ctx, image, panel.x, panelY, panel.width, panel.height);
   ctx.restore();
 };
 

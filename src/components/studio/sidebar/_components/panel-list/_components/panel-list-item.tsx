@@ -1,7 +1,6 @@
 import { ImageIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { getPanelImageFitClassName } from '@/components/studio/_lib/panel-fit';
 import type { Panel } from '@/components/studio/_lib/types';
 
 interface PanelListItemProps {
@@ -55,7 +54,7 @@ const PanelListItem = ({
             <img
               src={selectedCandidate.imageUrl}
               alt=""
-              className={cn('h-full w-full', getPanelImageFitClassName(panel))}
+              className="h-full w-full object-cover"
             />
           ) : (
             <ImageIcon className="size-3.5 text-fg-faint" />
