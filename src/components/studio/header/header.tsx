@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
@@ -58,6 +59,7 @@ const Header = () => {
     <AppHeader
       subtitle={projectName}
       actionsLabel={t('header.actionsLabel')}
+      languagePlacement="none"
       actions={
         <>
           <Button
@@ -84,6 +86,7 @@ const Header = () => {
               {t(badge.labelKey)}
             </Badge>
           )}
+          <LanguageSwitcher />
           <Button
             type="button"
             variant="outline"
