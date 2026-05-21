@@ -7,16 +7,40 @@ import {
 } from './class-names';
 import { getThoughtTailDots, resolveBubbleStyle } from './bubble-style';
 import { normalizePanelGapColor } from '@shared/project-state';
-import { getCanvasBackgroundStops } from './canvas-background';
 import { getCanvasPanels } from './canvas-state';
-import { CANVAS_WIDTH } from './constants';
+import {
+  CANVAS_CONNECTOR_HEIGHT,
+  CANVAS_EDGE_BLEND_HEIGHT,
+  CANVAS_WIDTH,
+} from './constants';
 import type { StudioState } from './types';
+
+const getEdgeBlendHeight = (height: number): number => {
+  if (!Number.isFinite(height) || height <= 0) return 0;
+
+  return Math.min(CANVAS_EDGE_BLEND_HEIGHT, height / 2);
+};
+
+const mixHexColor = (firstColor: string, secondColor: string): string => {
+  const first = Number.parseInt(firstColor.slice(1), 16);
+  const second = Number.parseInt(secondColor.slice(1), 16);
+  const red = Math.round(((first >> 16) + (second >> 16)) / 2);
+  const green = Math.round((((first >> 8) & 255) + ((second >> 8) & 255)) / 2);
+  const blue = Math.round(((first & 255) + (second & 255)) / 2);
+  const mixed = (red << 16) + (green << 8) + blue;
+
+  return `#${mixed.toString(16).padStart(6, '0')}`;
+};
 
 const buildDynamicStyles = (state: StudioState): string => {
   const rules = [
-    [`.${getCanvasConnectorClassName()}{`, 'background:transparent;', '}'].join(
-      '',
-    ),
+    [
+      `.${getCanvasConnectorClassName()}{`,
+      `height:${CANVAS_CONNECTOR_HEIGHT}px;`,
+      `max-width:${CANVAS_WIDTH}px;`,
+      'background:transparent;',
+      '}',
+    ].join(''),
     `.${getStripGapClassName(state.panelGap)}{gap:${state.panelGap}px}`,
   ];
 
@@ -24,24 +48,53 @@ const buildDynamicStyles = (state: StudioState): string => {
     const previousCanvas = state.canvases[index - 1] ?? null;
     const nextCanvas = state.canvases[index + 1] ?? null;
     const backgroundColor = normalizePanelGapColor(canvas.backgroundColor);
-    const previousColor = previousCanvas
-      ? normalizePanelGapColor(previousCanvas.backgroundColor)
-      : null;
-    const nextColor = nextCanvas
-      ? normalizePanelGapColor(nextCanvas.backgroundColor)
-      : null;
-    const backgroundStops = getCanvasBackgroundStops({
-      currentColor: backgroundColor,
-      height: canvas.height,
-      previousColor,
-      nextColor,
-    });
+    const edgeBlendHeight = getEdgeBlendHeight(canvas.height);
+    const backgroundImages: string[] = [];
+    const backgroundSizes: string[] = [];
+    const backgroundPositions: string[] = [];
+    const backgroundRepeats: string[] = [];
+
+    if (previousCanvas && edgeBlendHeight > 0) {
+      const previousColor = normalizePanelGapColor(
+        previousCanvas.backgroundColor,
+      );
+      const midpointColor = mixHexColor(previousColor, backgroundColor);
+      backgroundImages.push(
+        `linear-gradient(180deg,${midpointColor} 0%,${backgroundColor} 100%)`,
+      );
+      backgroundSizes.push(`100% ${edgeBlendHeight}px`);
+      backgroundPositions.push('top');
+      backgroundRepeats.push('no-repeat');
+    }
+
+    if (nextCanvas && edgeBlendHeight > 0) {
+      const nextColor = normalizePanelGapColor(nextCanvas.backgroundColor);
+      const midpointColor = mixHexColor(backgroundColor, nextColor);
+      backgroundImages.push(
+        `linear-gradient(180deg,${backgroundColor} 0%,${midpointColor} 100%)`,
+      );
+      backgroundSizes.push(`100% ${edgeBlendHeight}px`);
+      backgroundPositions.push('bottom');
+      backgroundRepeats.push('no-repeat');
+    }
+
     rules.push(
       [
         `.${getCanvasStageClassName(canvas)}{`,
         `aspect-ratio:${CANVAS_WIDTH}/${canvas.height};`,
         `background-color:${backgroundColor};`,
-        `background-image:linear-gradient(180deg,${backgroundStops.topColor} 0%,${backgroundStops.centerColor} ${backgroundStops.edgeStartPercent},${backgroundStops.centerColor} ${backgroundStops.edgeEndPercent},${backgroundStops.bottomColor} 100%);`,
+        backgroundImages.length > 0
+          ? `background-image:${backgroundImages.join(',')};`
+          : '',
+        backgroundSizes.length > 0
+          ? `background-size:${backgroundSizes.join(',')};`
+          : '',
+        backgroundPositions.length > 0
+          ? `background-position:${backgroundPositions.join(',')};`
+          : '',
+        backgroundRepeats.length > 0
+          ? `background-repeat:${backgroundRepeats.join(',')};`
+          : '',
         '}',
       ].join(''),
     );
