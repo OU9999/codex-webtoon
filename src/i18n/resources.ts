@@ -2,9 +2,6 @@ const resources = {
   ko: {
     translation: {
       auth: {
-        apiKey: 'API Key',
-        apiKeyAvailable: '사용 가능',
-        apiKeyMissing: '없음',
         authed: '인증됨',
         badgeChecking: '인증 확인 중',
         cliMissing: 'CLI 없음',
@@ -16,7 +13,6 @@ const resources = {
         oauthPreparing: 'OAuth 준비 중',
         refresh: '새로고침',
         required: '인증 필요',
-        setEnv: '또는 OPENAI_API_KEY 환경 변수를 설정하세요.',
         statusLoadFailed: '인증 상태 조회 실패',
         status: '인증 상태',
         unauthed: '인증 안 됨',
@@ -51,19 +47,16 @@ const resources = {
       },
       defaults: {
         canvasTitle: 'Canvas',
-        commonPrompt:
-          '현대 한국 로맨스 웹툰, 부드러운 선화, 세미 리얼 캐릭터, 따뜻하지만 선명한 색감.\n캐릭터: 민지, 20대 초반 여성, 짧은 흑발 단발, 베이지 니트, 차분하지만 예민한 표정.\n공통 금지사항: 이미지 안에 읽을 수 있는 텍스트, 말풍선, 워터마크를 만들지 말 것.',
+        commonPrompt: '',
         copyTitle: '{{title}} copy',
         newCanvasTitle: 'Canvas {{count}}',
         newPanelTitle: 'Panel {{count}}',
         panels: {
           longPausePrompt: '',
           longPauseTitle: 'Long pause',
-          openingPrompt:
-            '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
+          openingPrompt: '',
           openingTitle: 'Opening beat',
-          reactionPrompt:
-            '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
+          reactionPrompt: '',
           reactionTitle: 'Reaction close-up',
         },
       },
@@ -142,11 +135,15 @@ const resources = {
         },
         panelForm: {
           finalPrompt: '최종 생성 조건',
-          generate: '패널 생성',
+          fitContain: '맞춤',
+          fitCover: '채우기',
+          fitFill: '늘이기',
+          fitMode: '이미지 채우기',
+          generate: '이미지 생성',
           generating: '생성 중',
           name: '패널 이름',
           prompt: '컷별 프롬프트',
-          regenerate: '패널 재생성',
+          regenerate: '이미지 재생성',
           selectedCut: '선택된 패널',
           variantCount: '변형 수',
           variantSuffix: '개',
@@ -165,6 +162,7 @@ const resources = {
       },
       panelCanvas: {
         empty: '빈 패널',
+        generating: '생성 중',
         resizeEast: '패널 동쪽 크기 조절',
         resizeNorth: '패널 위쪽 크기 조절',
         resizeNortheast: '패널 오른쪽 위 크기 조절',
@@ -229,7 +227,7 @@ const resources = {
         candidatePool: '후보 풀',
         clearAll: '전체 해제',
         description:
-          '선택한 이미지는 다음 패널 생성의 시각 레퍼런스로 함께 전달됩니다.',
+          '선택한 이미지는 다음 이미지 생성의 시각 레퍼런스로 함께 전달됩니다.',
         emptyCandidates: '후보 없음',
         emptySelected: '레퍼런스 없음',
         errors: {
@@ -244,6 +242,8 @@ const resources = {
         externalUrlLabel: '외부 레퍼런스 이미지 URL',
         max: '최대',
         none: '없음',
+        panelLabel: '패널 {{count}}',
+        primary: '사용 중',
         remove: '레퍼런스 이미지 제거',
         selected: '선택됨',
         title: '레퍼런스 이미지',
@@ -368,9 +368,6 @@ const resources = {
   en: {
     translation: {
       auth: {
-        apiKey: 'API Key',
-        apiKeyAvailable: 'available',
-        apiKeyMissing: 'none',
         authed: 'authed',
         badgeChecking: 'checking auth',
         cliMissing: 'CLI missing',
@@ -382,7 +379,6 @@ const resources = {
         oauthPreparing: 'OAuth pending',
         refresh: 'Refresh',
         required: 'Auth required',
-        setEnv: 'Or set the OPENAI_API_KEY environment variable.',
         statusLoadFailed: 'Failed to check auth status.',
         status: 'Auth status',
         unauthed: 'unauthed',
@@ -417,19 +413,16 @@ const resources = {
       },
       defaults: {
         canvasTitle: 'Canvas',
-        commonPrompt:
-          'Modern Korean romance webtoon, soft linework, semi-real characters, warm but clear colors.\nCharacter: Minji, woman in her early 20s, short black bob, beige knit top, calm but sensitive expression.\nCommon negative prompt: do not create readable text, speech bubbles, or watermarks inside the image.',
+        commonPrompt: '',
         copyTitle: '{{title}} copy',
         newCanvasTitle: 'Canvas {{count}}',
         newPanelTitle: 'Panel {{count}}',
         panels: {
           longPausePrompt: '',
           longPauseTitle: 'Long pause',
-          openingPrompt:
-            'A rainy evening. Minji checks a phone notification under a bus stop shelter. Medium shot.',
+          openingPrompt: '',
           openingTitle: 'Opening beat',
-          reactionPrompt:
-            'Close-up of Minji with trembling eyes. Show emotion only, with no text on screen.',
+          reactionPrompt: '',
           reactionTitle: 'Reaction close-up',
         },
       },
@@ -508,11 +501,15 @@ const resources = {
         },
         panelForm: {
           finalPrompt: 'Final generation prompt',
-          generate: 'Generate panel',
+          fitContain: 'Contain',
+          fitCover: 'Cover',
+          fitFill: 'Fill',
+          fitMode: 'Image fit',
+          generate: 'Generate image',
           generating: 'Generating',
           name: 'Panel name',
           prompt: 'Panel prompt',
-          regenerate: 'Regenerate panel',
+          regenerate: 'Regenerate image',
           selectedCut: 'Selected panel',
           variantCount: 'Variants',
           variantSuffix: '',
@@ -531,6 +528,7 @@ const resources = {
       },
       panelCanvas: {
         empty: 'Empty panel',
+        generating: 'Generating',
         resizeEast: 'Resize panel east',
         resizeNorth: 'Resize panel north',
         resizeNortheast: 'Resize panel northeast',
@@ -595,7 +593,7 @@ const resources = {
         candidatePool: 'Candidate pool',
         clearAll: 'Clear all',
         description:
-          'Selected images will be sent as visual references for the next panel generation.',
+          'Selected images will be sent as visual references for the next image generation.',
         emptyCandidates: 'No candidates',
         emptySelected: 'No references',
         errors: {
@@ -610,6 +608,8 @@ const resources = {
         externalUrlLabel: 'External reference image URL',
         max: 'Max',
         none: 'none',
+        panelLabel: 'Panel {{count}}',
+        primary: 'in use',
         remove: 'Remove reference image',
         selected: 'Selected',
         title: 'Reference images',

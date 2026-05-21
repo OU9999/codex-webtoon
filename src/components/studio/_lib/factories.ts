@@ -13,6 +13,7 @@ import type {
   WebtoonCanvas,
 } from './types';
 import { DEFAULT_BUBBLE_STYLE, getBubbleShapePatch } from './bubble-style';
+import { DEFAULT_PANEL_FIT_MODE } from './panel-fit';
 
 const createWebtoonCanvas = (
   overrides: CreateCanvasOverrides = {},
@@ -38,6 +39,7 @@ const createPanel = (overrides: CreatePanelOverrides = {}): Panel => {
     prompt: overrides.prompt ?? '',
     candidates: overrides.candidates ?? [],
     selectedCandidateId: overrides.selectedCandidateId ?? null,
+    fitMode: overrides.fitMode ?? DEFAULT_PANEL_FIT_MODE,
     deletedCandidates: [],
     referenceImages: overrides.referenceImages ?? [],
     bubbles: overrides.bubbles ?? [],

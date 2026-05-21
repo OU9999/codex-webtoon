@@ -188,13 +188,12 @@
   }
 
   .panel-frame {
-    @apply absolute isolate touch-none overflow-hidden border border-rim bg-card;
+    @apply absolute isolate touch-none overflow-hidden bg-card;
     cursor: grab;
     box-shadow: 0 1px 0 rgb(22 51 92 / 0.06);
   }
 
   .panel-frame.selected {
-    @apply border-brand;
     z-index: 20;
     overflow: visible;
     box-shadow:

@@ -6,13 +6,8 @@ import {
   drawEmptyPanel,
   getBubbleCanvasFont,
 } from '../_lib/bubble-renderer';
-import { getCanvasBackgroundStops } from '../_lib/canvas-background';
 import { getCanvasPanels } from '../_lib/canvas-state';
-import {
-  CANVAS_CONNECTOR_HEIGHT,
-  CANVAS_WIDTH,
-  CANVAS_WORKSPACE_BACKGROUND_COLOR,
-} from '../_lib/constants';
+import { CANVAS_EDGE_BLEND_HEIGHT, CANVAS_WIDTH } from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
 import type { Panel, StudioState, WebtoonCanvas } from '../_lib/types';
 
@@ -33,10 +28,7 @@ interface CanvasExportLayout {
   projectCanvas: WebtoonCanvas;
   canvasIndex: number;
   canvasTop: number;
-  connectorTop: number | null;
-  previousBackgroundColor: string | null;
   currentBackgroundColor: string;
-  nextBackgroundColor: string | null;
 }
 
 interface RenderPngPartInput {
@@ -116,45 +108,31 @@ const drawImageCover = (
   );
 };
 
-const getExportHeight = (state: StudioState): number => {
-  const canvasHeightTotal = state.canvases.reduce(
-    (sum, canvas) => sum + canvas.height,
-    0,
-  );
-  const connectorHeightTotal =
-    Math.max(0, state.canvases.length - 1) * CANVAS_CONNECTOR_HEIGHT;
-
-  return canvasHeightTotal + connectorHeightTotal;
+const drawPanelImage = (
+  ctx: CanvasRenderingContext2D,
+  panel: Panel,
+  panelY: number,
+  image: HTMLImageElement,
+): void => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(panel.x, panelY, panel.width, panel.height);
+  ctx.clip();
+  drawImageCover(ctx, image, panel.x, panelY, panel.width, panel.height);
+  ctx.restore();
 };
 
-const drawCanvasConnector = (
-  ctx: CanvasRenderingContext2D,
-  y: number,
-): void => {
-  ctx.fillStyle = CANVAS_WORKSPACE_BACKGROUND_COLOR;
-  ctx.fillRect(0, y, CANVAS_WIDTH, CANVAS_CONNECTOR_HEIGHT);
+const getExportHeight = (state: StudioState): number => {
+  return state.canvases.reduce((sum, canvas) => sum + canvas.height, 0);
 };
 
 const drawCanvasBackground = (
   ctx: CanvasRenderingContext2D,
   y: number,
   height: number,
-  previousColor: string | null,
   currentColor: string,
-  nextColor: string | null,
 ): void => {
-  const stops = getCanvasBackgroundStops({
-    currentColor,
-    height,
-    previousColor,
-    nextColor,
-  });
-  const gradient = ctx.createLinearGradient(0, y, 0, y + height);
-  gradient.addColorStop(0, stops.topColor);
-  gradient.addColorStop(stops.edgeStartRatio, stops.centerColor);
-  gradient.addColorStop(stops.edgeEndRatio, stops.centerColor);
-  gradient.addColorStop(1, stops.bottomColor);
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = currentColor;
   ctx.fillRect(0, y, CANVAS_WIDTH, height);
 };
 
@@ -165,6 +143,33 @@ const intersectsSlice = (
   sliceHeight: number,
 ): boolean =>
   itemTop < sliceTop + sliceHeight && itemTop + itemHeight > sliceTop;
+
+const drawCanvasBoundaryBlend = (
+  ctx: CanvasRenderingContext2D,
+  previousLayout: CanvasExportLayout,
+  nextLayout: CanvasExportLayout,
+  sliceTop: number,
+  sliceHeight: number,
+): void => {
+  const blendRadius = Math.min(
+    CANVAS_EDGE_BLEND_HEIGHT,
+    previousLayout.projectCanvas.height / 2,
+    nextLayout.projectCanvas.height / 2,
+  );
+  if (blendRadius <= 0) return;
+
+  const boundaryTop = nextLayout.canvasTop;
+  const blendTop = boundaryTop - blendRadius;
+  const blendHeight = blendRadius * 2;
+  if (!intersectsSlice(blendTop, blendHeight, sliceTop, sliceHeight)) return;
+
+  const y = blendTop - sliceTop;
+  const gradient = ctx.createLinearGradient(0, y, 0, y + blendHeight);
+  gradient.addColorStop(0, previousLayout.currentBackgroundColor);
+  gradient.addColorStop(1, nextLayout.currentBackgroundColor);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, y, CANVAS_WIDTH, blendHeight);
+};
 
 const clampManualSplitHeight = (height: number | undefined): number => {
   if (!height || !Number.isFinite(height)) return DEFAULT_MANUAL_SPLIT_HEIGHT;
@@ -200,11 +205,6 @@ const buildCanvasExportLayouts = (state: StudioState): CanvasExportLayout[] => {
   let offsetY = 0;
 
   return state.canvases.map((projectCanvas, canvasIndex) => {
-    const previousCanvas = state.canvases[canvasIndex - 1] ?? null;
-    const nextCanvas = state.canvases[canvasIndex + 1] ?? null;
-    const connectorTop = canvasIndex > 0 ? offsetY : null;
-    if (connectorTop !== null) offsetY += CANVAS_CONNECTOR_HEIGHT;
-
     const canvasTop = offsetY;
     offsetY += projectCanvas.height;
 
@@ -212,16 +212,9 @@ const buildCanvasExportLayouts = (state: StudioState): CanvasExportLayout[] => {
       projectCanvas,
       canvasIndex,
       canvasTop,
-      connectorTop,
       currentBackgroundColor: normalizePanelGapColor(
         projectCanvas.backgroundColor,
       ),
-      previousBackgroundColor: previousCanvas
-        ? normalizePanelGapColor(previousCanvas.backgroundColor)
-        : null,
-      nextBackgroundColor: nextCanvas
-        ? normalizePanelGapColor(nextCanvas.backgroundColor)
-        : null,
     };
   });
 };
@@ -250,12 +243,7 @@ const drawPanel = async (
   if (candidate?.imageUrl) {
     try {
       const image = await loadCachedImage(candidate.imageUrl, imageCache);
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(panel.x, panelY, panel.width, panel.height);
-      ctx.clip();
-      drawImageCover(ctx, image, panel.x, panelY, panel.width, panel.height);
-      ctx.restore();
+      drawPanelImage(ctx, panel, panelY, image);
     } catch {
       drawEmptyPanel(ctx, panelY, panel.height, panel.x, panel.width);
     }
@@ -288,18 +276,6 @@ const renderExportSlice = async (
 
   for (const layout of layouts) {
     if (
-      layout.connectorTop !== null &&
-      intersectsSlice(
-        layout.connectorTop,
-        CANVAS_CONNECTOR_HEIGHT,
-        sliceTop,
-        sliceHeight,
-      )
-    ) {
-      drawCanvasConnector(ctx, layout.connectorTop - sliceTop);
-    }
-
-    if (
       !intersectsSlice(
         layout.canvasTop,
         layout.projectCanvas.height,
@@ -314,10 +290,33 @@ const renderExportSlice = async (
       ctx,
       layout.canvasTop - sliceTop,
       layout.projectCanvas.height,
-      layout.previousBackgroundColor,
       layout.currentBackgroundColor,
-      layout.nextBackgroundColor,
     );
+  }
+
+  for (let index = 1; index < layouts.length; index += 1) {
+    const previousLayout = layouts[index - 1];
+    const nextLayout = layouts[index];
+    drawCanvasBoundaryBlend(
+      ctx,
+      previousLayout,
+      nextLayout,
+      sliceTop,
+      sliceHeight,
+    );
+  }
+
+  for (const layout of layouts) {
+    if (
+      !intersectsSlice(
+        layout.canvasTop,
+        layout.projectCanvas.height,
+        sliceTop,
+        sliceHeight,
+      )
+    ) {
+      continue;
+    }
 
     for (const panel of getCanvasPanels(state, layout.projectCanvas.id)) {
       const panelGlobalY = layout.canvasTop + panel.y;

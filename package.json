@@ -1,7 +1,7 @@
 {
   "name": "webtoon-panel-studio",
   "version": "0.1.0",
-  "description": "Local-first webtoon panel editor with AI image generation. Runs from npx, authenticates via OpenAI API key or Codex OAuth.",
+  "description": "Local-first webtoon panel editor with AI image generation. Runs from npx and authenticates through local Codex OAuth.",
   "keywords": [
     "webtoon",
     "comic",
@@ -22,7 +22,8 @@
   "files": [
     "build",
     "dist",
-    "README.md"
+    "README.md",
+    "README.kr.md"
   ],
   "scripts": {
     "dev:ui": "vite --config vite-config.ts --host 127.0.0.1",
@@ -46,7 +47,6 @@
     "@radix-ui/react-select": "^2.2.6",
     "express": "^5.1.0",
     "i18next": "^26.2.0",
-    "openai": "^5.8.2",
     "react-i18next": "^17.0.8",
     "ulid": "^3.0.2"
   },

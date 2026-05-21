@@ -1,10 +1,16 @@
 # webtoon-panel-studio
 
+**EN** | [KR](./README.kr.md)
+
+<!-- TODO: Add the package logo here: assets/logo.png -->
+
 Local-first AI webtoon panel editor.
 
 Build a vertical webtoon canvas, generate selected panels, keep panel-level
 candidates, and edit speech bubbles as separate layers. The app runs locally and
 stores projects on the user's machine.
+
+<!-- TODO: Add the main studio screenshot here: assets/screenshots/studio-overview.png -->
 
 ## Requirements
 
@@ -31,30 +37,17 @@ pnpm dlx webtoon-panel-studio help
 
 ## Authentication
 
-Image generation uses the first available provider:
+Image generation uses the local Codex OAuth proxy. Install and authenticate the
+Codex CLI before starting the server:
 
-- Codex OAuth, when the Codex CLI is installed and authenticated.
-- OpenAI API key, from `OPENAI_API_KEY` or the local config file.
-
-API key config file:
-
-```json
-{
-  "openaiApiKey": "sk-..."
-}
-```
-
-Default config path:
-
-```text
-~/.config/webtoon-panel-studio/config.json
+```bash
+npx @openai/codex login
 ```
 
 ## Environment
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | unset | OpenAI API key fallback. |
 | `WPS_HOST` | `127.0.0.1` | Local server host. |
 | `WPS_PORT` | `4321` | Local server port. |
 | `WPS_CONFIG_DIR` | `~/.config/webtoon-panel-studio` | Config and server advertisement directory. |
@@ -83,6 +76,13 @@ The Vite dev server runs at <http://127.0.0.1:5173/> and the API server runs
 at <http://127.0.0.1:4321/>.
 
 ## Features
+
+<!--
+TODO: Add workflow screenshots in or near this section:
+- assets/screenshots/panel-generation.png
+- assets/screenshots/speech-bubbles.png
+- assets/screenshots/png-export.png
+-->
 
 - Vertical webtoon canvas with selectable panels
 - Add, duplicate, delete, reorder, and resize panels

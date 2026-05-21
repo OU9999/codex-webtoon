@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { detectCodexAuth } from '../lib/auth/codex-detect.js';
-import { resolveOpenAiApiKey } from '../lib/provider/api-key.js';
 import { getOAuthHandle } from '../runtime-context.js';
 
 interface AuthStatusBody {
@@ -13,32 +12,18 @@ interface AuthStatusBody {
     state: 'disabled' | 'pending' | 'ready' | 'failed';
     lastError: string | null;
   };
-  apiKey: {
-    available: boolean;
-  };
-  recommendedProvider: 'oauth' | 'openai' | null;
+  recommendedProvider: 'oauth' | null;
   loginCommand: string;
 }
-
-const checkApiKey = (): boolean => {
-  try {
-    resolveOpenAiApiKey();
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const authRouter = Router();
 
 authRouter.get('/status', async (_req, res) => {
   const codex = await detectCodexAuth();
   const handle = getOAuthHandle();
-  const apiKeyAvailable = checkApiKey();
 
   let recommendedProvider: AuthStatusBody['recommendedProvider'] = null;
   if (handle && handle.state === 'ready') recommendedProvider = 'oauth';
-  else if (apiKeyAvailable) recommendedProvider = 'openai';
 
   const body: AuthStatusBody = {
     codex: {
@@ -50,7 +35,6 @@ authRouter.get('/status', async (_req, res) => {
       state: handle?.state ?? 'disabled',
       lastError: handle?.lastError ?? null,
     },
-    apiKey: { available: apiKeyAvailable },
     recommendedProvider,
     loginCommand: 'npx @openai/codex login',
   };

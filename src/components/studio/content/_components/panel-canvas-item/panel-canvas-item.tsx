@@ -1,4 +1,4 @@
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, Loader2 } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ interface PanelCanvasItemProps {
   panel: Panel;
   index: number;
   canvasHeight: number;
+  isGenerating: boolean;
   isSelected: boolean;
   onTransformStart: (payload: PanelTransformStartPayload) => void;
 }
@@ -38,6 +39,7 @@ const PanelCanvasItem = ({
   panel,
   index,
   canvasHeight,
+  isGenerating,
   isSelected,
   onTransformStart,
 }: PanelCanvasItemProps) => {
@@ -89,6 +91,19 @@ const PanelCanvasItem = ({
             <ImagePlus className="size-9" />
             <span>{t('panelCanvas.empty')}</span>
           </p>
+        )}
+        {isGenerating && (
+          <figcaption
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none absolute inset-0 z-20 grid place-items-center overflow-hidden bg-[rgb(26_31_48/0.35)] text-white backdrop-blur-[1px]"
+          >
+            <span className="absolute inset-0 animate-pulse bg-[linear-gradient(110deg,transparent_0%,rgb(255_255_255/0.28)_42%,rgb(255_255_255/0.42)_50%,rgb(255_255_255/0.28)_58%,transparent_100%)]" />
+            <span className="relative z-10 flex items-center gap-2 rounded-[4px] border border-white/35 bg-[rgb(26_31_48/0.7)] px-3 py-2 font-mono text-[10px] font-black tracking-[0.08em] uppercase shadow-sm">
+              <Loader2 className="size-3.5 animate-spin" />
+              {t('panelCanvas.generating')}
+            </span>
+          </figcaption>
         )}
       </figure>
       <span className="panel-number">{index + 1}</span>

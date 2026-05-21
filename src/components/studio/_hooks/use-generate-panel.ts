@@ -26,6 +26,9 @@ const useGeneratePanel = (
 ) => {
   const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingPanelId, setGeneratingPanelId] = useState<string | null>(
+    null,
+  );
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   const handleGenerateSelectedPanel = async (): Promise<void> => {
@@ -38,6 +41,7 @@ const useGeneratePanel = (
 
     const targetPanelId = selectedPanel.id;
     setIsGenerating(true);
+    setGeneratingPanelId(targetPanelId);
     setGenerationError(null);
 
     try {
@@ -77,6 +81,7 @@ const useGeneratePanel = (
       setGenerationError(message);
     } finally {
       setIsGenerating(false);
+      setGeneratingPanelId(null);
     }
   };
 
@@ -85,6 +90,7 @@ const useGeneratePanel = (
   return {
     handleGenerateSelectedPanel,
     isGenerating,
+    generatingPanelId,
     generationError,
     dismissGenerationError,
   };

@@ -18,7 +18,12 @@ import {
   clampPanelToCanvas,
   getMinimumCanvasHeightForContent,
 } from '../_lib/panel-geometry';
-import type { Panel, ReferenceImageRef, StudioState } from '../_lib/types';
+import type {
+  Panel,
+  PanelFitMode,
+  ReferenceImageRef,
+  StudioState,
+} from '../_lib/types';
 
 const isSameReferenceImage = (
   reference: ReferenceImageRef,
@@ -220,6 +225,7 @@ const usePanelActions = (
         prompt: selected.prompt,
         candidates: selected.candidates,
         selectedCandidateId: selected.selectedCandidateId,
+        fitMode: selected.fitMode,
         referenceImages: selected.referenceImages,
         bubbles: selected.bubbles.map((bubble) => ({
           ...bubble,
@@ -452,6 +458,10 @@ const usePanelActions = (
     patchSelectedPanel({ prompt: event.target.value });
   };
 
+  const handleSelectedPanelFitModeChange = (fitMode: PanelFitMode): void => {
+    patchSelectedPanel({ fitMode });
+  };
+
   const handleReferenceImageToggle = (reference: ReferenceImageRef): void => {
     setState((current) => {
       const selected = current.panels.find(
@@ -533,6 +543,7 @@ const usePanelActions = (
     handleReferenceImageRemove,
     handleReferenceImageToggle,
     handleReferenceImagesClear,
+    handleSelectedPanelFitModeChange,
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,

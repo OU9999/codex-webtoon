@@ -23,6 +23,7 @@ type BubbleShape =
 type BubbleTailSide = 'none' | 'top' | 'right' | 'bottom' | 'left';
 type PanelTransformMode = 'move' | 'resize';
 type PanelResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
+type PanelFitMode = 'cover' | 'contain' | 'fill';
 
 type CandidateProvider = 'local-mock' | 'oauth' | 'openai';
 
@@ -94,6 +95,7 @@ interface Panel {
   prompt: string;
   candidates: Candidate[];
   selectedCandidateId: string | null;
+  fitMode?: PanelFitMode;
   deletedCandidates: Candidate[];
   referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
@@ -152,6 +154,7 @@ interface CreatePanelOverrides extends Partial<
     | 'prompt'
     | 'candidates'
     | 'selectedCandidateId'
+    | 'fitMode'
     | 'referenceImages'
     | 'bubbles'
   >
@@ -248,6 +251,7 @@ export type {
   LayerAction,
   LayerActionId,
   Panel,
+  PanelFitMode,
   PanelResizeHandle,
   PanelTransform,
   PanelTransformMode,

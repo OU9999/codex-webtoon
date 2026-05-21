@@ -38,7 +38,7 @@ interface ApiError {
 
 type CodexProbe = 'authed' | 'unauthed' | 'missing';
 type OAuthState = 'disabled' | 'pending' | 'ready' | 'failed';
-type AuthProviderRecommendation = 'oauth' | 'openai' | null;
+type AuthProviderRecommendation = 'oauth' | null;
 
 interface AuthStatus {
   codex: {
@@ -50,7 +50,6 @@ interface AuthStatus {
     state: OAuthState;
     lastError: string | null;
   };
-  apiKey: { available: boolean };
   recommendedProvider: AuthProviderRecommendation;
   loginCommand: string;
 }
@@ -128,6 +127,8 @@ interface WebtoonCanvas {
   backgroundColor: string;
 }
 
+type PanelFitMode = 'cover' | 'contain' | 'fill';
+
 interface Panel {
   id: string;
   canvasId?: string;
@@ -139,6 +140,7 @@ interface Panel {
   prompt: string;
   candidates: Candidate[];
   selectedCandidateId: string | null;
+  fitMode?: PanelFitMode;
   deletedCandidates: Candidate[];
   referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
@@ -174,6 +176,7 @@ export type {
   HealthResponse,
   OAuthState,
   Panel,
+  PanelFitMode,
   ProjectMeta,
   ProjectState,
   ProjectSummary,

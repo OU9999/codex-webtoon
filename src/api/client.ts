@@ -14,7 +14,7 @@ interface GenerateCandidateRequest {
   prompt: string;
   height: number;
   count?: number;
-  provider?: 'auto' | 'openai' | 'oauth';
+  provider?: 'auto' | 'oauth';
   referenceImages?: ReferenceImageRef[];
 }
 
