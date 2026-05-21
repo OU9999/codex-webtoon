@@ -1,7 +1,9 @@
 import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import {
   MIN_PANEL_HEIGHT,
   MIN_PANEL_WIDTH,
@@ -10,9 +12,22 @@ import {
 import { FieldBlock } from '../../_components/field-block';
 import { PromptTextarea } from '../../_components/prompt-textarea';
 import { RangeField } from '../../_components/range-field';
+import { getPanelFitMode } from '../../_lib/panel-fit';
+import type { PanelFitMode } from '../../_lib/types';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
 import { ReferenceImageDialog } from './reference-image-dialog';
+
+interface PanelFitOption {
+  value: PanelFitMode;
+  labelKey: string;
+}
+
+const PANEL_FIT_OPTIONS: readonly PanelFitOption[] = [
+  { value: 'cover', labelKey: 'inspector.panelForm.fitCover' },
+  { value: 'contain', labelKey: 'inspector.panelForm.fitContain' },
+  { value: 'fill', labelKey: 'inspector.panelForm.fitFill' },
+];
 
 const PanelForm = () => {
   const { t } = useTranslation();
@@ -21,6 +36,7 @@ const PanelForm = () => {
     finalPrompt,
     generationError,
     handleGenerateSelectedPanel,
+    handleSelectedPanelFitModeChange,
     handleSelectedPanelHeightChange,
     handleSelectedPanelPromptChange,
     handleSelectedPanelTitleChange,
@@ -51,6 +67,14 @@ const PanelForm = () => {
     panelIndex >= 0
       ? `${selectedPanelCanvas?.title ?? t('defaults.canvasTitle')} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
+  const fitMode = getPanelFitMode(selectedPanel);
+
+  const handleFitModeSelect = (
+    event: ReactMouseEvent<HTMLButtonElement>,
+  ): void => {
+    const value = event.currentTarget.dataset.value as PanelFitMode;
+    handleSelectedPanelFitModeChange(value);
+  };
 
   return (
     <InspectorSection
@@ -83,6 +107,32 @@ const PanelForm = () => {
         step={10}
         onValueChange={handleSelectedPanelHeightChange}
       />
+      <FieldBlock label={t('inspector.panelForm.fitMode')} compact>
+        <nav
+          className="grid grid-cols-3 gap-1.5"
+          aria-label={t('inspector.panelForm.fitMode')}
+        >
+          {PANEL_FIT_OPTIONS.map((option) => {
+            const isActive = fitMode === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                data-value={option.value}
+                aria-pressed={isActive}
+                className={cn(
+                  'h-9 rounded-md border border-input bg-background text-xs font-bold text-muted-foreground transition-colors hover:bg-hover',
+                  isActive && 'border-brand bg-brand-soft text-brand',
+                )}
+                onClick={handleFitModeSelect}
+              >
+                {t(option.labelKey)}
+              </button>
+            );
+          })}
+        </nav>
+      </FieldBlock>
       <FieldBlock label={t('inspector.panelForm.prompt')}>
         <ReferenceImageDialog />
         <PromptTextarea

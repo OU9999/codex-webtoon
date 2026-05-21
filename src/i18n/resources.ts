@@ -138,6 +138,10 @@ const resources = {
         },
         panelForm: {
           finalPrompt: '최종 생성 조건',
+          fitContain: '맞춤',
+          fitCover: '채우기',
+          fitFill: '늘이기',
+          fitMode: '이미지 채우기',
           generate: '패널 생성',
           generating: '생성 중',
           name: '패널 이름',
@@ -500,6 +504,10 @@ const resources = {
         },
         panelForm: {
           finalPrompt: 'Final generation prompt',
+          fitContain: 'Contain',
+          fitCover: 'Cover',
+          fitFill: 'Fill',
+          fitMode: 'Image fit',
           generate: 'Generate panel',
           generating: 'Generating',
           name: 'Panel name',

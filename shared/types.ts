@@ -127,6 +127,8 @@ interface WebtoonCanvas {
   backgroundColor: string;
 }
 
+type PanelFitMode = 'cover' | 'contain' | 'fill';
+
 interface Panel {
   id: string;
   canvasId?: string;
@@ -138,6 +140,7 @@ interface Panel {
   prompt: string;
   candidates: Candidate[];
   selectedCandidateId: string | null;
+  fitMode?: PanelFitMode;
   deletedCandidates: Candidate[];
   referenceImages: ReferenceImageRef[];
   bubbles: Bubble[];
@@ -173,6 +176,7 @@ export type {
   HealthResponse,
   OAuthState,
   Panel,
+  PanelFitMode,
   ProjectMeta,
   ProjectState,
   ProjectSummary,

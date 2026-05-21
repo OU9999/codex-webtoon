@@ -52,7 +52,8 @@ const findChangedPanelLabel = (
 
     if (
       previousPanel.title !== panel.title ||
-      previousPanel.prompt !== panel.prompt
+      previousPanel.prompt !== panel.prompt ||
+      previousPanel.fitMode !== panel.fitMode
     ) {
       return i18n.t('history.panelContentUpdated');
     }
