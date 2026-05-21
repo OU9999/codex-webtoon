@@ -41,26 +41,23 @@ const createDefaultState = (): StudioState => {
       title: i18n.t('defaults.panels.openingTitle'),
       y: 0,
       height: 420,
-      prompt: i18n.t('defaults.panels.openingPrompt'),
     }),
     createPanel({
       canvasId: canvas.id,
       title: i18n.t('defaults.panels.reactionTitle'),
       y: 420 + panelGap,
       height: 330,
-      prompt: i18n.t('defaults.panels.reactionPrompt'),
     }),
     createPanel({
       canvasId: canvas.id,
       title: i18n.t('defaults.panels.longPauseTitle'),
       y: 420 + panelGap + 330 + panelGap,
       height: 560,
-      prompt: i18n.t('defaults.panels.longPausePrompt'),
     }),
   ];
 
   return {
-    commonPrompt: i18n.t('defaults.commonPrompt'),
+    commonPrompt: '',
     canvases: [canvas],
     selectedCanvasId: canvas.id,
     panels,

@@ -47,19 +47,16 @@ const resources = {
       },
       defaults: {
         canvasTitle: 'Canvas',
-        commonPrompt:
-          '현대 한국 로맨스 웹툰, 부드러운 선화, 세미 리얼 캐릭터, 따뜻하지만 선명한 색감.\n캐릭터: 민지, 20대 초반 여성, 짧은 흑발 단발, 베이지 니트, 차분하지만 예민한 표정.\n공통 금지사항: 이미지 안에 읽을 수 있는 텍스트, 말풍선, 워터마크를 만들지 말 것.',
+        commonPrompt: '',
         copyTitle: '{{title}} copy',
         newCanvasTitle: 'Canvas {{count}}',
         newPanelTitle: 'Panel {{count}}',
         panels: {
           longPausePrompt: '',
           longPauseTitle: 'Long pause',
-          openingPrompt:
-            '비 오는 저녁, 민지가 버스정류장 아래에서 휴대폰 알림을 확인한다. 미디엄 샷.',
+          openingPrompt: '',
           openingTitle: 'Opening beat',
-          reactionPrompt:
-            '민지의 눈이 흔들리는 클로즈업. 화면에는 텍스트 없이 감정만 드러난다.',
+          reactionPrompt: '',
           reactionTitle: 'Reaction close-up',
         },
       },
@@ -413,19 +410,16 @@ const resources = {
       },
       defaults: {
         canvasTitle: 'Canvas',
-        commonPrompt:
-          'Modern Korean romance webtoon, soft linework, semi-real characters, warm but clear colors.\nCharacter: Minji, woman in her early 20s, short black bob, beige knit top, calm but sensitive expression.\nCommon negative prompt: do not create readable text, speech bubbles, or watermarks inside the image.',
+        commonPrompt: '',
         copyTitle: '{{title}} copy',
         newCanvasTitle: 'Canvas {{count}}',
         newPanelTitle: 'Panel {{count}}',
         panels: {
           longPausePrompt: '',
           longPauseTitle: 'Long pause',
-          openingPrompt:
-            'A rainy evening. Minji checks a phone notification under a bus stop shelter. Medium shot.',
+          openingPrompt: '',
           openingTitle: 'Opening beat',
-          reactionPrompt:
-            'Close-up of Minji with trembling eyes. Show emotion only, with no text on screen.',
+          reactionPrompt: '',
           reactionTitle: 'Reaction close-up',
         },
       },
