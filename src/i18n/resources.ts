@@ -2,9 +2,6 @@ const resources = {
   ko: {
     translation: {
       auth: {
-        apiKey: 'API Key',
-        apiKeyAvailable: '사용 가능',
-        apiKeyMissing: '없음',
         authed: '인증됨',
         badgeChecking: '인증 확인 중',
         cliMissing: 'CLI 없음',
@@ -16,7 +13,6 @@ const resources = {
         oauthPreparing: 'OAuth 준비 중',
         refresh: '새로고침',
         required: '인증 필요',
-        setEnv: '또는 OPENAI_API_KEY 환경 변수를 설정하세요.',
         statusLoadFailed: '인증 상태 조회 실패',
         status: '인증 상태',
         unauthed: '인증 안 됨',
@@ -368,9 +364,6 @@ const resources = {
   en: {
     translation: {
       auth: {
-        apiKey: 'API Key',
-        apiKeyAvailable: 'available',
-        apiKeyMissing: 'none',
         authed: 'authed',
         badgeChecking: 'checking auth',
         cliMissing: 'CLI missing',
@@ -382,7 +375,6 @@ const resources = {
         oauthPreparing: 'OAuth pending',
         refresh: 'Refresh',
         required: 'Auth required',
-        setEnv: 'Or set the OPENAI_API_KEY environment variable.',
         statusLoadFailed: 'Failed to check auth status.',
         status: 'Auth status',
         unauthed: 'unauthed',

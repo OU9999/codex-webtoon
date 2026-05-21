@@ -50,7 +50,7 @@ const createProjectState = (): ProjectState => ({
           createdAt: '2026-05-18T00:00:00.000Z',
           promptSnapshot: 'A rooftop establishing shot',
           height: 640,
-          provider: 'openai',
+          provider: 'oauth',
         },
       ],
       selectedCandidateId: 'candidate-1',

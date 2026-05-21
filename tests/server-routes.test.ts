@@ -48,7 +48,7 @@ const createProjectState = (): ProjectState => ({
           createdAt: '2026-05-18T00:00:00.000Z',
           promptSnapshot: 'City street',
           height: 600,
-          provider: 'openai',
+          provider: 'oauth',
         },
       ],
       selectedCandidateId: 'candidate-1',

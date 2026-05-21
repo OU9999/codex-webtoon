@@ -38,7 +38,7 @@ interface ApiError {
 
 type CodexProbe = 'authed' | 'unauthed' | 'missing';
 type OAuthState = 'disabled' | 'pending' | 'ready' | 'failed';
-type AuthProviderRecommendation = 'oauth' | 'openai' | null;
+type AuthProviderRecommendation = 'oauth' | null;
 
 interface AuthStatus {
   codex: {
@@ -50,7 +50,6 @@ interface AuthStatus {
     state: OAuthState;
     lastError: string | null;
   };
-  apiKey: { available: boolean };
   recommendedProvider: AuthProviderRecommendation;
   loginCommand: string;
 }

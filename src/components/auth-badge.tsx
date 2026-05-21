@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import {
   CircleAlert,
   CircleCheck,
-  KeyRound,
   Loader2,
   RefreshCw,
   ShieldCheck,
   ShieldOff,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ interface AuthBadgeProps {
 }
 
 interface BadgeContent {
-  icon: typeof KeyRound;
+  icon: LucideIcon;
   label: string;
   tone: 'ready' | 'warn' | 'idle';
 }
@@ -33,9 +33,6 @@ const pickContent = (status: AuthStatus | null): BadgeContent => {
   }
   if (status.recommendedProvider === 'oauth') {
     return { icon: ShieldCheck, label: 'auth.oauth', tone: 'ready' };
-  }
-  if (status.recommendedProvider === 'openai') {
-    return { icon: KeyRound, label: 'auth.apiKey', tone: 'ready' };
   }
   if (status.oauth.state === 'pending') {
     return { icon: Loader2, label: 'auth.oauthPreparing', tone: 'idle' };
@@ -110,14 +107,6 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
                       : t('auth.unauthed')
                 }
               />
-              <Row
-                label={t('auth.apiKey')}
-                value={
-                  status.apiKey.available
-                    ? t('auth.apiKeyAvailable')
-                    : t('auth.apiKeyMissing')
-                }
-              />
             </dl>
           )}
           {status && !status.recommendedProvider && (
@@ -132,7 +121,6 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
                   ? 'npm i -g @openai/codex'
                   : status.loginCommand}
               </code>
-              <p className="text-slate-400">{t('auth.setEnv')}</p>
             </div>
           )}
           {status?.oauth.lastError && status.oauth.state !== 'ready' && (

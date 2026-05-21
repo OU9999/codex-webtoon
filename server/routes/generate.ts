@@ -1,13 +1,8 @@
 import { Router, type Response } from 'express';
-import OpenAI, { toFile } from 'openai';
 import {
   generateImageViaOAuth,
   OAuthGenerateError,
 } from '../lib/auth/oauth-runtime.js';
-import {
-  MissingApiKeyError,
-  resolveOpenAiApiKey,
-} from '../lib/provider/api-key.js';
 import {
   ImageStoreError,
   readCandidatePng,
@@ -26,8 +21,8 @@ import {
 } from '../../shared/reference-images.js';
 import type { ApiError, ReferenceImageRef } from '../../shared/types.js';
 
-type ProviderRequest = 'auto' | 'openai' | 'oauth';
-type ProviderResolved = 'openai' | 'oauth';
+type ProviderRequest = 'auto' | 'oauth';
+type ProviderResolved = 'oauth';
 
 interface GenerateRequestBody {
   projectName?: unknown;
@@ -229,14 +224,13 @@ const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
   if (typeof body.provider === 'string') {
     if (
       body.provider === 'auto' ||
-      body.provider === 'openai' ||
       body.provider === 'oauth'
     ) {
       provider = body.provider;
     } else {
       throw new GenerateValidationError(
         'provider',
-        'provider must be one of: auto, openai, oauth.',
+        'provider must be one of: auto, oauth.',
       );
     }
   }
@@ -281,23 +275,19 @@ const pickSize = (height: number): ImageSize => {
 
 const resolveProvider = (
   requested: ProviderRequest,
-): { provider: ProviderResolved; apiKey?: string; oauthUrl?: string } => {
+): { provider: ProviderResolved; oauthUrl: string } => {
   if (requested === 'oauth' || requested === 'auto') {
     const handle = getOAuthHandle();
     if (handle && handle.state === 'ready' && handle.url) {
       return { provider: 'oauth', oauthUrl: handle.url };
     }
-    if (requested === 'oauth') {
-      throw new OAuthGenerateError(
-        'oauth_unavailable',
-        503,
-        handle?.lastError ?? 'OAuth proxy is not ready.',
-      );
-    }
   }
 
-  const apiKey = resolveOpenAiApiKey();
-  return { provider: 'openai', apiKey };
+  throw new OAuthGenerateError(
+    'oauth_unavailable',
+    503,
+    getOAuthHandle()?.lastError ?? 'OAuth proxy is not ready.',
+  );
 };
 
 interface GeneratedPng {
@@ -310,12 +300,6 @@ interface ReferenceImageBuffer {
   buffer: Buffer;
   mediaType: string;
 }
-
-const getReferenceFileExtension = (mediaType: string): string => {
-  if (mediaType === 'image/jpeg') return 'jpg';
-  if (mediaType === 'image/webp') return 'webp';
-  return 'png';
-};
 
 const assertReferenceImageSize = (buffer: Buffer): void => {
   if (buffer.length === 0) {
@@ -428,68 +412,17 @@ const generatePng = async (
   referenceImages: ReferenceImageBuffer[],
 ): Promise<GeneratedPng> =>
   withGenerationTimeout(async (signal) => {
-    if (resolved.provider === 'oauth') {
-      const result = await generateImageViaOAuth({
-        oauthUrl: resolved.oauthUrl ?? '',
-        prompt,
-        size,
-        referenceImageDataUrls: referenceImages.map(
-          (reference) =>
-            `data:${reference.mediaType};base64,${reference.buffer.toString('base64')}`,
-        ),
-        signal,
-      });
-      return { buffer: Buffer.from(result.b64, 'base64'), model: result.model };
-    }
-
-    const model = 'gpt-image-1';
-    const client = new OpenAI({ apiKey: resolved.apiKey });
-    if (referenceImages.length > 0) {
-      const image = await Promise.all(
-        referenceImages.map((reference, index) =>
-          toFile(
-            reference.buffer,
-            `reference-${index + 1}.${getReferenceFileExtension(reference.mediaType)}`,
-            {
-              type: reference.mediaType,
-            },
-          ),
-        ),
-      );
-      const response = await client.images.edit(
-        {
-          model,
-          prompt,
-          size,
-          n: 1,
-          image,
-          input_fidelity: 'high',
-        },
-        { signal },
-      );
-
-      const b64 = response.data?.[0]?.b64_json;
-      if (!b64) {
-        throw new Error('Image provider returned no data.');
-      }
-      return { buffer: Buffer.from(b64, 'base64'), model };
-    }
-
-    const response = await client.images.generate(
-      {
-        model,
-        prompt,
-        size,
-        n: 1,
-      },
-      { signal },
-    );
-
-    const b64 = response.data?.[0]?.b64_json;
-    if (!b64) {
-      throw new Error('Image provider returned no data.');
-    }
-    return { buffer: Buffer.from(b64, 'base64'), model };
+    const result = await generateImageViaOAuth({
+      oauthUrl: resolved.oauthUrl,
+      prompt,
+      size,
+      referenceImageDataUrls: referenceImages.map(
+        (reference) =>
+          `data:${reference.mediaType};base64,${reference.buffer.toString('base64')}`,
+      ),
+      signal,
+    });
+    return { buffer: Buffer.from(result.b64, 'base64'), model: result.model };
   });
 
 const sendGenerationError = (res: Response, err: unknown): void => {
@@ -556,11 +489,6 @@ generateRouter.post('/', async (req, res) => {
     if (err instanceof OAuthGenerateError) {
       const body: ApiError = { error: err.code, message: err.message };
       res.status(err.status).json(body);
-      return;
-    }
-    if (err instanceof MissingApiKeyError) {
-      const body: ApiError = { error: 'missing_api_key', message: err.message };
-      res.status(400).json(body);
       return;
     }
     throw err;

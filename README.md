@@ -33,30 +33,17 @@ pnpm dlx webtoon-panel-studio help
 
 ## Authentication
 
-Image generation uses the first available provider:
+Image generation uses the local Codex OAuth proxy. Install and authenticate the
+Codex CLI before starting the server:
 
-- Codex OAuth, when the Codex CLI is installed and authenticated.
-- OpenAI API key, from `OPENAI_API_KEY` or the local config file.
-
-API key config file:
-
-```json
-{
-  "openaiApiKey": "sk-..."
-}
-```
-
-Default config path:
-
-```text
-~/.config/webtoon-panel-studio/config.json
+```bash
+npx @openai/codex login
 ```
 
 ## Environment
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | unset | OpenAI API key fallback. |
 | `WPS_HOST` | `127.0.0.1` | Local server host. |
 | `WPS_PORT` | `4321` | Local server port. |
 | `WPS_CONFIG_DIR` | `~/.config/webtoon-panel-studio` | Config and server advertisement directory. |

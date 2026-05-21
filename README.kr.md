@@ -33,30 +33,17 @@ pnpm dlx webtoon-panel-studio help
 
 ## 인증
 
-이미지 생성은 사용 가능한 첫 번째 공급자를 사용합니다.
+이미지 생성은 로컬 Codex OAuth 프록시를 사용합니다. 서버를 시작하기 전에
+Codex CLI를 설치하고 인증하세요.
 
-- Codex CLI가 설치되어 있고 인증된 경우 Codex OAuth
-- `OPENAI_API_KEY` 또는 로컬 설정 파일의 OpenAI API 키
-
-API 키 설정 파일:
-
-```json
-{
-  "openaiApiKey": "sk-..."
-}
-```
-
-기본 설정 파일 경로:
-
-```text
-~/.config/webtoon-panel-studio/config.json
+```bash
+npx @openai/codex login
 ```
 
 ## 환경 변수
 
 | 변수                           | 기본값                           | 설명                                              |
 | ------------------------------ | -------------------------------- | ------------------------------------------------- |
-| `OPENAI_API_KEY`               | 설정 안 됨                       | OpenAI API 키 대체 경로입니다.                    |
 | `WPS_HOST`                     | `127.0.0.1`                      | 로컬 서버 호스트입니다.                           |
 | `WPS_PORT`                     | `4321`                           | 로컬 서버 포트입니다.                             |
 | `WPS_CONFIG_DIR`               | `~/.config/webtoon-panel-studio` | 설정 및 서버 광고 디렉터리입니다.                 |
