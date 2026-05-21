@@ -139,11 +139,11 @@ const resources = {
           fitCover: '채우기',
           fitFill: '늘이기',
           fitMode: '이미지 채우기',
-          generate: '패널 생성',
+          generate: '이미지 생성',
           generating: '생성 중',
           name: '패널 이름',
           prompt: '컷별 프롬프트',
-          regenerate: '패널 재생성',
+          regenerate: '이미지 재생성',
           selectedCut: '선택된 패널',
           variantCount: '변형 수',
           variantSuffix: '개',
@@ -162,6 +162,7 @@ const resources = {
       },
       panelCanvas: {
         empty: '빈 패널',
+        generating: '생성 중',
         resizeEast: '패널 동쪽 크기 조절',
         resizeNorth: '패널 위쪽 크기 조절',
         resizeNortheast: '패널 오른쪽 위 크기 조절',
@@ -226,7 +227,7 @@ const resources = {
         candidatePool: '후보 풀',
         clearAll: '전체 해제',
         description:
-          '선택한 이미지는 다음 패널 생성의 시각 레퍼런스로 함께 전달됩니다.',
+          '선택한 이미지는 다음 이미지 생성의 시각 레퍼런스로 함께 전달됩니다.',
         emptyCandidates: '후보 없음',
         emptySelected: '레퍼런스 없음',
         errors: {
@@ -502,11 +503,11 @@ const resources = {
           fitCover: 'Cover',
           fitFill: 'Fill',
           fitMode: 'Image fit',
-          generate: 'Generate panel',
+          generate: 'Generate image',
           generating: 'Generating',
           name: 'Panel name',
           prompt: 'Panel prompt',
-          regenerate: 'Regenerate panel',
+          regenerate: 'Regenerate image',
           selectedCut: 'Selected panel',
           variantCount: 'Variants',
           variantSuffix: '',
@@ -525,6 +526,7 @@ const resources = {
       },
       panelCanvas: {
         empty: 'Empty panel',
+        generating: 'Generating',
         resizeEast: 'Resize panel east',
         resizeNorth: 'Resize panel north',
         resizeNortheast: 'Resize panel northeast',
@@ -589,7 +591,7 @@ const resources = {
         candidatePool: 'Candidate pool',
         clearAll: 'Clear all',
         description:
-          'Selected images will be sent as visual references for the next panel generation.',
+          'Selected images will be sent as visual references for the next image generation.',
         emptyCandidates: 'No candidates',
         emptySelected: 'No references',
         errors: {

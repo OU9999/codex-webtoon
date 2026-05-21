@@ -17,6 +17,7 @@ const Content = () => {
   const { t } = useTranslation();
   const {
     editingBubbleId,
+    generatingPanelId,
     state,
     selectedCanvas,
     selectedPanel,
@@ -137,6 +138,7 @@ const Content = () => {
                     panel={panel}
                     index={index}
                     canvasHeight={canvas.height}
+                    isGenerating={panel.id === generatingPanelId}
                     isSelected={panel.id === selectedPanel?.id}
                     onTransformStart={handlePanelTransformStart}
                   />
