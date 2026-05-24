@@ -1,15 +1,15 @@
 ---
 name: project-check
-description: 로컬 품질 검증과 실패 원인 분류. AGENTS.md/DESIGN.md 규칙 준수 확인, pnpm 기반 format/typecheck/test/build 실행, CI나 로컬 검증 실패 triage, PR 전 점검, 직접 테스트 요청에 사용한다.
+description: 로컬 품질 검증과 실패 원인 분류. AGENTS.md/DESIGN.md 규칙 준수 확인, pnpm 기반 format/typecheck/test/build 실행, CI나 로컬 검증 실패 분류, PR 전 점검, 직접 테스트 요청에 사용한다.
 ---
 
-# Project Check
+# 프로젝트 점검
 
 ## 원칙
 
 - `pnpm`만 사용한다. `npm`, `yarn`으로 설치/스크립트를 실행하지 않는다.
 - 먼저 `AGENTS.md`를 읽고, UI/스타일 변경이면 `DESIGN.md`도 읽는다.
-- dirty worktree를 전제로 작업한다. 사용자가 만든 변경을 되돌리지 않는다.
+- 정리되지 않은 working tree를 전제로 작업한다. 사용자가 만든 변경을 되돌리지 않는다.
 - 실패는 한 번에 하나씩 분류하고, 가장 작은 수정으로 해결한다.
 
 ## 실행 순서
@@ -54,7 +54,7 @@ pnpm build
 pnpm prepublishOnly
 ```
 
-### 4. 실패 triage
+### 4. 실패 원인 분류
 
 실패하면 다음 순서로 처리한다.
 

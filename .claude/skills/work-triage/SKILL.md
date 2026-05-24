@@ -1,9 +1,9 @@
 ---
 name: work-triage
-description: 남은 작업과 다음 작업 선정. 사용자가 "현재 남은 작업", "다음 작업", "todo 파악", ".progress 읽고 시작", "이어 작업"을 요청할 때 .progress/.docs/현재 git 상태를 읽고 우선순위를 정한다.
+description: 남은 작업과 다음 작업 선정. 사용자가 "현재 남은 작업", "다음 작업", "할 일 파악", ".progress 읽고 시작", "이어 작업"을 요청할 때 .progress/.docs/현재 git 상태를 읽고 우선순위를 정한다.
 ---
 
-# Work Triage
+# 작업 정리
 
 ## 목표
 
@@ -18,7 +18,7 @@ git status --short
 git branch --show-current
 ```
 
-dirty worktree가 있으면 어떤 파일이 진행 중인지 먼저 분류한다.
+정리되지 않은 working tree가 있으면 어떤 파일이 진행 중인지 먼저 분류한다.
 
 ### 2. 기록 읽기
 

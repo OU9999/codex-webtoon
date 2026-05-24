@@ -1,6 +1,6 @@
 interface:
-  display_name: "Work Triage"
-  short_description: "Find remaining work from project notes"
-  default_prompt: "Use $work-triage to identify the next useful task."
+  display_name: "작업 정리"
+  short_description: "진행 기록에서 남은 작업 찾기"
+  default_prompt: "$work-triage 로 다음에 할 작업을 정리한다."
 policy:
   allow_implicit_invocation: false
