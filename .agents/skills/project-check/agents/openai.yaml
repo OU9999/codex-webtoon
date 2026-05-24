@@ -1,0 +1,6 @@
+interface:
+  display_name: "프로젝트 점검"
+  short_description: "로컬 검증과 실패 원인 분류"
+  default_prompt: "$project-check 로 이 repo를 PR 전에 검증한다."
+policy:
+  allow_implicit_invocation: false
