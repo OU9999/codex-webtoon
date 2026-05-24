@@ -1,0 +1,6 @@
+interface:
+  display_name: "Work Triage"
+  short_description: "Find remaining work from project notes"
+  default_prompt: "Use $work-triage to identify the next useful task."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Project Check"
+  short_description: "Run local checks and triage failures"
+  default_prompt: "Use $project-check to verify this repo before PR."
+policy:
+  allow_implicit_invocation: false
