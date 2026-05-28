@@ -22,6 +22,7 @@ import type {
   Panel,
   PanelFitMode,
   ReferenceImageRef,
+  SidebarDropPosition,
   StudioState,
 } from '../_lib/types';
 
@@ -113,6 +114,17 @@ const scrollCanvasIntoView = (canvasId: string): void => {
       behavior: 'smooth',
     });
   });
+};
+
+const getCanvasAfterDelete = (
+  canvases: StudioState['canvases'],
+  canvasId: string,
+): StudioState['canvases'][number] | null => {
+  const canvasIndex = canvases.findIndex((canvas) => canvas.id === canvasId);
+  if (canvasIndex < 0) return null;
+
+  const remainingCanvases = canvases.filter((canvas) => canvas.id !== canvasId);
+  return remainingCanvases[Math.min(canvasIndex, remainingCanvases.length - 1)];
 };
 
 const usePanelActions = (
@@ -385,6 +397,93 @@ const usePanelActions = (
     scrollCanvasIntoView(canvasId);
   };
 
+  const handleCanvasMove = (
+    sourceCanvasId: string,
+    targetCanvasId: string,
+    position: SidebarDropPosition,
+  ): void => {
+    if (sourceCanvasId === targetCanvasId) return;
+
+    setState((current) => {
+      const sourceIndex = current.canvases.findIndex(
+        (canvas) => canvas.id === sourceCanvasId,
+      );
+      const targetIndex = current.canvases.findIndex(
+        (canvas) => canvas.id === targetCanvasId,
+      );
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+
+      const canvases = [...current.canvases];
+      const [sourceCanvas] = canvases.splice(sourceIndex, 1);
+      if (!sourceCanvas) return current;
+
+      const adjustedTargetIndex =
+        sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+      const rawInsertIndex =
+        position === 'after' ? adjustedTargetIndex + 1 : adjustedTargetIndex;
+      const insertIndex = clamp(rawInsertIndex, 0, canvases.length);
+      canvases.splice(insertIndex, 0, sourceCanvas);
+
+      return { ...current, canvases };
+    });
+  };
+
+  const handlePanelMove = (
+    sourcePanelId: string,
+    targetPanelId: string,
+    position: SidebarDropPosition,
+  ): void => {
+    if (sourcePanelId === targetPanelId) return;
+
+    setState((current) => {
+      const sourcePanel = current.panels.find(
+        (panel) => panel.id === sourcePanelId,
+      );
+      const targetPanel = current.panels.find(
+        (panel) => panel.id === targetPanelId,
+      );
+      if (!sourcePanel || !targetPanel) return current;
+      if (sourcePanel.canvasId !== targetPanel.canvasId) return current;
+
+      const canvasPanels = getCanvasPanels(current, sourcePanel.canvasId);
+      const sourceIndex = canvasPanels.findIndex(
+        (panel) => panel.id === sourcePanel.id,
+      );
+      const targetIndex = canvasPanels.findIndex(
+        (panel) => panel.id === targetPanel.id,
+      );
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+
+      const reordered = [...canvasPanels];
+      const [source] = reordered.splice(sourceIndex, 1);
+      if (!source) return current;
+
+      const adjustedTargetIndex =
+        sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+      const rawInsertIndex =
+        position === 'after' ? adjustedTargetIndex + 1 : adjustedTargetIndex;
+      const insertIndex = clamp(rawInsertIndex, 0, reordered.length);
+      reordered.splice(insertIndex, 0, source);
+
+      let canvasPanelIndex = 0;
+      const panels = current.panels.map((panel) => {
+        if (panel.canvasId !== sourcePanel.canvasId) return panel;
+
+        const nextPanel = reordered[canvasPanelIndex];
+        canvasPanelIndex += 1;
+        return nextPanel ?? panel;
+      });
+
+      return {
+        ...current,
+        panels,
+        selectedCanvasId: sourcePanel.canvasId,
+        selectedPanelId: sourcePanel.id,
+        selectedBubbleId: null,
+      };
+    });
+  };
+
   const handleAddCanvas = (): void => {
     const canvas = createWebtoonCanvas({
       title: t('defaults.newCanvasTitle', {
@@ -400,6 +499,73 @@ const usePanelActions = (
       selectedBubbleId: null,
     }));
     scrollCanvasIntoView(canvas.id);
+  };
+
+  const handleDeleteCanvas = (canvasId: string): void => {
+    if (state.canvases.length <= 1) return;
+
+    const nextCanvas = getCanvasAfterDelete(state.canvases, canvasId);
+    const shouldScrollToNextCanvas = state.selectedCanvasId === canvasId;
+
+    setState((current) => {
+      if (current.canvases.length <= 1) return current;
+
+      const canvas = current.canvases.find((item) => item.id === canvasId);
+      if (!canvas) return current;
+
+      const remainingCanvases = current.canvases.filter(
+        (item) => item.id !== canvas.id,
+      );
+      const fallbackCanvas =
+        getCanvasAfterDelete(current.canvases, canvas.id) ??
+        remainingCanvases[0];
+      if (!fallbackCanvas) return current;
+
+      const deletedPanelIds = new Set(
+        current.panels
+          .filter((panel) => panel.canvasId === canvas.id)
+          .map((panel) => panel.id),
+      );
+      const panels = current.panels
+        .filter((panel) => panel.canvasId !== canvas.id)
+        .map((panel) => ({
+          ...panel,
+          referenceImages: panel.referenceImages.filter(
+            (reference) =>
+              !reference.panelId || !deletedPanelIds.has(reference.panelId),
+          ),
+        }));
+      const selectedCanvasExists = remainingCanvases.some(
+        (item) => item.id === current.selectedCanvasId,
+      );
+      const selectedPanelExists =
+        current.selectedPanelId !== null &&
+        panels.some((panel) => panel.id === current.selectedPanelId);
+      const selectedBubbleExists =
+        current.selectedBubbleId !== null &&
+        panels.some((panel) =>
+          panel.bubbles.some(
+            (bubble) => bubble.id === current.selectedBubbleId,
+          ),
+        );
+
+      return {
+        ...current,
+        canvases: remainingCanvases,
+        panels,
+        selectedCanvasId: selectedCanvasExists
+          ? current.selectedCanvasId
+          : fallbackCanvas.id,
+        selectedPanelId: selectedPanelExists ? current.selectedPanelId : null,
+        selectedBubbleId: selectedBubbleExists
+          ? current.selectedBubbleId
+          : null,
+      };
+    });
+
+    if (shouldScrollToNextCanvas && nextCanvas) {
+      scrollCanvasIntoView(nextCanvas.id);
+    }
   };
 
   const handleSelectionClear = (): void => {
@@ -529,7 +695,9 @@ const usePanelActions = (
   return {
     handleAddCanvas,
     handleAddPanel,
+    handleCanvasMove,
     handleCanvasSelect,
+    handleDeleteCanvas,
     handleCanvasHeightChange,
     handleCanvasCommonPromptChange,
     handleCommonPromptChange,
@@ -539,6 +707,7 @@ const usePanelActions = (
     handleMovePanelUp,
     handleCanvasBackgroundColorChange,
     handlePanelGapChange,
+    handlePanelMove,
     handlePanelSelect,
     handleReferenceImageRemove,
     handleReferenceImageToggle,

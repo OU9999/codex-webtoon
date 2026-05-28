@@ -24,6 +24,7 @@ type BubbleTailSide = 'none' | 'top' | 'right' | 'bottom' | 'left';
 type PanelTransformMode = 'move' | 'resize';
 type PanelResizeHandle = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type PanelFitMode = 'cover' | 'contain' | 'fill';
+type SidebarDropPosition = 'before' | 'after';
 
 type CandidateProvider = 'local-mock' | 'oauth' | 'openai';
 
@@ -255,6 +256,7 @@ export type {
   PanelResizeHandle,
   PanelTransform,
   PanelTransformMode,
+  SidebarDropPosition,
   PanelTransformStartPayload,
   ReferenceImageRef,
   StudioState,
