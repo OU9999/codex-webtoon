@@ -48,6 +48,25 @@ const getAppendPanelY = (panels: Panel[], panelGap: number): number => {
   return Math.max(...panels.map(getPanelBottom)) + panelGap;
 };
 
+const getAutoAlignedPanels = (
+  panels: Panel[],
+  panelGap: number,
+): { panels: Panel[]; contentHeight: number } => {
+  let nextY = 0;
+  const alignedPanels = panels.map((panel) => {
+    const alignedPanel = { ...panel, y: nextY };
+    nextY += panel.height + panelGap;
+
+    return alignedPanel;
+  });
+  const contentHeight =
+    alignedPanels.length === 0
+      ? MIN_CANVAS_HEIGHT
+      : Math.max(MIN_CANVAS_HEIGHT, nextY - panelGap);
+
+  return { panels: alignedPanels, contentHeight };
+};
+
 const scrollPanelIntoView = (panelId: string): void => {
   window.requestAnimationFrame(() => {
     const panelElement = Array.from(
@@ -297,6 +316,35 @@ const usePanelActions = (
 
   const handleMovePanelUp = (): void => moveSelectedPanel(-1);
   const handleMovePanelDown = (): void => moveSelectedPanel(1);
+
+  const handleAutoAlignPanels = (): void => {
+    setState((current) => {
+      const canvas = getSelectedCanvas(current);
+      if (!canvas) return current;
+
+      const canvasPanels = getCanvasPanels(current, canvas.id);
+      if (canvasPanels.length === 0) return current;
+
+      const { panels: alignedCanvasPanels, contentHeight } =
+        getAutoAlignedPanels(canvasPanels, current.panelGap);
+      const alignedPanelById = new Map(
+        alignedCanvasPanels.map((panel) => [panel.id, panel]),
+      );
+
+      return {
+        ...current,
+        canvases: current.canvases.map((item) =>
+          item.id === canvas.id
+            ? { ...item, height: Math.max(item.height, contentHeight) }
+            : item,
+        ),
+        panels: current.panels.map(
+          (panel) => alignedPanelById.get(panel.id) ?? panel,
+        ),
+        selectedCanvasId: canvas.id,
+      };
+    });
+  };
 
   const handleCanvasHeightChange = (value: number[]): void => {
     const raw = value[0];
@@ -695,6 +743,7 @@ const usePanelActions = (
   return {
     handleAddCanvas,
     handleAddPanel,
+    handleAutoAlignPanels,
     handleCanvasMove,
     handleCanvasSelect,
     handleDeleteCanvas,

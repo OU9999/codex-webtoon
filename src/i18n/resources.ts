@@ -268,6 +268,8 @@ const resources = {
         },
         canvas: {
           addPanel: '패널 추가',
+          autoAlignPanels: 'Y 정렬',
+          autoAlignPanelsLabel: '패널 Y축 자동 정렬',
           background: '배경',
           backgroundColorLabel: '캔버스 배경색',
           commonPrompt: '캔버스 공용 프롬프트',
@@ -641,6 +643,8 @@ const resources = {
         },
         canvas: {
           addPanel: 'Add panel',
+          autoAlignPanels: 'Align Y',
+          autoAlignPanelsLabel: 'Auto-align panel Y positions',
           background: 'Background',
           backgroundColorLabel: 'Canvas background color',
           commonPrompt: 'Canvas common prompt',
