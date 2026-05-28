@@ -1,20 +1,41 @@
-import { ImageIcon } from 'lucide-react';
+import { GripVertical, ImageIcon } from 'lucide-react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import type { Panel } from '@/components/studio/_lib/types';
+import type {
+  Panel,
+  SidebarDropPosition,
+} from '@/components/studio/_lib/types';
 
 interface PanelListItemProps {
   panel: Panel;
   index: number;
   isActive: boolean;
+  isDragging: boolean;
+  canReorder: boolean;
+  dropPosition: SidebarDropPosition | null;
   onSelect: (panelId: string) => void;
+  onPointerDown: (
+    event: ReactPointerEvent<HTMLLIElement>,
+    panelId: string,
+  ) => void;
+  onPointerMove: (event: ReactPointerEvent<HTMLLIElement>) => void;
+  onPointerUp: (event: ReactPointerEvent<HTMLLIElement>) => void;
+  onPointerCancel: (event: ReactPointerEvent<HTMLLIElement>) => void;
 }
 
 const PanelListItem = ({
   panel,
   index,
   isActive,
+  isDragging,
+  canReorder,
+  dropPosition,
   onSelect,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
 }: PanelListItemProps) => {
   const { t } = useTranslation();
   const selectedCandidate = panel.candidates.find(
@@ -25,18 +46,69 @@ const PanelListItem = ({
     : panel.prompt.trim()
       ? 'prompt'
       : 'empty';
+  const dragTitle = t('sidebar.panelList.dragPanel', { title: panel.title });
 
   const handleSelect = (): void => {
     onSelect(panel.id);
   };
 
+  const handlePointerDown = (event: ReactPointerEvent<HTMLLIElement>): void => {
+    onPointerDown(event, panel.id);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLLIElement>): void => {
+    onPointerMove(event);
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLLIElement>): void => {
+    onPointerUp(event);
+  };
+
+  const handlePointerCancel = (
+    event: ReactPointerEvent<HTMLLIElement>,
+  ): void => {
+    onPointerCancel(event);
+  };
+
   return (
-    <li>
+    <li
+      className={cn(
+        'relative grid grid-cols-[16px_minmax(0,1fr)] items-center gap-1.5 rounded-[4px] border border-rim bg-background p-1.5 transition-all',
+        isActive && 'border-brand bg-brand-soft hover:bg-brand-soft',
+        isDragging &&
+          'scale-[0.99] border-dashed border-brand bg-brand-soft/70 opacity-70',
+        dropPosition && 'border-brand bg-brand-soft ring-1 ring-brand/45',
+      )}
+      data-sidebar-panel-id={panel.id}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
+      {dropPosition && (
+        <span
+          className={cn(
+            'pointer-events-none absolute right-1 left-1 z-10 h-[3px] rounded-full bg-brand shadow-[0_0_0_3px_var(--brand-soft)]',
+            dropPosition === 'before' ? '-top-1.5' : '-bottom-1.5',
+          )}
+          aria-hidden="true"
+        />
+      )}
+      <span
+        className={cn(
+          'grid size-4 cursor-grab touch-none place-items-center text-fg-faint active:cursor-grabbing',
+          !canReorder && 'cursor-default opacity-45',
+        )}
+        title={dragTitle}
+        aria-hidden="true"
+      >
+        <GripVertical className="size-3.5" />
+      </span>
       <button
         type="button"
         className={cn(
-          'grid w-full grid-cols-[22px_44px_minmax(0,1fr)] items-center gap-2 rounded-[4px] border border-rim bg-background p-2 text-left transition-colors hover:bg-hover',
-          isActive && 'border-brand bg-brand-soft hover:bg-brand-soft',
+          'grid min-w-0 touch-none grid-cols-[22px_44px_minmax(0,1fr)] items-center gap-2 rounded-[3px] px-1 py-0.5 text-left transition-colors hover:bg-hover',
+          isActive && 'hover:bg-brand-soft',
         )}
         onClick={handleSelect}
         aria-current={isActive ? 'true' : undefined}

@@ -268,6 +268,8 @@ const resources = {
         },
         canvas: {
           addPanel: '패널 추가',
+          autoAlignPanels: 'Y 정렬',
+          autoAlignPanelsLabel: '패널 Y축 자동 정렬',
           background: '배경',
           backgroundColorLabel: '캔버스 배경색',
           commonPrompt: '캔버스 공용 프롬프트',
@@ -290,12 +292,16 @@ const resources = {
           deleteSelected: '선택 패널 삭제',
         },
         panelList: {
+          dragPanel: '{{title}} 이동',
           itemMeta: '{{width}}x{{height}} / {{count}}개 레이어',
         },
         project: {
           addCanvas: '추가',
           canvases: '캔버스',
           commonPrompt: '프로젝트 공용 프롬프트',
+          deleteCanvas: '{{title}} 삭제',
+          deleteLastCanvasDisabled: '마지막 캔버스는 삭제할 수 없음',
+          dragCanvas: '{{title}} 이동',
           meta: '{{canvasCount}}개 캔버스 · {{panelCount}}개 패널',
           navLabel: '프로젝트 캔버스',
           panelMeta: '{{count}}개 패널 / {{height}}px',
@@ -637,6 +643,8 @@ const resources = {
         },
         canvas: {
           addPanel: 'Add panel',
+          autoAlignPanels: 'Align Y',
+          autoAlignPanelsLabel: 'Auto-align panel Y positions',
           background: 'Background',
           backgroundColorLabel: 'Canvas background color',
           commonPrompt: 'Canvas common prompt',
@@ -659,12 +667,16 @@ const resources = {
           deleteSelected: 'Delete selected panel',
         },
         panelList: {
+          dragPanel: 'Move {{title}}',
           itemMeta: '{{width}}x{{height}} / {{count}} layers',
         },
         project: {
           addCanvas: 'Add',
           canvases: 'Canvases',
           commonPrompt: 'Project common prompt',
+          deleteCanvas: 'Delete {{title}}',
+          deleteLastCanvasDisabled: 'Cannot delete the last canvas',
+          dragCanvas: 'Move {{title}}',
           meta: '{{canvasCount}} canvases · {{panelCount}} panels',
           navLabel: 'Project canvases',
           panelMeta: '{{count}} panels / {{height}}px',
