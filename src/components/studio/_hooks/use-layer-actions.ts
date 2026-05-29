@@ -7,7 +7,7 @@ import {
   isBubbleFontWeight,
   isBubbleTailSide,
 } from '../_lib/bubble-style';
-import { createBubble } from '../_lib/factories';
+import { createBubble, createPanel } from '../_lib/factories';
 import { CANVAS_WIDTH } from '../_lib/constants';
 import {
   getCanvasPanels,
@@ -23,11 +23,21 @@ interface CanvasPoint {
 
 interface LayerAddTarget {
   panel: Panel;
+  createdPanel: boolean;
+  canvasHeight: number;
   x: number;
   y: number;
 }
 
+const DEFAULT_LAYER_PANEL_HEIGHT = 420;
+
+const clampLayerValue = (value: number, min: number, max: number): number => {
+  return Math.min(Math.max(value, min), max);
+};
+
 const getCanvasStageElement = (canvasId: string): HTMLElement | null => {
+  if (typeof document === 'undefined') return null;
+
   return (
     Array.from(document.querySelectorAll<HTMLElement>('.webtoon-stage')).find(
       (element) => element.dataset.canvasId === canvasId,
@@ -103,21 +113,68 @@ const findViewCenterPanel = (
   }, null);
 };
 
+const getBubblePositionInPanel = (
+  panel: Panel,
+  point: CanvasPoint,
+  bubble: Bubble,
+): CanvasPoint => {
+  const maxX = Math.max(0, panel.width - bubble.width);
+  const maxY = Math.max(0, panel.height - bubble.height);
+
+  return {
+    x: clampLayerValue(point.x - panel.x - bubble.width / 2, 0, maxX),
+    y: clampLayerValue(point.y - panel.y - bubble.height / 2, 0, maxY),
+  };
+};
+
+const createLayerFallbackPanel = (
+  canvasId: string,
+  canvasHeight: number,
+  center: CanvasPoint,
+  title: string,
+): Panel => {
+  const maxPanelY = Math.max(0, canvasHeight - DEFAULT_LAYER_PANEL_HEIGHT);
+  const y = clampLayerValue(
+    center.y - DEFAULT_LAYER_PANEL_HEIGHT / 2,
+    0,
+    maxPanelY,
+  );
+
+  return createPanel({
+    canvasId,
+    title,
+    y,
+    height: DEFAULT_LAYER_PANEL_HEIGHT,
+  });
+};
+
 const getLayerAddTarget = (
   state: StudioState,
   bubble: Bubble,
+  fallbackPanelTitle: string,
 ): LayerAddTarget | null => {
   const canvas = getSelectedCanvas(state);
   if (!canvas) return null;
 
   const center = getVisibleStageCenter(canvas.id, canvas.height);
-  const panel = findViewCenterPanel(getCanvasPanels(state, canvas.id), center);
-  if (!panel) return null;
+  const canvasPanels = getCanvasPanels(state, canvas.id);
+  const existingPanel = findViewCenterPanel(canvasPanels, center);
+  const panel =
+    existingPanel ??
+    createLayerFallbackPanel(
+      canvas.id,
+      canvas.height,
+      center,
+      fallbackPanelTitle,
+    );
+  const position = getBubblePositionInPanel(panel, center, bubble);
 
   return {
     panel,
-    x: center.x - panel.x - bubble.width / 2,
-    y: center.y - panel.y - bubble.height / 2,
+    createdPanel: !existingPanel,
+    canvasHeight: Math.max(canvas.height, panel.y + panel.height),
+    x: position.x,
+    y: position.y,
   };
 };
 
@@ -191,20 +248,32 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
       ...patch,
     };
     setState((current) => {
-      const target = getLayerAddTarget(current, bubble);
+      const target = getLayerAddTarget(
+        current,
+        bubble,
+        t('defaults.newPanelTitle', { count: 1 }),
+      );
       if (!target) return current;
       const nextBubble = {
         ...bubble,
         x: target.x,
         y: target.y,
       };
+      const panels = target.createdPanel
+        ? [...current.panels, target.panel]
+        : current.panels;
 
       return {
         ...current,
+        canvases: current.canvases.map((canvas) =>
+          canvas.id === target.panel.canvasId
+            ? { ...canvas, height: target.canvasHeight }
+            : canvas,
+        ),
         selectedCanvasId: target.panel.canvasId,
         selectedPanelId: null,
         selectedBubbleId: nextBubble.id,
-        panels: current.panels.map((panel) =>
+        panels: panels.map((panel) =>
           panel.id === target.panel.id
             ? { ...panel, bubbles: [...panel.bubbles, nextBubble] }
             : panel,

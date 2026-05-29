@@ -40,9 +40,13 @@ const BubbleActionButton = ({
 
 const BubbleActions = () => {
   const { t } = useTranslation();
-  const { handleLayerAdd, selectedCanvasPanels, selectedPanel } =
-    useStudioContext();
-  const isDisabled = selectedCanvasPanels.length === 0;
+  const {
+    handleLayerAdd,
+    selectedCanvas,
+    selectedCanvasPanels,
+    selectedPanel,
+  } = useStudioContext();
+  const isDisabled = !selectedCanvas;
   const layerCount = selectedPanel
     ? selectedPanel.bubbles.length
     : selectedCanvasPanels.reduce(
