@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { renameProject, saveProjectState } from '@/api/client';
+import type { ProjectState } from '@shared/types';
 import { buildFinalPrompt } from '../_lib/prompt';
 import {
   getCanvasPanels,
@@ -28,9 +30,15 @@ interface UseStudioOptions {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
+  onProjectRename: (name: string) => void;
 }
 
-const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
+const useStudio = ({
+  projectName,
+  initialState,
+  onBack,
+  onProjectRename,
+}: UseStudioOptions) => {
   const [state, setState, saveStatus, historyEntries, canUndo, handleUndo] =
     useStudioState({
       projectName,
@@ -148,6 +156,15 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     panels.handleDeletePanel();
   };
 
+  const handleProjectRename = async (name: string): Promise<void> => {
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName === projectName) return;
+
+    await saveProjectState(projectName, state as unknown as ProjectState);
+    const renamed = await renameProject(projectName, trimmedName);
+    onProjectRename(renamed.name);
+  };
+
   useDynamicStyles(state);
   useKeyboardShortcuts({
     onGenerate: generation.handleGenerateSelectedPanel,
@@ -190,6 +207,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     handleCanvasResizeStart,
     handlePanelSelect,
     handlePanelTransformStart,
+    handleProjectRename,
     handleSelectionClear,
     handleSelectedBubbleDelete,
   };

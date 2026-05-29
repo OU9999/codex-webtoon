@@ -141,9 +141,44 @@ test('saveState and loadState round-trip project data through disk', async () =>
   assert.equal(summary.thumbnailUrl, state.panels[0]?.candidates[0]?.imageUrl);
 });
 
+test('renameProject moves folders and rewrites project asset URLs', async () => {
+  const { createProject, listProjects, loadState, renameProject, saveState } =
+    await storePromise;
+  const project = createProject('Rename Source');
+  const state = createProjectState();
+  const candidate = state.panels[0]?.candidates[0];
+  assert.ok(candidate);
+  candidate.imageUrl =
+    '/projects/Rename%20Source/candidates/panel-1/candidate-1.png';
+
+  saveState(project.name, state);
+
+  const renamed = renameProject(project.name, 'Rename Target');
+
+  assert.equal(renamed.name, 'Rename Target');
+  assert.equal(renamed.path, join(projectsRoot, 'Rename Target'));
+  assert.equal(existsSync(project.path), false);
+  assert.equal(existsSync(renamed.path), true);
+
+  const loaded = loadState(renamed.name);
+  assert.ok(loaded);
+  assert.equal(
+    loaded.panels[0]?.candidates[0]?.imageUrl,
+    '/projects/Rename%20Target/candidates/panel-1/candidate-1.png',
+  );
+
+  const summary = listProjects().find(
+    (candidateProject) => candidateProject.name === renamed.name,
+  );
+  assert.ok(summary);
+  assert.equal(summary.path, renamed.path);
+});
+
 test('project operations reject invalid names and invalid state shapes', async () => {
-  const { ProjectError, createProject, saveState } = await storePromise;
+  const { ProjectError, createProject, renameProject, saveState } =
+    await storePromise;
   const project = createProject('Validation');
+  createProject('Validation Conflict');
 
   assert.throws(
     () => createProject('../outside'),
@@ -154,6 +189,16 @@ test('project operations reject invalid names and invalid state shapes', async (
     () => saveState(project.name, { panels: [] }),
     (err: unknown) =>
       err instanceof ProjectError && err.code === 'invalid_state',
+  );
+  assert.throws(
+    () => renameProject(project.name, '../outside'),
+    (err: unknown) =>
+      err instanceof ProjectError && err.code === 'invalid_name',
+  );
+  assert.throws(
+    () => renameProject(project.name, 'Validation Conflict'),
+    (err: unknown) =>
+      err instanceof ProjectError && err.code === 'project_exists',
   );
 });
 

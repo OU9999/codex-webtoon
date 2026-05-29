@@ -11,14 +11,21 @@ interface StudioProps {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
+  onProjectRename: (name: string) => void;
 }
 
-const Studio = ({ projectName, initialState, onBack }: StudioProps) => {
+const Studio = ({
+  projectName,
+  initialState,
+  onBack,
+  onProjectRename,
+}: StudioProps) => {
   return (
     <StudioProvider
       projectName={projectName}
       initialState={initialState}
       onBack={onBack}
+      onProjectRename={onProjectRename}
     >
       <Shell>
         <Header />

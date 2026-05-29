@@ -3,6 +3,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
@@ -174,6 +175,83 @@ const readProjectThumbnailUrl = (dir: string): string | null => {
   }
 };
 
+const rewriteProjectAssetUrls = (
+  value: unknown,
+  fromName: string,
+  toName: string,
+): unknown => {
+  const encodedFromName = encodeURIComponent(fromName);
+  const encodedToName = encodeURIComponent(toName);
+  const encodedPrefix = `/projects/${encodedFromName}/`;
+  const nextEncodedPrefix = `/projects/${encodedToName}/`;
+  const rawPrefix = `/projects/${fromName}/`;
+  const nextRawPrefix = `/projects/${toName}/`;
+
+  if (typeof value === 'string') {
+    if (value.startsWith(encodedPrefix)) {
+      return `${nextEncodedPrefix}${value.slice(encodedPrefix.length)}`;
+    }
+
+    if (value.startsWith(rawPrefix)) {
+      return `${nextRawPrefix}${value.slice(rawPrefix.length)}`;
+    }
+
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteProjectAssetUrls(item, fromName, toName));
+  }
+
+  const record = getObjectRecord(value);
+  if (!record) return value;
+
+  return Object.fromEntries(
+    Object.entries(record).map(([key, item]) => [
+      key,
+      rewriteProjectAssetUrls(item, fromName, toName),
+    ]),
+  );
+};
+
+const readRenamedStatePayload = (
+  dir: string,
+  fromName: string,
+  toName: string,
+): string | null => {
+  const file = join(dir, STATE_FILE);
+  if (!existsSync(file)) return null;
+
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf-8')) as unknown;
+    const renamed = rewriteProjectAssetUrls(parsed, fromName, toName);
+    return JSON.stringify(renamed, null, 2);
+  } catch {
+    return null;
+  }
+};
+
+const isSameProjectDirectory = (
+  currentDir: string,
+  nextDir: string,
+): boolean => {
+  if (!existsSync(nextDir)) return false;
+
+  return realpathSync(currentDir) === realpathSync(nextDir);
+};
+
+const moveProjectDirectory = (currentDir: string, nextDir: string): void => {
+  if (!isSameProjectDirectory(currentDir, nextDir)) {
+    renameSync(currentDir, nextDir);
+    return;
+  }
+
+  const root = resolve(ensureProjectsRoot());
+  const tempDir = join(root, `.rename-${process.pid}-${Date.now()}`);
+  renameSync(currentDir, tempDir);
+  renameSync(tempDir, nextDir);
+};
+
 const createProject = (rawName: string): ProjectSummary => {
   validateName(rawName);
   const name = rawName.trim();
@@ -240,6 +318,70 @@ const getProject = (name: string): ProjectMeta => {
   const stat = statSync(join(dir, PROJECT_FILE));
   meta.updatedAt = stat.mtimeMs;
   return meta;
+};
+
+const renameProject = (
+  currentRawName: string,
+  nextRawName: string,
+): ProjectSummary => {
+  validateName(currentRawName);
+  validateName(nextRawName);
+
+  const currentName = currentRawName.trim();
+  const nextName = nextRawName.trim();
+  const currentDir = projectPath(currentName);
+  const meta = readProjectMeta(currentDir);
+  if (!meta) {
+    throw new ProjectError(
+      'project_not_found',
+      `Project "${currentName}" not found.`,
+    );
+  }
+
+  if (currentName === nextName) {
+    return {
+      name: meta.name,
+      path: currentDir,
+      createdAt: meta.createdAt,
+      updatedAt: meta.updatedAt,
+      thumbnailUrl: readProjectThumbnailUrl(currentDir),
+    };
+  }
+
+  const nextDir = projectPath(nextName);
+  if (existsSync(nextDir) && !isSameProjectDirectory(currentDir, nextDir)) {
+    throw new ProjectError(
+      'project_exists',
+      `Project "${nextName}" already exists.`,
+    );
+  }
+
+  const statePayload = readRenamedStatePayload(
+    currentDir,
+    currentName,
+    nextName,
+  );
+  moveProjectDirectory(currentDir, nextDir);
+
+  const now = Date.now();
+  const renamedMeta: ProjectMeta = {
+    ...meta,
+    name: nextName,
+    updatedAt: now,
+  };
+  writeProjectMeta(nextDir, renamedMeta);
+
+  if (statePayload) {
+    atomicWriteFileSync(join(nextDir, STATE_FILE), statePayload);
+  }
+
+  return {
+    name: nextName,
+    path: nextDir,
+    createdAt: renamedMeta.createdAt,
+    updatedAt: renamedMeta.updatedAt,
+    thumbnailUrl: readProjectThumbnailUrl(nextDir),
+  };
 };
 
 const getProjectDir = (name: string): string => {
@@ -483,6 +625,7 @@ export {
   getProjectDir,
   listProjects,
   loadState,
+  renameProject,
   saveState,
   touchProject,
 };

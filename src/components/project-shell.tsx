@@ -164,6 +164,10 @@ const ProjectShell = () => {
     setError(null);
   };
 
+  const handleProjectRename = (name: string): void => {
+    setProjectName(name);
+  };
+
   const handleRetry = (): void => {
     if (!projectName) return;
     setProjectName(null);
@@ -243,6 +247,7 @@ const ProjectShell = () => {
       projectName={projectName}
       initialState={initialState}
       onBack={handleBack}
+      onProjectRename={handleProjectRename}
     />
   );
 };

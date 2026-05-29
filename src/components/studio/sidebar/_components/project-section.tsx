@@ -1,7 +1,15 @@
-import { GripVertical, ImageIcon, Plus, SquarePen, Trash2 } from 'lucide-react';
+import {
+  GripVertical,
+  ImageIcon,
+  PencilLine,
+  Plus,
+  SquarePen,
+  Trash2,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ProjectNameEditDialog } from '@/components/project-name-edit-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getCanvasPanels } from '../../_lib/canvas-state';
@@ -221,7 +229,9 @@ const ProjectSection = () => {
     useState<CanvasPointerDrag | null>(null);
   const [canvasDragTarget, setCanvasDragTarget] =
     useState<CanvasDragTarget | null>(null);
+  const [isProjectRenameOpen, setIsProjectRenameOpen] = useState(false);
   const {
+    handleProjectRename,
     projectName,
     selectedCanvas,
     state,
@@ -246,6 +256,14 @@ const ProjectSection = () => {
     firstCanvasPanelWithImage?.candidates[0] ?? null;
   const canReorderCanvas = state.canvases.length > 1;
   const canDeleteCanvas = state.canvases.length > 1;
+
+  const handleProjectRenameOpen = (): void => {
+    setIsProjectRenameOpen(true);
+  };
+
+  const handleProjectRenameClose = (): void => {
+    setIsProjectRenameOpen(false);
+  };
 
   const handleCanvasSelectRequest = (canvasId: string): void => {
     if (suppressCanvasClickRef.current) return;
@@ -362,7 +380,7 @@ const ProjectSection = () => {
       title={t('sidebar.project.title')}
       meta={projectMeta}
     >
-      <section className="mb-3 flex items-center gap-2.5">
+      <section className="mb-3 grid grid-cols-[30px_minmax(0,1fr)_28px] items-center gap-2.5">
         <span className="flex size-[30px] shrink-0 items-center justify-center overflow-hidden rounded-[4px] border border-rim-strong bg-panel">
           {projectThumbnailCandidate ? (
             <img
@@ -382,6 +400,17 @@ const ProjectSection = () => {
             {projectMeta}
           </span>
         </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={handleProjectRenameOpen}
+          className="size-7 rounded-[4px] text-fg-muted hover:bg-hover hover:text-brand"
+          aria-label={t('sidebar.project.renameProject')}
+          title={t('sidebar.project.renameProject')}
+        >
+          <PencilLine className="size-3.5" />
+        </Button>
       </section>
       <FieldBlock label={t('sidebar.project.commonPrompt')}>
         <PromptTextarea
@@ -446,6 +475,13 @@ const ProjectSection = () => {
           </ol>
         </nav>
       </section>
+      {isProjectRenameOpen && (
+        <ProjectNameEditDialog
+          currentName={projectName}
+          onClose={handleProjectRenameClose}
+          onRename={handleProjectRename}
+        />
+      )}
     </SidebarCollapsibleSection>
   );
 };

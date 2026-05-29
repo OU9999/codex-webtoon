@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 
 import { AppHeader } from '@/components/app-header';
 import { AuthBadge } from '@/components/auth-badge';
+import { ProjectNameEditDialog } from '@/components/project-name-edit-dialog';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
-import { deleteProject, listProjects } from '@/api/client';
+import { deleteProject, listProjects, renameProject } from '@/api/client';
 import type { ProjectSummary } from '@shared/types';
 import { ContinueHero } from './_components/continue-hero';
 import { NewProjectModal } from './_components/new-project-modal';
@@ -25,6 +26,9 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   const [query, setQuery] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [deletingName, setDeletingName] = useState<string | null>(null);
+  const [renamingProject, setRenamingProject] = useState<ProjectSummary | null>(
+    null,
+  );
   const searchRef = useRef<HTMLInputElement>(null);
   const auth = useAuthStatus();
 
@@ -87,6 +91,29 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
     } finally {
       setDeletingName(null);
     }
+  };
+
+  const handleRenameProjectRequest = (name: string): void => {
+    const project = projects.find((item) => item.name === name);
+    if (!project) return;
+
+    setRenamingProject(project);
+  };
+
+  const handleCloseRenameProject = (): void => {
+    setRenamingProject(null);
+  };
+
+  const handleRenameProject = async (name: string): Promise<void> => {
+    if (!renamingProject) return;
+
+    const renamed = await renameProject(renamingProject.name, name);
+    setProjects((current) =>
+      current.map((project) =>
+        project.name === renamingProject.name ? renamed : project,
+      ),
+    );
+    setRenamingProject(null);
   };
 
   /** Loads the project list when the picker first mounts. */
@@ -175,6 +202,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
                 onOpen={onPick}
                 onDelete={handleDeleteProject}
                 onNewProject={handleNewProject}
+                onRename={handleRenameProjectRequest}
               />
 
               {error && (
@@ -205,6 +233,14 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
         <NewProjectModal
           onClose={handleCloseNewProject}
           onCreated={handleProjectCreated}
+        />
+      )}
+
+      {renamingProject && (
+        <ProjectNameEditDialog
+          currentName={renamingProject.name}
+          onClose={handleCloseRenameProject}
+          onRename={handleRenameProject}
         />
       )}
     </div>
