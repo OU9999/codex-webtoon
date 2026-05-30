@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { FolderPlus, Loader2, Trash2 } from 'lucide-react';
+import { FolderPlus, Loader2, PencilLine, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
@@ -13,9 +13,10 @@ interface RecentProjectsProps {
   onOpen: (name: string) => void;
   onDelete: (name: string) => void;
   onNewProject: () => void;
+  onRename: (name: string) => void;
 }
 
-const ROW_GRID = 'grid-cols-[40px_minmax(0,1fr)_140px_minmax(0,1.4fr)_28px]';
+const ROW_GRID = 'grid-cols-[40px_minmax(0,1fr)_140px_minmax(0,1.4fr)_56px]';
 
 const RecentProjects = ({
   projects,
@@ -24,6 +25,7 @@ const RecentProjects = ({
   onOpen,
   onDelete,
   onNewProject,
+  onRename,
 }: RecentProjectsProps) => {
   const { i18n, t } = useTranslation();
 
@@ -36,6 +38,12 @@ const RecentProjects = ({
     event.stopPropagation();
     const name = event.currentTarget.dataset.projectName;
     if (name) onDelete(name);
+  };
+
+  const handleRenameClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation();
+    const name = event.currentTarget.dataset.projectName;
+    if (name) onRename(name);
   };
 
   return (
@@ -130,22 +138,36 @@ const RecentProjects = ({
                 <span className="pointer-events-none truncate font-mono text-[11px] text-fg-muted">
                   {project.path}
                 </span>
-                <button
-                  type="button"
-                  data-project-name={project.name}
-                  onClick={handleDeleteClick}
-                  disabled={isDeleting}
-                  aria-label={t('projectPicker.row.deleteLabel', {
-                    name: project.name,
-                  })}
-                  className="relative grid size-5 place-items-center rounded text-fg-muted opacity-0 transition group-hover:opacity-100 hover:bg-status-red/15 hover:text-status-red focus-visible:opacity-100"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="size-3.5" />
-                  )}
-                </button>
+                <span className="relative flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    data-project-name={project.name}
+                    onClick={handleRenameClick}
+                    disabled={isDeleting}
+                    aria-label={t('projectPicker.row.renameLabel', {
+                      name: project.name,
+                    })}
+                    className="grid size-5 place-items-center rounded text-fg-muted opacity-0 transition group-hover:opacity-100 hover:bg-brand-soft hover:text-brand focus-visible:opacity-100"
+                  >
+                    <PencilLine className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    data-project-name={project.name}
+                    onClick={handleDeleteClick}
+                    disabled={isDeleting}
+                    aria-label={t('projectPicker.row.deleteLabel', {
+                      name: project.name,
+                    })}
+                    className="grid size-5 place-items-center rounded text-fg-muted opacity-0 transition group-hover:opacity-100 hover:bg-status-red/15 hover:text-status-red focus-visible:opacity-100"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-3.5" />
+                    )}
+                  </button>
+                </span>
               </div>
             );
           })}

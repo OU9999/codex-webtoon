@@ -19,6 +19,7 @@ interface StudioProviderProps {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
+  onProjectRename: (name: string) => void;
   children: ReactNode;
 }
 
@@ -26,9 +27,15 @@ const StudioProvider = ({
   projectName,
   initialState,
   onBack,
+  onProjectRename,
   children,
 }: StudioProviderProps) => {
-  const studio = useStudio({ projectName, initialState, onBack });
+  const studio = useStudio({
+    projectName,
+    initialState,
+    onBack,
+    onProjectRename,
+  });
   return (
     <StudioContext.Provider value={studio}>{children}</StudioContext.Provider>
   );

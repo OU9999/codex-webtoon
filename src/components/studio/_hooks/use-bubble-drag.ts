@@ -17,6 +17,14 @@ const TAIL_TIP_MAX = 220;
 const TAIL_POSITION_MIN = 5;
 const TAIL_POSITION_MAX = 95;
 
+const moveBubble = (bubble: Bubble, drag: BubbleDrag, x: number, y: number) => {
+  return {
+    ...bubble,
+    x: x - drag.offsetX,
+    y: y - drag.offsetY,
+  };
+};
+
 const resizeFromAnchor = (
   bubble: Bubble,
   drag: BubbleDrag,
@@ -26,51 +34,33 @@ const resizeFromAnchor = (
 ): Bubble => {
   const deltaX = x - drag.pointerStartX;
   const deltaY = y - drag.pointerStartY;
-  const maxWidth = CANVAS_WIDTH * 2;
-  const maxHeight = drag.panelHeight * 2;
   let nextX = drag.bubbleStartX;
   let nextY = drag.bubbleStartY;
   let nextWidth = drag.bubbleStartWidth;
   let nextHeight = drag.bubbleStartHeight;
 
   if (anchor.includes('e')) {
-    nextWidth = clamp(
-      drag.bubbleStartWidth + deltaX,
-      MIN_BUBBLE_WIDTH,
-      maxWidth,
-    );
+    nextWidth = Math.max(drag.bubbleStartWidth + deltaX, MIN_BUBBLE_WIDTH);
   }
 
   if (anchor.includes('s')) {
-    nextHeight = clamp(
-      drag.bubbleStartHeight + deltaY,
-      MIN_BUBBLE_HEIGHT,
-      maxHeight,
-    );
+    nextHeight = Math.max(drag.bubbleStartHeight + deltaY, MIN_BUBBLE_HEIGHT);
   }
 
   if (anchor.includes('w')) {
-    nextWidth = clamp(
-      drag.bubbleStartWidth - deltaX,
-      MIN_BUBBLE_WIDTH,
-      maxWidth,
-    );
+    nextWidth = Math.max(drag.bubbleStartWidth - deltaX, MIN_BUBBLE_WIDTH);
     nextX = drag.bubbleStartX + drag.bubbleStartWidth - nextWidth;
   }
 
   if (anchor.includes('n')) {
-    nextHeight = clamp(
-      drag.bubbleStartHeight - deltaY,
-      MIN_BUBBLE_HEIGHT,
-      maxHeight,
-    );
+    nextHeight = Math.max(drag.bubbleStartHeight - deltaY, MIN_BUBBLE_HEIGHT);
     nextY = drag.bubbleStartY + drag.bubbleStartHeight - nextHeight;
   }
 
   return {
     ...bubble,
-    x: clamp(nextX, -CANVAS_WIDTH, CANVAS_WIDTH * 2),
-    y: clamp(nextY, -drag.panelHeight, drag.panelHeight * 2),
+    x: nextX,
+    y: nextY,
     width: nextWidth,
     height: nextHeight,
   };
@@ -198,10 +188,6 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
         drag.canvasHeight;
       const x = stageX - drag.panelX;
       const y = stageY - drag.panelY;
-      const minX = -CANVAS_WIDTH;
-      const maxX = CANVAS_WIDTH * 2;
-      const minY = -drag.panelHeight;
-      const maxY = drag.panelHeight * 2;
 
       setState.transient((current) => ({
         ...current,
@@ -218,11 +204,7 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
               }
 
               if (drag.mode === 'move') {
-                return {
-                  ...bubble,
-                  x: clamp(x - drag.offsetX, minX, maxX),
-                  y: clamp(y - drag.offsetY, minY, maxY),
-                };
+                return moveBubble(bubble, drag, x, y);
               }
 
               return resizeFromAnchor(
@@ -257,4 +239,4 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
   return { handleBubbleDragStart };
 };
 
-export { useBubbleDrag };
+export { moveBubble, useBubbleDrag };

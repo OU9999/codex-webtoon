@@ -140,6 +140,9 @@ test('project routes create, list, save, load, and delete project data', async (
   assert.equal(emptyState.status, 204);
 
   const state = createProjectState();
+  const candidate = state.panels[0]?.candidates[0];
+  assert.ok(candidate);
+  candidate.imageUrl = `/projects/${encodedName}/candidates/panel-1/candidate-1.png`;
   const saveRes = await fetch(`${baseUrl}/api/projects/${encodedName}/state`, {
     method: 'PUT',
     headers: jsonHeaders,
@@ -164,12 +167,44 @@ test('project routes create, list, save, load, and delete project data', async (
   assert.ok(summary);
   assert.equal(summary.thumbnailUrl, state.panels[0]?.candidates[0]?.imageUrl);
 
-  const deleteRes = await fetch(`${baseUrl}/api/projects/${encodedName}`, {
-    method: 'DELETE',
-  });
+  const renamedName = 'Route Project Renamed';
+  const encodedRenamedName = encodeURIComponent(renamedName);
+  const renameRes = await requestJson<{ name: string; thumbnailUrl: string }>(
+    `/api/projects/${encodedName}`,
+    {
+      method: 'PATCH',
+      headers: jsonHeaders,
+      body: JSON.stringify({ name: renamedName }),
+    },
+  );
+  assert.equal(renameRes.name, renamedName);
+  assert.equal(
+    renameRes.thumbnailUrl,
+    `/projects/${encodedRenamedName}/candidates/panel-1/candidate-1.png`,
+  );
+
+  const getOriginal = await fetch(`${baseUrl}/api/projects/${encodedName}`);
+  assert.equal(getOriginal.status, 404);
+
+  const loadedRenamed = await requestJson<ProjectState>(
+    `/api/projects/${encodedRenamedName}/state`,
+  );
+  assert.equal(
+    loadedRenamed.panels[0]?.candidates[0]?.imageUrl,
+    `/projects/${encodedRenamedName}/candidates/panel-1/candidate-1.png`,
+  );
+
+  const deleteRes = await fetch(
+    `${baseUrl}/api/projects/${encodedRenamedName}`,
+    {
+      method: 'DELETE',
+    },
+  );
   assert.equal(deleteRes.status, 204);
 
-  const getDeleted = await fetch(`${baseUrl}/api/projects/${encodedName}`);
+  const getDeleted = await fetch(
+    `${baseUrl}/api/projects/${encodedRenamedName}`,
+  );
   assert.equal(getDeleted.status, 404);
 });
 
@@ -197,4 +232,15 @@ test('project routes return structured errors for invalid requests', async () =>
   });
   assert.equal(invalidJson.status, 400);
   assert.equal((await invalidJson.json()).error, 'invalid_json');
+
+  const invalidRename = await fetch(
+    `${baseUrl}/api/projects/${encodeURIComponent('missing')}`,
+    {
+      method: 'PATCH',
+      headers: jsonHeaders,
+      body: JSON.stringify({ name: '../outside' }),
+    },
+  );
+  assert.equal(invalidRename.status, 400);
+  assert.equal((await invalidRename.json()).error, 'invalid_name');
 });

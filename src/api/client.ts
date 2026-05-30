@@ -69,6 +69,19 @@ const createProject = (name: string): Promise<ProjectSummary> =>
     body: JSON.stringify({ name }),
   });
 
+const renameProject = (
+  currentName: string,
+  nextName: string,
+): Promise<ProjectSummary> =>
+  requestJson<ProjectSummary>(
+    `/api/projects/${encodeURIComponent(currentName)}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nextName }),
+    },
+  );
+
 const getProject = (name: string): Promise<ProjectMeta> =>
   requestJson<ProjectMeta>(`/api/projects/${encodeURIComponent(name)}`);
 
@@ -114,6 +127,7 @@ export {
   getProject,
   listProjects,
   loadProjectState,
+  renameProject,
   saveProjectState,
 };
 export type { GenerateCandidateRequest };

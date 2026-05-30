@@ -1,5 +1,24 @@
-import { CANVAS_WIDTH } from './constants';
 import type { Panel } from './types';
+
+const getPanelOrientation = (panel: Panel): string => {
+  const ratio = panel.width / panel.height;
+  if (ratio > 1.15) return 'landscape';
+  if (ratio < 0.85) return 'portrait';
+
+  return 'square';
+};
+
+const getPanelSpecPrompt = (panel: Panel): string => {
+  const orientation = getPanelOrientation(panel);
+
+  return [
+    `Panel spec: ${orientation} webtoon panel, target frame ${panel.width}px wide by ${panel.height}px tall.`,
+    'Match the target aspect ratio and fill the entire frame edge-to-edge.',
+    'Do not create blank margins, white gutters, borders, letterboxing, or pillarboxing inside the image.',
+    'If reference images are used, adapt their subject and composition to the target frame instead of preserving their original canvas margins.',
+    'No readable text in image.',
+  ].join(' ');
+};
 
 const buildFinalPrompt = ({
   projectCommonPrompt,
@@ -20,10 +39,10 @@ const buildFinalPrompt = ({
     projectCommonPrompt.trim(),
     canvasCommonPrompt.trim(),
     panel.prompt.trim(),
-    `Panel spec: vertical webtoon panel, output width ${CANVAS_WIDTH}px, panel height ${panel.height}px, no readable text in image.`,
+    getPanelSpecPrompt(panel),
   ]
     .filter(Boolean)
     .join('\n\n');
 };
 
-export { buildFinalPrompt };
+export { buildFinalPrompt, getPanelSpecPrompt };

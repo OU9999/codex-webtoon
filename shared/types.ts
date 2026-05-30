@@ -31,6 +31,10 @@ interface CreateProjectRequest {
   name: string;
 }
 
+interface RenameProjectRequest {
+  name: string;
+}
+
 interface ApiError {
   error: string;
   message: string;
@@ -181,6 +185,7 @@ export type {
   ProjectState,
   ProjectSummary,
   ReferenceImageRef,
+  RenameProjectRequest,
   ServerAdvertisement,
   WebtoonCanvas,
 };

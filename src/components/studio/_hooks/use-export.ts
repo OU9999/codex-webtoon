@@ -9,7 +9,7 @@ import {
 import { getCanvasPanels } from '../_lib/canvas-state';
 import { CANVAS_EDGE_BLEND_HEIGHT, CANVAS_WIDTH } from '../_lib/constants';
 import { downloadBlob, loadImage } from '../_lib/file-utils';
-import type { Panel, StudioState, WebtoonCanvas } from '../_lib/types';
+import type { Bubble, Panel, StudioState, WebtoonCanvas } from '../_lib/types';
 
 const FONT_LOAD_SAMPLE_TEXT = 'Aa가나';
 const DEFAULT_AUTO_SPLIT_HEIGHT = 12000;
@@ -37,6 +37,24 @@ interface RenderPngPartInput {
   sliceHeight: number;
   imageCache: Map<string, Promise<HTMLImageElement>>;
 }
+
+interface PanelExportLayerItem {
+  panel: Panel;
+  panelY: number;
+}
+
+interface BubbleExportLayerItem {
+  bubble: Bubble;
+  panel: Panel;
+  panelY: number;
+}
+
+interface ExportLayerItems {
+  bubbles: BubbleExportLayerItem[];
+  panels: PanelExportLayerItem[];
+}
+
+const BUBBLE_EXPORT_BOUNDS_MARGIN = 240;
 
 const canvasToPngBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> => {
   return new Promise((resolve) => {
@@ -231,7 +249,7 @@ const loadCachedImage = (
   return image;
 };
 
-const drawPanel = async (
+const drawPanelBase = async (
   ctx: CanvasRenderingContext2D,
   panel: Panel,
   panelY: number,
@@ -259,10 +277,61 @@ const drawPanel = async (
     panel.width - 1,
     panel.height - 1,
   );
+};
+
+const drawBubbleLayer = (
+  ctx: CanvasRenderingContext2D,
+  item: BubbleExportLayerItem,
+): void => {
   ctx.save();
-  ctx.translate(panel.x, panelY);
-  panel.bubbles.forEach((bubble) => drawBubbleToCanvas(ctx, bubble, 0));
+  ctx.translate(item.panel.x, item.panelY);
+  drawBubbleToCanvas(ctx, item.bubble, 0);
   ctx.restore();
+};
+
+const getBubbleExportY = (
+  canvasTop: number,
+  panel: Panel,
+  bubble: Bubble,
+): number => canvasTop + panel.y + bubble.y;
+
+const collectExportLayerItems = (
+  state: StudioState,
+  sliceTop: number,
+  sliceHeight: number,
+): ExportLayerItems => {
+  const layouts = buildCanvasExportLayouts(state);
+  const panels: PanelExportLayerItem[] = [];
+  const bubbles: BubbleExportLayerItem[] = [];
+
+  layouts.forEach((layout) => {
+    getCanvasPanels(state, layout.projectCanvas.id).forEach((panel) => {
+      const panelGlobalY = layout.canvasTop + panel.y;
+      if (intersectsSlice(panelGlobalY, panel.height, sliceTop, sliceHeight)) {
+        panels.push({
+          panel,
+          panelY: panelGlobalY - sliceTop,
+        });
+      }
+
+      panel.bubbles.forEach((bubble) => {
+        const bubbleGlobalY = getBubbleExportY(layout.canvasTop, panel, bubble);
+        const bubbleTop = bubbleGlobalY - BUBBLE_EXPORT_BOUNDS_MARGIN;
+        const bubbleHeight = bubble.height + BUBBLE_EXPORT_BOUNDS_MARGIN * 2;
+        if (!intersectsSlice(bubbleTop, bubbleHeight, sliceTop, sliceHeight)) {
+          return;
+        }
+
+        bubbles.push({
+          bubble,
+          panel,
+          panelY: panelGlobalY - sliceTop,
+        });
+      });
+    });
+  });
+
+  return { bubbles, panels };
 };
 
 const renderExportSlice = async (
@@ -306,27 +375,13 @@ const renderExportSlice = async (
     );
   }
 
-  for (const layout of layouts) {
-    if (
-      !intersectsSlice(
-        layout.canvasTop,
-        layout.projectCanvas.height,
-        sliceTop,
-        sliceHeight,
-      )
-    ) {
-      continue;
-    }
+  const layerItems = collectExportLayerItems(state, sliceTop, sliceHeight);
 
-    for (const panel of getCanvasPanels(state, layout.projectCanvas.id)) {
-      const panelGlobalY = layout.canvasTop + panel.y;
-      if (!intersectsSlice(panelGlobalY, panel.height, sliceTop, sliceHeight)) {
-        continue;
-      }
-
-      await drawPanel(ctx, panel, panelGlobalY - sliceTop, imageCache);
-    }
+  for (const item of layerItems.panels) {
+    await drawPanelBase(ctx, item.panel, item.panelY, imageCache);
   }
+
+  layerItems.bubbles.forEach((item) => drawBubbleLayer(ctx, item));
 };
 
 const renderPngPart = async ({
@@ -482,6 +537,7 @@ export {
   DEFAULT_MANUAL_SPLIT_HEIGHT,
   MAX_MANUAL_SPLIT_HEIGHT,
   MIN_MANUAL_SPLIT_HEIGHT,
+  collectExportLayerItems,
   getExportHeight,
   getPngExportPartCount,
   useExport,

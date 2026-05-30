@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { renameProject, saveProjectState } from '@/api/client';
+import type { ProjectState } from '@shared/types';
 import { buildFinalPrompt } from '../_lib/prompt';
 import {
   getCanvasPanels,
@@ -15,6 +17,7 @@ import type {
 import { useBubbleDrag } from './use-bubble-drag';
 import { useCanvasResize } from './use-canvas-resize';
 import { useCandidateActions } from './use-candidate-actions';
+import { useClipboardActions } from './use-clipboard-actions';
 import { useDynamicStyles } from './use-dynamic-styles';
 import { useExport } from './use-export';
 import { useGeneratePanel } from './use-generate-panel';
@@ -28,9 +31,15 @@ interface UseStudioOptions {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
+  onProjectRename: (name: string) => void;
 }
 
-const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
+const useStudio = ({
+  projectName,
+  initialState,
+  onBack,
+  onProjectRename,
+}: UseStudioOptions) => {
   const [state, setState, saveStatus, historyEntries, canUndo, handleUndo] =
     useStudioState({
       projectName,
@@ -86,6 +95,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
   const drag = useBubbleDrag(setState);
   const transform = usePanelTransform(setState);
   const canvasResize = useCanvasResize(setState);
+  const clipboard = useClipboardActions(state, setState);
   const exporting = useExport(state);
 
   const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
@@ -148,6 +158,24 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     panels.handleDeletePanel();
   };
 
+  const handleSelectionCopy = (): void => {
+    clipboard.handleSelectionCopy();
+  };
+
+  const handleClipboardPaste = (): void => {
+    setEditingBubbleId(null);
+    clipboard.handleClipboardPaste();
+  };
+
+  const handleProjectRename = async (name: string): Promise<void> => {
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName === projectName) return;
+
+    await saveProjectState(projectName, state as unknown as ProjectState);
+    const renamed = await renameProject(projectName, trimmedName);
+    onProjectRename(renamed.name);
+  };
+
   useDynamicStyles(state);
   useKeyboardShortcuts({
     onGenerate: generation.handleGenerateSelectedPanel,
@@ -156,6 +184,10 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     undoEnabled: canUndo,
     onSelectionDelete: handleSelectionDelete,
     selectionDeleteEnabled: Boolean(state.selectedBubbleId || selectedPanel),
+    onSelectionCopy: handleSelectionCopy,
+    selectionCopyEnabled: clipboard.selectionCopyEnabled,
+    onClipboardPaste: handleClipboardPaste,
+    clipboardPasteEnabled: clipboard.clipboardPasteEnabled,
   });
 
   return {
@@ -181,6 +213,7 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     ...layers,
     ...drag,
     ...transform,
+    ...clipboard,
     ...exporting,
     editingBubbleId,
     handleBubbleDragStart,
@@ -188,8 +221,11 @@ const useStudio = ({ projectName, initialState, onBack }: UseStudioOptions) => {
     handleBubbleTextEditEnd,
     handleBubbleTextEditStart,
     handleCanvasResizeStart,
+    handleClipboardPaste,
     handlePanelSelect,
     handlePanelTransformStart,
+    handleProjectRename,
+    handleSelectionCopy,
     handleSelectionClear,
     handleSelectedBubbleDelete,
   };

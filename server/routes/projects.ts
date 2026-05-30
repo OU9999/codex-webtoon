@@ -6,9 +6,14 @@ import {
   getProject,
   listProjects,
   loadState,
+  renameProject,
   saveState,
 } from '../lib/project-store.js';
-import type { ApiError, CreateProjectRequest } from '../../shared/types.js';
+import type {
+  ApiError,
+  CreateProjectRequest,
+  RenameProjectRequest,
+} from '../../shared/types.js';
 
 const errorStatus: Record<string, number> = {
   invalid_name: 400,
@@ -61,6 +66,24 @@ projectsRouter.post('/', (req, res) => {
 projectsRouter.get('/:name', (req, res) => {
   try {
     res.json(getProject(req.params.name));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+projectsRouter.patch('/:name', (req, res) => {
+  const { name } = (req.body ?? {}) as Partial<RenameProjectRequest>;
+  if (typeof name !== 'string') {
+    const body: ApiError = {
+      error: 'invalid_name',
+      message: 'name must be a string.',
+    };
+    res.status(400).json(body);
+    return;
+  }
+
+  try {
+    res.json(renameProject(req.params.name, name));
   } catch (err) {
     sendError(res, err);
   }
