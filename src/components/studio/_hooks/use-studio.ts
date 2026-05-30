@@ -17,6 +17,7 @@ import type {
 import { useBubbleDrag } from './use-bubble-drag';
 import { useCanvasResize } from './use-canvas-resize';
 import { useCandidateActions } from './use-candidate-actions';
+import { useClipboardActions } from './use-clipboard-actions';
 import { useDynamicStyles } from './use-dynamic-styles';
 import { useExport } from './use-export';
 import { useGeneratePanel } from './use-generate-panel';
@@ -94,6 +95,7 @@ const useStudio = ({
   const drag = useBubbleDrag(setState);
   const transform = usePanelTransform(setState);
   const canvasResize = useCanvasResize(setState);
+  const clipboard = useClipboardActions(state, setState);
   const exporting = useExport(state);
 
   const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
@@ -156,6 +158,15 @@ const useStudio = ({
     panels.handleDeletePanel();
   };
 
+  const handleSelectionCopy = (): void => {
+    clipboard.handleSelectionCopy();
+  };
+
+  const handleClipboardPaste = (): void => {
+    setEditingBubbleId(null);
+    clipboard.handleClipboardPaste();
+  };
+
   const handleProjectRename = async (name: string): Promise<void> => {
     const trimmedName = name.trim();
     if (!trimmedName || trimmedName === projectName) return;
@@ -173,6 +184,10 @@ const useStudio = ({
     undoEnabled: canUndo,
     onSelectionDelete: handleSelectionDelete,
     selectionDeleteEnabled: Boolean(state.selectedBubbleId || selectedPanel),
+    onSelectionCopy: handleSelectionCopy,
+    selectionCopyEnabled: clipboard.selectionCopyEnabled,
+    onClipboardPaste: handleClipboardPaste,
+    clipboardPasteEnabled: clipboard.clipboardPasteEnabled,
   });
 
   return {
@@ -198,6 +213,7 @@ const useStudio = ({
     ...layers,
     ...drag,
     ...transform,
+    ...clipboard,
     ...exporting,
     editingBubbleId,
     handleBubbleDragStart,
@@ -205,9 +221,11 @@ const useStudio = ({
     handleBubbleTextEditEnd,
     handleBubbleTextEditStart,
     handleCanvasResizeStart,
+    handleClipboardPaste,
     handlePanelSelect,
     handlePanelTransformStart,
     handleProjectRename,
+    handleSelectionCopy,
     handleSelectionClear,
     handleSelectedBubbleDelete,
   };

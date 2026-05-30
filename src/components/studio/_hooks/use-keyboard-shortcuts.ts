@@ -7,6 +7,10 @@ interface UseKeyboardShortcutsOptions {
   undoEnabled: boolean;
   onSelectionDelete: () => void;
   selectionDeleteEnabled: boolean;
+  onSelectionCopy: () => void;
+  selectionCopyEnabled: boolean;
+  onClipboardPaste: () => void;
+  clipboardPasteEnabled: boolean;
 }
 
 const isEditableTarget = (target: EventTarget | null): boolean => {
@@ -23,10 +27,15 @@ const useKeyboardShortcuts = ({
   undoEnabled,
   onSelectionDelete,
   selectionDeleteEnabled,
+  onSelectionCopy,
+  selectionCopyEnabled,
+  onClipboardPaste,
+  clipboardPasteEnabled,
 }: UseKeyboardShortcutsOptions): void => {
   /**
-   * Binds global editor shortcuts for generating, undoing, and deleting the
-   * current canvas selection while preserving native text-field editing.
+   * Binds global editor shortcuts for generating, undoing, deleting, copying,
+   * and pasting the current canvas selection while preserving native text-field
+   * editing.
    */
   useEffect(() => {
     const handler = (event: KeyboardEvent): void => {
@@ -47,6 +56,31 @@ const useKeyboardShortcuts = ({
       if (!(event.metaKey || event.ctrlKey)) return;
 
       const key = event.key.toLowerCase();
+      const editableTarget = isEditableTarget(event.target);
+      if (
+        key === 'c' &&
+        selectionCopyEnabled &&
+        !event.shiftKey &&
+        !event.altKey &&
+        !editableTarget
+      ) {
+        event.preventDefault();
+        onSelectionCopy();
+        return;
+      }
+
+      if (
+        key === 'v' &&
+        clipboardPasteEnabled &&
+        !event.shiftKey &&
+        !event.altKey &&
+        !editableTarget
+      ) {
+        event.preventDefault();
+        onClipboardPaste();
+        return;
+      }
+
       if (key === 'z' && !event.shiftKey && undoEnabled) {
         event.preventDefault();
         onUndo();
@@ -64,9 +98,13 @@ const useKeyboardShortcuts = ({
     return () => window.removeEventListener('keydown', handler);
   }, [
     generateEnabled,
+    clipboardPasteEnabled,
     onGenerate,
+    onClipboardPaste,
     onSelectionDelete,
+    onSelectionCopy,
     onUndo,
+    selectionCopyEnabled,
     selectionDeleteEnabled,
     undoEnabled,
   ]);
