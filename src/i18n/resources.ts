@@ -353,10 +353,10 @@ const resources = {
       },
       bubbles: {
         defaultText: {
-          monologue: '독백',
-          sfx: '탁',
-          speech: '대사',
-          thought: '생각',
+          monologue: 'text',
+          sfx: 'text',
+          speech: 'text',
+          thought: 'text',
         },
         type: {
           monologue: '박스',
@@ -738,10 +738,10 @@ const resources = {
       },
       bubbles: {
         defaultText: {
-          monologue: 'Narration',
-          sfx: 'Tap',
-          speech: 'Dialogue',
-          thought: 'Thought',
+          monologue: 'text',
+          sfx: 'text',
+          speech: 'text',
+          thought: 'text',
         },
         type: {
           monologue: 'BOX',
