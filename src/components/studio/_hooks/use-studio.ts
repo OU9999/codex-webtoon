@@ -104,9 +104,13 @@ const useStudio = ({
   const clipboard = useClipboardActions(state, setState);
   const exporting = useExport(state);
 
-  const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
+  const handleBubbleSelect = (
+    bubbleId: string,
+    panelId?: string,
+    additive = false,
+  ): void => {
     setEditingBubbleId(null);
-    layers.handleBubbleSelect(bubbleId, panelId);
+    layers.handleBubbleSelect(bubbleId, panelId, additive);
   };
 
   const handleBubbleTextEditStart = (
@@ -126,9 +130,9 @@ const useStudio = ({
     drag.handleBubbleDragStart(payload);
   };
 
-  const handlePanelSelect = (panelId: string): void => {
+  const handlePanelSelect = (panelId: string, additive = false): void => {
     setEditingBubbleId(null);
-    panels.handlePanelSelect(panelId);
+    panels.handlePanelSelect(panelId, additive);
   };
 
   const handlePanelTransformStart = (
@@ -157,7 +161,6 @@ const useStudio = ({
     setEditingBubbleId(null);
     if (selectedBubbleIds.length > 0) {
       layers.handleSelectedBubbleDelete();
-      return;
     }
 
     if (selectedPanelIds.length === 0) return;

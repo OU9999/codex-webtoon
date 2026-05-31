@@ -215,3 +215,66 @@ test('pasteClipboardItem duplicates a selected bubble group', () => {
   assert.equal(next.selectedPanelId, null);
   assert.equal(next.selectedBubbleId, secondDuplicate.id);
 });
+
+test('pasteClipboardItem duplicates mixed panel and bubble selections', () => {
+  const panelBubble = createBubble({ id: 'bubble-a', x: 10, y: 20 });
+  const independentBubble = createBubble({ id: 'bubble-b', x: 80, y: 90 });
+  const firstPanel = createPanel({
+    id: 'panel-a',
+    bubbles: [panelBubble],
+  });
+  const secondPanel = createPanel({
+    id: 'panel-b',
+    title: 'Panel B',
+    x: 320,
+    y: 180,
+    bubbles: [independentBubble],
+  });
+  const state = createState({
+    panels: [firstPanel, secondPanel],
+    selectedPanelId: firstPanel.id,
+    selectedPanelIds: [firstPanel.id],
+    selectedBubbleId: independentBubble.id,
+    selectedBubbleIds: [independentBubble.id],
+  });
+  const item = createClipboardItem(state);
+
+  assert.equal(item?.kind, 'mixed');
+  if (item?.kind !== 'mixed') return;
+
+  const next = pasteClipboardItem(state, item, pasteOptions);
+  const duplicatePanel = next.panels[1];
+  const updatedSecondPanel = next.panels[2];
+  const duplicateBubble = updatedSecondPanel?.bubbles[1];
+
+  assert.equal(next.panels.length, 3);
+  assert.ok(duplicatePanel);
+  assert.ok(updatedSecondPanel);
+  assert.ok(duplicateBubble);
+  assert.notEqual(duplicatePanel.id, firstPanel.id);
+  assert.notEqual(duplicatePanel.bubbles[0]?.id, panelBubble.id);
+  assert.notEqual(duplicateBubble.id, independentBubble.id);
+  assert.equal(duplicateBubble.x, 104);
+  assert.equal(duplicateBubble.y, 114);
+  assert.deepEqual(next.selectedPanelIds, [duplicatePanel.id]);
+  assert.deepEqual(next.selectedBubbleIds, [duplicateBubble.id]);
+  assert.equal(next.selectedPanelId, duplicatePanel.id);
+  assert.equal(next.selectedBubbleId, null);
+});
+
+test('createClipboardItem does not copy selected panel bubbles twice', () => {
+  const sourceBubble = createBubble({ id: 'bubble-a' });
+  const sourcePanel = createPanel({
+    bubbles: [sourceBubble],
+  });
+  const state = createState({
+    panels: [sourcePanel],
+    selectedPanelId: sourcePanel.id,
+    selectedPanelIds: [sourcePanel.id],
+    selectedBubbleId: sourceBubble.id,
+    selectedBubbleIds: [sourceBubble.id],
+  });
+  const item = createClipboardItem(state);
+
+  assert.equal(item?.kind, 'panel');
+});

@@ -7,11 +7,15 @@ import {
 import { clamp } from '../_lib/canvas-primitives';
 import { getPanelCanvasHeight } from '../_lib/canvas-state';
 import {
+  getBubbleStartPositions,
+  getPanelByBubbleId,
   getPrimarySelectionId,
+  getSelectedBubbleIds,
   getSelectedPanelIds,
 } from '../_lib/selection-state';
 import type {
   Bubble,
+  BubbleDragStartPosition,
   PanelResizeHandle,
   PanelTransform,
   PanelTransformStartPosition,
@@ -58,6 +62,18 @@ const getSameCanvasPanelIds = (
   );
 
   return panelIds.filter((id) => panelCanvasById.get(id) === canvasId);
+};
+
+const getSameCanvasBubbleIds = (
+  state: StudioState,
+  bubbleIds: string[],
+  canvasId: string,
+): string[] => {
+  return bubbleIds.filter((bubbleId) => {
+    const bubblePanel = getPanelByBubbleId(state, bubbleId);
+
+    return bubblePanel?.canvasId === canvasId;
+  });
 };
 
 const getInteractionPanelIds = (
@@ -108,6 +124,26 @@ const getPanelStartPositions = (
       startWidth: panel.width,
       startHeight: panel.height,
     }));
+};
+
+const moveSelectedBubbles = (
+  bubbles: Bubble[],
+  bubbleStartById: Map<string, BubbleDragStartPosition>,
+  panelX: number,
+  panelY: number,
+  deltaX: number,
+  deltaY: number,
+): Bubble[] => {
+  return bubbles.map((bubble) => {
+    const start = bubbleStartById.get(bubble.id);
+    if (!start) return bubble;
+
+    return {
+      ...bubble,
+      x: start.startStageX + deltaX - panelX,
+      y: start.startStageY + deltaY - panelY,
+    };
+  });
 };
 
 const getMoveDeltaBounds = (
@@ -166,15 +202,29 @@ const usePanelTransform = (setState: StudioStateSetter) => {
       panel.canvasId,
       event.shiftKey,
     );
+    const sameCanvasSelectedBubbleIds = getSameCanvasBubbleIds(
+      snapshot,
+      getSelectedBubbleIds(snapshot),
+      panel.canvasId,
+    );
+    const shouldKeepBubbleSelection =
+      event.shiftKey || getSelectedPanelIds(snapshot).includes(panel.id);
+    const selectedBubbleIds = shouldKeepBubbleSelection
+      ? sameCanvasSelectedBubbleIds
+      : [];
     const primaryPanelId = getPrimarySelectionId(interaction.panelIds);
+    const primaryBubbleId =
+      interaction.panelIds.length > 0
+        ? null
+        : getPrimarySelectionId(selectedBubbleIds);
 
     setState((current) => ({
       ...current,
       selectedCanvasId: panel.canvasId,
       selectedPanelId: primaryPanelId,
       selectedPanelIds: interaction.panelIds,
-      selectedBubbleId: null,
-      selectedBubbleIds: [],
+      selectedBubbleId: primaryBubbleId,
+      selectedBubbleIds,
     }));
 
     if (!interaction.shouldStartDrag) {
@@ -187,6 +237,10 @@ const usePanelTransform = (setState: StudioStateSetter) => {
       dragSnapshot,
       interaction.panelIds,
     );
+    const bubbleStartPositions = getBubbleStartPositions(
+      dragSnapshot,
+      selectedBubbleIds,
+    );
     if (panelStartPositions.length === 0) return;
 
     transformRef.current = {
@@ -197,6 +251,7 @@ const usePanelTransform = (setState: StudioStateSetter) => {
       canvasHeight,
       historyStart: dragSnapshot,
       panelStartPositions,
+      bubbleStartPositions,
       offsetX: pointerX - panel.x,
       offsetY: pointerY - panel.y,
       startX: panel.x,
@@ -229,6 +284,9 @@ const usePanelTransform = (setState: StudioStateSetter) => {
       const startById = new Map(
         transform.panelStartPositions.map((start) => [start.panelId, start]),
       );
+      const bubbleStartById = new Map(
+        transform.bubbleStartPositions.map((start) => [start.bubbleId, start]),
+      );
       const bounds = getMoveDeltaBounds(
         transform.panelStartPositions,
         transform.canvasHeight,
@@ -247,21 +305,43 @@ const usePanelTransform = (setState: StudioStateSetter) => {
         panels: current.panels.map((panel) => {
           if (transform.mode === 'move') {
             const start = startById.get(panel.id);
-            if (!start) return panel;
+            if (!start) {
+              if (bubbleStartById.size === 0) return panel;
+
+              return {
+                ...panel,
+                bubbles: moveSelectedBubbles(
+                  panel.bubbles,
+                  bubbleStartById,
+                  panel.x,
+                  panel.y,
+                  moveDeltaX,
+                  moveDeltaY,
+                ),
+              };
+            }
 
             const x = start.startX + moveDeltaX;
             const y = start.startY + moveDeltaY;
             const panelDeltaX = x - panel.x;
             const panelDeltaY = y - panel.y;
+            const bubbles = keepBubbleStagePositions(
+              panel.bubbles,
+              panelDeltaX,
+              panelDeltaY,
+            );
 
             return {
               ...panel,
               x,
               y,
-              bubbles: keepBubbleStagePositions(
-                panel.bubbles,
-                panelDeltaX,
-                panelDeltaY,
+              bubbles: moveSelectedBubbles(
+                bubbles,
+                bubbleStartById,
+                x,
+                y,
+                moveDeltaX,
+                moveDeltaY,
               ),
             };
           }

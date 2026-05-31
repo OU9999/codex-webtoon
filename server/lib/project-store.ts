@@ -525,7 +525,7 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
   );
   const selectedPanelId = state.selectedBubbleId ? null : state.selectedPanelId;
   const selectedPanelIds = state.selectedBubbleId
-    ? []
+    ? (state.selectedPanelIds ?? [])
     : (state.selectedPanelIds ?? (selectedPanelId ? [selectedPanelId] : []));
   const selectedBubbleIds =
     state.selectedBubbleIds ??

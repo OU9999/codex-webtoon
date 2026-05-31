@@ -174,6 +174,7 @@ interface BubbleDrag {
   panelX: number;
   panelY: number;
   panelHeight: number;
+  panelStartPositions: PanelTransformStartPosition[];
   bubbleStartPositions: BubbleDragStartPosition[];
   pointerStageStartX: number;
   pointerStageStartY: number;
@@ -192,6 +193,8 @@ interface BubbleDragStartPosition {
   panelId: string;
   startX: number;
   startY: number;
+  startStageX: number;
+  startStageY: number;
 }
 
 interface BubbleDragStartPayload {
@@ -211,6 +214,7 @@ interface PanelTransform {
   canvasHeight: number;
   historyStart: StudioState;
   panelStartPositions: PanelTransformStartPosition[];
+  bubbleStartPositions: BubbleDragStartPosition[];
   offsetX: number;
   offsetY: number;
   startX: number;

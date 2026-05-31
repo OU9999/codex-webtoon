@@ -86,7 +86,7 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
     ? null
     : loaded.selectedPanelId;
   const selectedPanelIds = loaded.selectedBubbleId
-    ? []
+    ? (loaded.selectedPanelIds ?? [])
     : (loaded.selectedPanelIds ?? (selectedPanelId ? [selectedPanelId] : []));
   const selectedBubbleIds =
     loaded.selectedBubbleIds ??

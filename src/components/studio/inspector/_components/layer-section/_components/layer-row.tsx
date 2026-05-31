@@ -1,5 +1,5 @@
 import { Bot, MessageCircle, SquarePen, Type } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { Bubble, BubbleType } from '@/components/studio/_lib/types';
@@ -8,7 +8,7 @@ interface LayerRowProps {
   bubble: Bubble;
   isActive: boolean;
   panelId: string;
-  onSelect: (bubbleId: string, panelId: string) => void;
+  onSelect: (bubbleId: string, panelId: string, additive: boolean) => void;
 }
 
 const TYPE_ICONS: Record<BubbleType, ReactNode> = {
@@ -21,8 +21,8 @@ const TYPE_ICONS: Record<BubbleType, ReactNode> = {
 const LayerRow = ({ bubble, isActive, panelId, onSelect }: LayerRowProps) => {
   const { t } = useTranslation();
 
-  const handleSelect = (): void => {
-    onSelect(bubble.id, panelId);
+  const handleSelect = (event: ReactMouseEvent<HTMLButtonElement>): void => {
+    onSelect(bubble.id, panelId, event.shiftKey);
   };
 
   return (

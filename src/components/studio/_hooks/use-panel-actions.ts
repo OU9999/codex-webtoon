@@ -14,7 +14,12 @@ import {
   getPanelCanvasHeight,
   getSelectedCanvas,
 } from '../_lib/canvas-state';
-import { getSelectedPanelIds } from '../_lib/selection-state';
+import {
+  getPanelByBubbleId,
+  getPrimarySelectionId,
+  getSelectedBubbleIds,
+  getSelectedPanelIds,
+} from '../_lib/selection-state';
 import {
   clampPanelToCanvas,
   getMinimumCanvasHeightForContent,
@@ -438,17 +443,41 @@ const usePanelActions = (
     setState((current) => ({ ...current, variantCount }));
   };
 
-  const handlePanelSelect = (panelId: string): void => {
-    setState((current) => ({
-      ...current,
-      selectedCanvasId:
-        current.panels.find((panel) => panel.id === panelId)?.canvasId ??
-        current.selectedCanvasId,
-      selectedPanelId: panelId,
-      selectedPanelIds: [panelId],
-      selectedBubbleId: null,
-      selectedBubbleIds: [],
-    }));
+  const handlePanelSelect = (panelId: string, additive = false): void => {
+    setState((current) => {
+      const targetPanel = current.panels.find((panel) => panel.id === panelId);
+      if (!targetPanel) return current;
+
+      const sameCanvasSelectedIds = getSelectedPanelIds(current).filter((id) =>
+        current.panels.some(
+          (panel) => panel.id === id && panel.canvasId === targetPanel.canvasId,
+        ),
+      );
+      const nextSelectedPanelIds = additive
+        ? sameCanvasSelectedIds.includes(panelId)
+          ? sameCanvasSelectedIds.filter((id) => id !== panelId)
+          : [...sameCanvasSelectedIds, panelId]
+        : [panelId];
+      const sameCanvasSelectedBubbleIds = additive
+        ? getSelectedBubbleIds(current).filter((id) => {
+            const bubblePanel = getPanelByBubbleId(current, id);
+
+            return bubblePanel?.canvasId === targetPanel.canvasId;
+          })
+        : [];
+
+      return {
+        ...current,
+        selectedCanvasId: targetPanel.canvasId,
+        selectedPanelId: getPrimarySelectionId(nextSelectedPanelIds),
+        selectedPanelIds: nextSelectedPanelIds,
+        selectedBubbleId:
+          nextSelectedPanelIds.length > 0
+            ? null
+            : getPrimarySelectionId(sameCanvasSelectedBubbleIds),
+        selectedBubbleIds: sameCanvasSelectedBubbleIds,
+      };
+    });
     scrollPanelIntoView(panelId);
   };
 

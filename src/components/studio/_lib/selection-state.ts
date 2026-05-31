@@ -1,4 +1,4 @@
-import type { Panel, StudioState } from './types';
+import type { BubbleDragStartPosition, Panel, StudioState } from './types';
 
 const uniqueIds = (ids: string[]): string[] => {
   return Array.from(new Set(ids));
@@ -57,11 +57,32 @@ const getPanelByBubbleId = (
   );
 };
 
+const getBubbleStartPositions = (
+  state: StudioState,
+  bubbleIds: string[],
+): BubbleDragStartPosition[] => {
+  const selectedIds = new Set(bubbleIds);
+
+  return state.panels.flatMap((panel) =>
+    panel.bubbles
+      .filter((bubble) => selectedIds.has(bubble.id))
+      .map((bubble) => ({
+        bubbleId: bubble.id,
+        panelId: panel.id,
+        startX: bubble.x,
+        startY: bubble.y,
+        startStageX: panel.x + bubble.x,
+        startStageY: panel.y + bubble.y,
+      })),
+  );
+};
+
 const getPrimarySelectionId = (ids: string[]): string | null => {
   return ids.at(-1) ?? null;
 };
 
 export {
+  getBubbleStartPositions,
   getPanelByBubbleId,
   getPrimarySelectionId,
   getSelectedBubbleIds,

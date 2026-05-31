@@ -29,6 +29,12 @@ interface BubbleGroupClipboardItem {
   bubbles: BubbleClipboardSource[];
 }
 
+interface MixedClipboardItem {
+  kind: 'mixed';
+  panels: Panel[];
+  bubbles: BubbleClipboardSource[];
+}
+
 interface PasteClipboardOptions {
   getPanelCopyTitle: (title: string) => string;
 }
@@ -52,7 +58,8 @@ type StudioClipboardItem =
   | PanelClipboardItem
   | PanelGroupClipboardItem
   | BubbleClipboardItem
-  | BubbleGroupClipboardItem;
+  | BubbleGroupClipboardItem
+  | MixedClipboardItem;
 
 const PASTE_OFFSET = 24;
 
@@ -96,7 +103,19 @@ const getSelectedPanelCopies = (state: StudioState): Panel[] => {
 const createClipboardItem = (
   state: StudioState,
 ): StudioClipboardItem | null => {
-  const bubbleSources = getSelectedBubbleSources(state);
+  const panels = getSelectedPanelCopies(state);
+  const selectedPanelIds = new Set(panels.map((panel) => panel.id));
+  const bubbleSources = getSelectedBubbleSources(state).filter(
+    (source) => !selectedPanelIds.has(source.panelId),
+  );
+  if (panels.length > 0 && bubbleSources.length > 0) {
+    return {
+      kind: 'mixed',
+      panels,
+      bubbles: bubbleSources,
+    };
+  }
+
   if (bubbleSources.length === 1) {
     const [source] = bubbleSources;
     if (!source) return null;
@@ -111,7 +130,6 @@ const createClipboardItem = (
     return { kind: 'bubble-group', bubbles: bubbleSources };
   }
 
-  const panels = getSelectedPanelCopies(state);
   if (panels.length === 1) {
     const [panel] = panels;
     if (!panel) return null;
@@ -429,7 +447,29 @@ const pasteClipboardItem = (
     return pasteBubbleGroupClipboardItem(state, [item]);
   }
 
-  return pasteBubbleGroupClipboardItem(state, item.bubbles);
+  if (item.kind === 'bubble-group') {
+    return pasteBubbleGroupClipboardItem(state, item.bubbles);
+  }
+
+  const afterBubbles = pasteBubbleGroupClipboardItem(
+    {
+      ...state,
+      selectedPanelId: null,
+      selectedPanelIds: [],
+    },
+    item.bubbles,
+  );
+  const afterPanels = pastePanelGroupClipboardItem(
+    afterBubbles,
+    item.panels,
+    options,
+  );
+
+  return {
+    ...afterPanels,
+    selectedBubbleId: null,
+    selectedBubbleIds: afterBubbles.selectedBubbleIds,
+  };
 };
 
 export { createClipboardItem, pasteClipboardItem };
