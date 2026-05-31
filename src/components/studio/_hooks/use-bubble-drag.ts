@@ -1,12 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { clamp } from '../_lib/canvas-primitives';
 import { CANVAS_WIDTH } from '../_lib/constants';
+import {
+  getPanelByBubbleId,
+  getPrimarySelectionId,
+  getSelectedBubbleIds,
+} from '../_lib/selection-state';
 import type {
   Bubble,
   BubbleDrag,
+  BubbleDragStartPosition,
   BubbleDragStartPayload,
   BubbleResizeAnchor,
   BubbleTailSide,
+  StudioState,
   StudioStateSetter,
 } from '../_lib/types';
 
@@ -22,6 +29,19 @@ const moveBubble = (bubble: Bubble, drag: BubbleDrag, x: number, y: number) => {
     ...bubble,
     x: x - drag.offsetX,
     y: y - drag.offsetY,
+  };
+};
+
+const moveBubbleByDelta = (
+  bubble: Bubble,
+  start: BubbleDragStartPosition,
+  deltaX: number,
+  deltaY: number,
+): Bubble => {
+  return {
+    ...bubble,
+    x: start.startX + deltaX,
+    y: start.startY + deltaY,
   };
 };
 
@@ -120,6 +140,70 @@ const moveTail = (bubble: Bubble, x: number, y: number): Bubble => {
   };
 };
 
+const getSameCanvasBubbleIds = (
+  state: StudioState,
+  bubbleIds: string[],
+  canvasId: string,
+): string[] => {
+  return bubbleIds.filter((bubbleId) => {
+    const panel = getPanelByBubbleId(state, bubbleId);
+
+    return panel?.canvasId === canvasId;
+  });
+};
+
+const getInteractionBubbleIds = (
+  state: StudioState,
+  bubbleId: string,
+  canvasId: string,
+  shiftKey: boolean,
+): { bubbleIds: string[]; shouldStartDrag: boolean } => {
+  const selectedIds = getSameCanvasBubbleIds(
+    state,
+    getSelectedBubbleIds(state),
+    canvasId,
+  );
+  const isSelected = selectedIds.includes(bubbleId);
+
+  if (!shiftKey) {
+    return {
+      bubbleIds:
+        isSelected && selectedIds.length > 0 ? selectedIds : [bubbleId],
+      shouldStartDrag: true,
+    };
+  }
+
+  if (isSelected) {
+    return {
+      bubbleIds: selectedIds.filter((id) => id !== bubbleId),
+      shouldStartDrag: false,
+    };
+  }
+
+  return {
+    bubbleIds: [...selectedIds, bubbleId],
+    shouldStartDrag: true,
+  };
+};
+
+const getBubbleStartPositions = (
+  state: StudioState,
+  bubbleIds: string[],
+): BubbleDragStartPosition[] => {
+  const selectedIds = new Set(bubbleIds);
+
+  return state.panels.flatMap((panel) =>
+    panel.bubbles
+      .filter((bubble) => selectedIds.has(bubble.id))
+      .map((bubble) => ({
+        bubbleId: bubble.id,
+        panelId: panel.id,
+        startX: bubble.x,
+        startY: bubble.y,
+      })),
+  );
+};
+
 const useBubbleDrag = (setState: StudioStateSetter) => {
   const dragRef = useRef<BubbleDrag | null>(null);
 
@@ -144,13 +228,36 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
       ((event.clientY - rect.top) / rect.height) * canvasHeight;
     const pointerX = pointerStageX - panel.x;
     const pointerY = pointerStageY - panel.y;
+    const snapshot = setState.getSnapshot();
+    const interaction = getInteractionBubbleIds(
+      snapshot,
+      bubble.id,
+      panel.canvasId,
+      event.shiftKey,
+    );
+    const primaryBubbleId = getPrimarySelectionId(interaction.bubbleIds);
 
     setState((current) => ({
       ...current,
       selectedCanvasId: panel.canvasId,
       selectedPanelId: null,
-      selectedBubbleId: bubble.id,
+      selectedPanelIds: [],
+      selectedBubbleId: primaryBubbleId,
+      selectedBubbleIds: interaction.bubbleIds,
     }));
+
+    if (!interaction.shouldStartDrag) {
+      dragRef.current = null;
+      return;
+    }
+
+    const dragSnapshot = setState.getSnapshot();
+    const bubbleStartPositions = getBubbleStartPositions(
+      dragSnapshot,
+      interaction.bubbleIds,
+    );
+    if (bubbleStartPositions.length === 0) return;
+
     dragRef.current = {
       mode,
       panelId: panel.id,
@@ -158,10 +265,13 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
       resizeAnchor,
       rect,
       canvasHeight,
-      historyStart: setState.getSnapshot(),
+      historyStart: dragSnapshot,
       panelX: panel.x,
       panelY: panel.y,
       panelHeight: panel.height,
+      bubbleStartPositions,
+      pointerStageStartX: pointerStageX,
+      pointerStageStartY: pointerStageY,
       pointerStartX: pointerX,
       pointerStartY: pointerY,
       bubbleStartX: bubble.x,
@@ -188,24 +298,32 @@ const useBubbleDrag = (setState: StudioStateSetter) => {
         drag.canvasHeight;
       const x = stageX - drag.panelX;
       const y = stageY - drag.panelY;
+      const moveDeltaX = stageX - drag.pointerStageStartX;
+      const moveDeltaY = stageY - drag.pointerStageStartY;
+      const startById = new Map(
+        drag.bubbleStartPositions.map((start) => [start.bubbleId, start]),
+      );
 
       setState.transient((current) => ({
         ...current,
         panels: current.panels.map((panel) => {
-          if (panel.id !== drag.panelId) return panel;
-
           return {
             ...panel,
             bubbles: panel.bubbles.map((bubble) => {
-              if (bubble.id !== drag.bubbleId) return bubble;
-
               if (drag.mode === 'tail') {
+                if (bubble.id !== drag.bubbleId) return bubble;
+
                 return moveTail(bubble, x, y);
               }
 
               if (drag.mode === 'move') {
-                return moveBubble(bubble, drag, x, y);
+                const start = startById.get(bubble.id);
+                if (!start) return bubble;
+
+                return moveBubbleByDelta(bubble, start, moveDeltaX, moveDeltaY);
               }
+
+              if (bubble.id !== drag.bubbleId) return bubble;
 
               return resizeFromAnchor(
                 bubble,

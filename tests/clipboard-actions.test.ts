@@ -146,3 +146,72 @@ test('pasteClipboardItem duplicates selected bubbles and cascades repeated paste
   assert.equal(secondDuplicate.y, 68);
   assert.equal(repeated.selectedBubbleId, secondDuplicate.id);
 });
+
+test('pasteClipboardItem duplicates a selected panel group', () => {
+  const firstPanel = createPanel({ id: 'panel-a', x: 10, y: 20 });
+  const secondPanel = createPanel({
+    id: 'panel-b',
+    title: 'Panel B',
+    x: 40,
+    y: 160,
+  });
+  const state = createState({
+    panels: [firstPanel, secondPanel],
+    selectedPanelId: secondPanel.id,
+    selectedPanelIds: [firstPanel.id, secondPanel.id],
+  });
+  const item = createClipboardItem(state);
+  const next = pasteClipboardItem(state, item, pasteOptions);
+  const firstDuplicate = next.panels[2];
+  const secondDuplicate = next.panels[3];
+
+  assert.equal(item?.kind, 'panel-group');
+  assert.equal(next.panels.length, 4);
+  assert.ok(firstDuplicate);
+  assert.ok(secondDuplicate);
+  assert.notEqual(firstDuplicate.id, firstPanel.id);
+  assert.notEqual(secondDuplicate.id, secondPanel.id);
+  assert.equal(firstDuplicate.x, 34);
+  assert.equal(firstDuplicate.y, 44);
+  assert.equal(secondDuplicate.x, 64);
+  assert.equal(secondDuplicate.y, 184);
+  assert.deepEqual(next.selectedPanelIds, [
+    firstDuplicate.id,
+    secondDuplicate.id,
+  ]);
+  assert.equal(next.selectedPanelId, secondDuplicate.id);
+  assert.equal(next.selectedBubbleId, null);
+});
+
+test('pasteClipboardItem duplicates a selected bubble group', () => {
+  const firstBubble = createBubble({ id: 'bubble-a', x: 10, y: 20 });
+  const secondBubble = createBubble({ id: 'bubble-b', x: 80, y: 90 });
+  const sourcePanel = createPanel({
+    bubbles: [firstBubble, secondBubble],
+  });
+  const state = createState({
+    panels: [sourcePanel],
+    selectedBubbleId: secondBubble.id,
+    selectedBubbleIds: [firstBubble.id, secondBubble.id],
+  });
+  const item = createClipboardItem(state);
+  const next = pasteClipboardItem(state, item, pasteOptions);
+  const firstDuplicate = next.panels[0]?.bubbles[2];
+  const secondDuplicate = next.panels[0]?.bubbles[3];
+
+  assert.equal(item?.kind, 'bubble-group');
+  assert.ok(firstDuplicate);
+  assert.ok(secondDuplicate);
+  assert.notEqual(firstDuplicate.id, firstBubble.id);
+  assert.notEqual(secondDuplicate.id, secondBubble.id);
+  assert.equal(firstDuplicate.x, 34);
+  assert.equal(firstDuplicate.y, 44);
+  assert.equal(secondDuplicate.x, 104);
+  assert.equal(secondDuplicate.y, 114);
+  assert.deepEqual(next.selectedBubbleIds, [
+    firstDuplicate.id,
+    secondDuplicate.id,
+  ]);
+  assert.equal(next.selectedPanelId, null);
+  assert.equal(next.selectedBubbleId, secondDuplicate.id);
+});

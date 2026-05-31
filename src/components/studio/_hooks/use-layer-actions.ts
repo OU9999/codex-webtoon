@@ -14,6 +14,7 @@ import {
   getPanelCanvas,
   getSelectedCanvas,
 } from '../_lib/canvas-state';
+import { getSelectedBubbleIds } from '../_lib/selection-state';
 import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
 
 interface CanvasPoint {
@@ -272,7 +273,9 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
         ),
         selectedCanvasId: target.panel.canvasId,
         selectedPanelId: null,
+        selectedPanelIds: [],
         selectedBubbleId: nextBubble.id,
+        selectedBubbleIds: [nextBubble.id],
         panels: panels.map((panel) =>
           panel.id === target.panel.id
             ? { ...panel, bubbles: [...panel.bubbles, nextBubble] }
@@ -295,7 +298,9 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
         ...current,
         selectedCanvasId: canvas?.id ?? current.selectedCanvasId,
         selectedPanelId: null,
+        selectedPanelIds: [],
         selectedBubbleId: bubbleId,
+        selectedBubbleIds: [bubbleId],
       };
     });
   };
@@ -417,19 +422,24 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   };
 
   const handleSelectedBubbleDelete = (): void => {
-    setState((current) => ({
-      ...current,
-      selectedPanelId: null,
-      selectedBubbleId: null,
-      panels: current.panels.map((panel) => {
-        return {
+    setState((current) => {
+      const selectedBubbleIds = new Set(getSelectedBubbleIds(current));
+      if (selectedBubbleIds.size === 0) return current;
+
+      return {
+        ...current,
+        selectedPanelId: null,
+        selectedPanelIds: [],
+        selectedBubbleId: null,
+        selectedBubbleIds: [],
+        panels: current.panels.map((panel) => ({
           ...panel,
           bubbles: panel.bubbles.filter(
-            (bubble) => bubble.id !== current.selectedBubbleId,
+            (bubble) => !selectedBubbleIds.has(bubble.id),
           ),
-        };
-      }),
-    }));
+        })),
+      };
+    });
   };
 
   return {

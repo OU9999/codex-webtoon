@@ -7,7 +7,8 @@ import { LayerRow } from './_components/layer-row';
 
 const LayerSection = () => {
   const { t } = useTranslation();
-  const { handleBubbleSelect, selectedPanel, state } = useStudioContext();
+  const { handleBubbleSelect, selectedBubbleIds, selectedPanel } =
+    useStudioContext();
 
   if (!selectedPanel) return null;
 
@@ -28,7 +29,7 @@ const LayerSection = () => {
             <LayerRow
               key={bubble.id}
               bubble={bubble}
-              isActive={bubble.id === state.selectedBubbleId}
+              isActive={selectedBubbleIds.includes(bubble.id)}
               panelId={selectedPanel.id}
               onSelect={handleBubbleSelect}
             />

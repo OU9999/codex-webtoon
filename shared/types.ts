@@ -157,6 +157,8 @@ interface ProjectState {
   panels: Panel[];
   selectedPanelId: string | null;
   selectedBubbleId: string | null;
+  selectedPanelIds?: string[];
+  selectedBubbleIds?: string[];
   canvasHeight?: number;
   panelGap: number;
   panelGapColor: string;

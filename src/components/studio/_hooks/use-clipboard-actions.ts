@@ -5,6 +5,10 @@ import {
   pasteClipboardItem,
 } from '../_lib/clipboard-actions';
 import type { StudioClipboardItem } from '../_lib/clipboard-actions';
+import {
+  getSelectedBubbleIds,
+  getSelectedPanelIds,
+} from '../_lib/selection-state';
 import type { StudioState, StudioStateSetter } from '../_lib/types';
 
 const useClipboardActions = (
@@ -36,9 +40,9 @@ const useClipboardActions = (
     clipboardPasteEnabled: clipboardItem !== null,
     handleClipboardPaste,
     handleSelectionCopy,
-    selectionCopyEnabled: Boolean(
-      state.selectedBubbleId || state.selectedPanelId,
-    ),
+    selectionCopyEnabled:
+      getSelectedBubbleIds(state).length > 0 ||
+      getSelectedPanelIds(state).length > 0,
   };
 };
 

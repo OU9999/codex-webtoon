@@ -121,7 +121,7 @@ const PanelList = () => {
   const {
     selectedCanvas,
     selectedCanvasPanels,
-    selectedPanel,
+    selectedPanelIds,
     handleAddPanel,
     handleAutoAlignPanels,
     handleCanvasBackgroundColorChange,
@@ -411,7 +411,7 @@ const PanelList = () => {
               key={panel.id}
               panel={panel}
               index={index}
-              isActive={panel.id === selectedPanel?.id}
+              isActive={selectedPanelIds.includes(panel.id)}
               isDragging={
                 panel.id === panelPointerDrag?.sourcePanelId &&
                 panelPointerDrag.hasMoved

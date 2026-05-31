@@ -20,7 +20,9 @@ const Content = () => {
     generatingPanelId,
     state,
     selectedCanvas,
+    selectedBubbleIds,
     selectedPanel,
+    selectedPanelIds,
     handleBubbleDragStart,
     handleBubbleTextEditEnd,
     handleBubbleTextEditStart,
@@ -139,7 +141,8 @@ const Content = () => {
                     index={index}
                     canvasHeight={canvas.height}
                     isGenerating={panel.id === generatingPanelId}
-                    isSelected={panel.id === selectedPanel?.id}
+                    isPrimarySelected={panel.id === selectedPanel?.id}
+                    isSelected={selectedPanelIds.includes(panel.id)}
                     onTransformStart={handlePanelTransformStart}
                   />
                 ))}
@@ -154,7 +157,8 @@ const Content = () => {
                         bubble.id === editingBubbleId &&
                         bubble.id === state.selectedBubbleId
                       }
-                      isSelected={bubble.id === state.selectedBubbleId}
+                      isPrimarySelected={bubble.id === state.selectedBubbleId}
+                      isSelected={selectedBubbleIds.includes(bubble.id)}
                       onDragStart={handleBubbleDragStart}
                       onEditEnd={handleBubbleTextEditEnd}
                       onEditStart={handleBubbleTextEditStart}

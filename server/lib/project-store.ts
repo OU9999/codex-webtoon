@@ -493,6 +493,12 @@ const isProjectState = (value: unknown): value is ProjectState => {
     (obj.selectedPanelId === null || typeof obj.selectedPanelId === 'string') &&
     (obj.selectedBubbleId === null ||
       typeof obj.selectedBubbleId === 'string') &&
+    (obj.selectedPanelIds === undefined ||
+      (Array.isArray(obj.selectedPanelIds) &&
+        obj.selectedPanelIds.every((id) => typeof id === 'string'))) &&
+    (obj.selectedBubbleIds === undefined ||
+      (Array.isArray(obj.selectedBubbleIds) &&
+        obj.selectedBubbleIds.every((id) => typeof id === 'string'))) &&
     (obj.canvasHeight === undefined || typeof obj.canvasHeight === 'number') &&
     typeof obj.panelGap === 'number' &&
     (obj.panelGapColor === undefined ||
@@ -518,6 +524,12 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
     state.panelGap,
   );
   const selectedPanelId = state.selectedBubbleId ? null : state.selectedPanelId;
+  const selectedPanelIds = state.selectedBubbleId
+    ? []
+    : (state.selectedPanelIds ?? (selectedPanelId ? [selectedPanelId] : []));
+  const selectedBubbleIds =
+    state.selectedBubbleIds ??
+    (state.selectedBubbleId ? [state.selectedBubbleId] : []);
   const selectedCanvasId = normalizeSelectedCanvasId(
     (state as { selectedCanvasId?: unknown }).selectedCanvasId,
     canvases,
@@ -560,6 +572,8 @@ const normalizeProjectState = (state: ProjectState): ProjectState => {
       return { ...panel, canvasId, ...geometry, referenceImages };
     }),
     selectedBubbleId: state.selectedBubbleId,
+    selectedPanelIds,
+    selectedBubbleIds,
     panelGap: state.panelGap,
     panelGapColor: normalizePanelGapColor(
       (state as { panelGapColor?: unknown }).panelGapColor,
