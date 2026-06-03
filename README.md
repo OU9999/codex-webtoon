@@ -1,10 +1,11 @@
-# webtoon-panel-studio
+# codex-webtoon
 
 **EN** | [KR](./README.kr.md)
 
 <!-- TODO: Add the package logo here: assets/logo.png -->
 
-Local-first AI webtoon panel editor.
+Unofficial local-first AI webtoon studio that uses Codex CLI OAuth. It is not
+affiliated with, endorsed by, or sponsored by OpenAI.
 
 Build a vertical webtoon canvas, generate selected panels, keep panel-level
 candidates, and edit speech bubbles as separate layers. The app runs locally and
@@ -22,7 +23,7 @@ stores projects on the user's machine.
 After the package is published:
 
 ```bash
-pnpm dlx webtoon-panel-studio
+pnpm dlx codex-webtoon
 ```
 
 The server starts at <http://127.0.0.1:4321/> by default.
@@ -30,10 +31,12 @@ The server starts at <http://127.0.0.1:4321/> by default.
 Available commands:
 
 ```bash
-pnpm dlx webtoon-panel-studio serve
-pnpm dlx webtoon-panel-studio status
-pnpm dlx webtoon-panel-studio help
+pnpm dlx codex-webtoon serve
+pnpm dlx codex-webtoon status
+pnpm dlx codex-webtoon help
 ```
+
+The package also keeps `wps` as a legacy CLI alias.
 
 ## Authentication
 
@@ -48,13 +51,17 @@ npx @openai/codex login
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `WPS_HOST` | `127.0.0.1` | Local server host. |
-| `WPS_PORT` | `4321` | Local server port. |
-| `WPS_CONFIG_DIR` | `~/.config/webtoon-panel-studio` | Config and server advertisement directory. |
-| `WPS_PROJECTS_ROOT` | `~/WebtoonProjects` | Local project storage root. |
-| `WPS_OAUTH` | `auto` | OAuth mode: `auto`, `on`, or `off`. |
-| `WPS_OAUTH_PROXY_PORT` | `10531` | Local OAuth proxy port. |
-| `WPS_OAUTH_STARTUP_TIMEOUT_MS` | `20000` | OAuth proxy startup timeout. |
+| `CODEX_WEBTOON_HOST` | `127.0.0.1` | Local server host. |
+| `CODEX_WEBTOON_PORT` | `4321` | Local server port. |
+| `CODEX_WEBTOON_CONFIG_DIR` | `~/.config/codex-webtoon` | Config and server advertisement directory. |
+| `CODEX_WEBTOON_PROJECTS_ROOT` | `~/WebtoonProjects` | Local project storage root. |
+| `CODEX_WEBTOON_OAUTH` | `auto` | OAuth mode: `auto`, `on`, or `off`. |
+| `CODEX_WEBTOON_OAUTH_PROXY_PORT` | `10531` | Local OAuth proxy port. |
+| `CODEX_WEBTOON_OAUTH_STARTUP_TIMEOUT_MS` | `20000` | OAuth proxy startup timeout. |
+
+Legacy `WPS_*` variables are still accepted as fallbacks. If no config
+directory is configured and `~/.config/webtoon-panel-studio` already exists,
+codex-webtoon reads it for compatibility.
 
 ## Development
 

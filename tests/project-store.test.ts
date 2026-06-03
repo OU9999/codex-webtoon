@@ -11,13 +11,13 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 import type { ProjectState } from '../shared/types.js';
 
-const testRoot = mkdtempSync(join(tmpdir(), 'wps-project-store-'));
+const testRoot = mkdtempSync(join(tmpdir(), 'codex-webtoon-project-store-'));
 const projectsRoot = join(testRoot, 'projects');
 const configRoot = join(testRoot, 'config');
 
-process.env.WPS_PROJECTS_ROOT = projectsRoot;
-process.env.WPS_CONFIG_DIR = configRoot;
-process.env.WPS_OAUTH = 'off';
+process.env.CODEX_WEBTOON_PROJECTS_ROOT = projectsRoot;
+process.env.CODEX_WEBTOON_CONFIG_DIR = configRoot;
+process.env.CODEX_WEBTOON_OAUTH = 'off';
 
 const storePromise = import('../server/lib/project-store.js');
 

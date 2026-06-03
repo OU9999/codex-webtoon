@@ -1,5 +1,5 @@
 name = "pr_reviewer"
-description = "image2-webtoon-ui의 정확성, 보안, 회귀, 누락 테스트, AGENTS/DESIGN 준수를 점검하는 읽기 전용 PR 리뷰어."
+description = "codex-webtoon의 정확성, 보안, 회귀, 누락 테스트, AGENTS/DESIGN 준수를 점검하는 읽기 전용 PR 리뷰어."
 sandbox_mode = "read-only"
 developer_instructions = """
 이 저장소의 오너처럼 리뷰한다.

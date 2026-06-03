@@ -286,9 +286,12 @@ const useStudioState = ({
         .catch((err: unknown) => {
           setSaveStatus('error');
           if (err instanceof ApiClientError) {
-            console.error('[wps] failed to save project state:', err.message);
+            console.error(
+              '[codex-webtoon] failed to save project state:',
+              err.message,
+            );
           } else {
-            console.error('[wps] failed to save project state:', err);
+            console.error('[codex-webtoon] failed to save project state:', err);
           }
         });
     }, SAVE_DEBOUNCE_MS);

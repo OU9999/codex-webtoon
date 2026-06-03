@@ -415,7 +415,7 @@ const downloadSinglePng = async (
     sliceHeight: getExportHeight(state),
     imageCache,
   });
-  downloadBlob(blob, `webtoon-panel-${timestamp}.png`);
+  downloadBlob(blob, `codex-webtoon-${timestamp}.png`);
 };
 
 const downloadSplitPngs = async (
@@ -440,7 +440,7 @@ const downloadSplitPngs = async (
     const part = String(index + 1).padStart(2, '0');
     downloadBlob(
       blob,
-      `webtoon-panel-${filenameMode}-${part}-${timestamp}.png`,
+      `codex-webtoon-${filenameMode}-${part}-${timestamp}.png`,
     );
   }
 };
@@ -460,7 +460,7 @@ const downloadCanvasPngs = async (
       imageCache,
     });
     const canvasNumber = String(layout.canvasIndex + 1).padStart(2, '0');
-    downloadBlob(blob, `webtoon-panel-canvas-${canvasNumber}-${timestamp}.png`);
+    downloadBlob(blob, `codex-webtoon-canvas-${canvasNumber}-${timestamp}.png`);
   }
 };
 
@@ -521,7 +521,7 @@ const useExport = (state: StudioState) => {
     const blob = new Blob([JSON.stringify(state, null, 2)], {
       type: 'application/json',
     });
-    downloadBlob(blob, `webtoon-panel-project-${Date.now()}.json`);
+    downloadBlob(blob, `codex-webtoon-project-${Date.now()}.json`);
   };
 
   return {

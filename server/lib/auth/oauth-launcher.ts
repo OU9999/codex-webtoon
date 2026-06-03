@@ -89,7 +89,9 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
   };
 
   const spawnProxy = (): void => {
-    console.log(`[wps] starting openai-oauth on port ${options.port}…`);
+    console.log(
+      `[codex-webtoon] starting openai-oauth on port ${options.port}…`,
+    );
     const proc = spawnBin(
       'npx',
       ['openai-oauth', '--port', String(options.port)],

@@ -3,21 +3,24 @@ import type { Bubble, Panel, WebtoonCanvas } from './types';
 const safeClassSegment = (value: string): string =>
   value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
-const getStageClassName = (): string => 'wps-webtoon-stage';
+const getStageClassName = (): string => 'codex-webtoon-stage';
 const getCanvasStageClassName = (canvas: WebtoonCanvas): string =>
-  `wps-canvas-${safeClassSegment(canvas.id)}`;
+  `codex-webtoon-canvas-${safeClassSegment(canvas.id)}`;
 const getCanvasConnectorClassName = (index?: number): string => {
-  if (typeof index !== 'number') return 'wps-canvas-connector';
+  if (typeof index !== 'number') return 'codex-webtoon-canvas-connector';
 
-  return `wps-canvas-connector-${index}`;
+  return `codex-webtoon-canvas-connector-${index}`;
 };
-const getStripGapClassName = (gap: number): string => `wps-strip-gap-${gap}`;
+const getStripGapClassName = (gap: number): string =>
+  `codex-webtoon-strip-gap-${gap}`;
 
 const getPanelClassName = (panel: Panel): string =>
-  `wps-panel-${safeClassSegment(panel.id)}`;
+  `codex-webtoon-panel-${safeClassSegment(panel.id)}`;
 
 const getBubbleClassName = (panel: Panel, bubble: Bubble): string =>
-  `wps-bubble-${safeClassSegment(panel.id)}-${safeClassSegment(bubble.id)}`;
+  `codex-webtoon-bubble-${safeClassSegment(panel.id)}-${safeClassSegment(
+    bubble.id,
+  )}`;
 
 export {
   getBubbleClassName,

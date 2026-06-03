@@ -85,7 +85,7 @@ const jsonErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
     return;
   }
 
-  console.error('[wps] unhandled error:', err);
+  console.error('[codex-webtoon] unhandled error:', err);
   const body: ApiError = {
     error: 'internal',
     message: err instanceof Error ? err.message : 'Internal server error.',
@@ -134,7 +134,9 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
 const initOAuth = async (): Promise<OAuthHandle> => {
   const mode = config.oauth.mode;
   if (mode === 'off') {
-    return disabledHandle('OAuth disabled via WPS_OAUTH=off.');
+    return disabledHandle(
+      'OAuth disabled via CODEX_WEBTOON_OAUTH/WPS_OAUTH=off.',
+    );
   }
 
   if (mode === 'auto') {
@@ -163,13 +165,15 @@ const startServer = async () => {
   const oauthHandle = await initOAuth();
   setOAuthHandle(oauthHandle);
   if (oauthHandle.state === 'disabled') {
-    console.log(`[wps] oauth: disabled — ${oauthHandle.lastError}`);
+    console.log(`[codex-webtoon] oauth: disabled — ${oauthHandle.lastError}`);
   } else {
     oauthHandle.readyPromise
-      .then(() => console.log(`[wps] oauth: ready at ${oauthHandle.url}`))
+      .then(() =>
+        console.log(`[codex-webtoon] oauth: ready at ${oauthHandle.url}`),
+      )
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[wps] oauth: failed — ${msg}`);
+        console.warn(`[codex-webtoon] oauth: failed — ${msg}`);
       });
   }
 
@@ -184,7 +188,7 @@ const startServer = async () => {
       startedAt,
       version,
     });
-    console.log(`[wps] server listening at ${url}`);
+    console.log(`[codex-webtoon] server listening at ${url}`);
   });
 
   const shutdown = (): void => {
@@ -206,7 +210,7 @@ if (
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   startServer().catch((err: unknown) => {
-    console.error('[wps] failed to start:', err);
+    console.error('[codex-webtoon] failed to start:', err);
     process.exit(1);
   });
 }
