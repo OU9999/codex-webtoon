@@ -4,10 +4,11 @@ import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ApiClientError, createProject } from '@/api/client';
+import type { ProjectSummary } from '@shared/types';
 
 interface NewProjectModalProps {
   onClose: () => void;
-  onCreated: (name: string) => void;
+  onCreated: (project: ProjectSummary) => void;
 }
 
 const NewProjectModal = ({ onClose, onCreated }: NewProjectModalProps) => {
@@ -35,7 +36,7 @@ const NewProjectModal = ({ onClose, onCreated }: NewProjectModalProps) => {
     setError(null);
     try {
       const created = await createProject(trimmed);
-      onCreated(created.name);
+      onCreated(created);
     } catch (err) {
       const message =
         err instanceof ApiClientError

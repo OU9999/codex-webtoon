@@ -255,9 +255,9 @@ const useStudioState = ({
   };
 
   /**
-   * Resets the studio state when a different project is opened.
-   * Without this, switching projects keeps the previous panels because the
-   * useState initializer only runs on mount.
+   * Resets the studio state when a freshly loaded project state arrives.
+   * Project renames update projectName only, so they must not reset the
+   * current canvas back to the original load snapshot.
    */
   useEffect(() => {
     const nextState = cloneState(initialState);
@@ -266,7 +266,7 @@ const useStudioState = ({
     setHistory([]);
     dirtyRef.current = false;
     setSaveStatus('idle');
-  }, [projectName, initialState]);
+  }, [initialState]);
 
   /**
    * Persists the current studio state to the server with a 500ms debounce.

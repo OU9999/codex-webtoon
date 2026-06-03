@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { renameProject, saveProjectState } from '@/api/client';
-import type { ProjectState } from '@shared/types';
+import type { ProjectState, ProjectSummary } from '@shared/types';
 import { buildFinalPrompt } from '../_lib/prompt';
 import {
   getCanvasPanels,
@@ -35,7 +35,7 @@ interface UseStudioOptions {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
-  onProjectRename: (name: string) => void;
+  onProjectRename: (project: ProjectSummary) => void;
 }
 
 const useStudio = ({
@@ -182,7 +182,7 @@ const useStudio = ({
 
     await saveProjectState(projectName, state as unknown as ProjectState);
     const renamed = await renameProject(projectName, trimmedName);
-    onProjectRename(renamed.name);
+    onProjectRename(renamed);
   };
 
   useDynamicStyles(state);

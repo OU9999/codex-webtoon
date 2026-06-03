@@ -28,6 +28,7 @@ import {
   createWebtoonCanvas,
 } from '@/components/studio/_lib/factories';
 import { withDefaultBubbleStyle } from '@/components/studio/_lib/bubble-style';
+import type { ProjectSummary } from '@shared/types';
 
 const createDefaultState = (): StudioState => {
   const panelGap = 28;
@@ -158,31 +159,34 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
 
 const ProjectShell = () => {
   const { t } = useTranslation();
-  const [projectName, setProjectName] = useState<string | null>(null);
+  const [project, setProject] = useState<ProjectSummary | null>(null);
   const [initialState, setInitialState] = useState<StudioState | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const loadGenRef = useRef(0);
+  const projectName = project?.name ?? null;
 
-  const handlePick = (name: string): void => {
-    setProjectName(name);
+  const handlePick = (nextProject: ProjectSummary): void => {
+    setProject(nextProject);
   };
 
   const handleBack = (): void => {
-    setProjectName(null);
+    setProject(null);
     setInitialState(null);
     setError(null);
   };
 
-  const handleProjectRename = (name: string): void => {
-    setProjectName(name);
+  const handleProjectRename = (renamedProject: ProjectSummary): void => {
+    setProject(renamedProject);
   };
 
   const handleRetry = (): void => {
-    if (!projectName) return;
-    setProjectName(null);
+    if (!project) return;
+
+    const retryProject = project;
+    setProject(null);
     setError(null);
-    setTimeout(() => setProjectName(projectName), 0);
+    setTimeout(() => setProject(retryProject), 0);
   };
 
   /**
@@ -222,7 +226,7 @@ const ProjectShell = () => {
     })();
   }, [projectName]);
 
-  if (!projectName) return <ProjectPicker onPick={handlePick} />;
+  if (!project) return <ProjectPicker onPick={handlePick} />;
 
   if (loading || !initialState) {
     return (
@@ -254,7 +258,8 @@ const ProjectShell = () => {
 
   return (
     <Studio
-      projectName={projectName}
+      projectName={project.name}
+      projectPath={project.path}
       initialState={initialState}
       onBack={handleBack}
       onProjectRename={handleProjectRename}

@@ -2,6 +2,7 @@ import type {
   ApiError,
   AuthStatus,
   Candidate,
+  HealthResponse,
   ProjectMeta,
   ProjectState,
   ProjectSummary,
@@ -118,12 +119,16 @@ const deleteProject = (name: string): Promise<void> =>
 const getAuthStatus = (): Promise<AuthStatus> =>
   requestJson<AuthStatus>('/api/auth/status');
 
+const getHealth = (): Promise<HealthResponse> =>
+  requestJson<HealthResponse>('/api/health');
+
 export {
   ApiClientError,
   createProject,
   deleteProject,
   generateCandidates,
   getAuthStatus,
+  getHealth,
   getProject,
   listProjects,
   loadProjectState,

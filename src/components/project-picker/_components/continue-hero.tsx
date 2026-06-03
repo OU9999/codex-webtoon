@@ -6,14 +6,14 @@ import { formatRelativeTime } from '../_lib/relative-time';
 
 interface ContinueHeroProps {
   project: ProjectSummary;
-  onOpen: (name: string) => void;
+  onOpen: (project: ProjectSummary) => void;
 }
 
 const ContinueHero = ({ project, onOpen }: ContinueHeroProps) => {
   const { i18n, t } = useTranslation();
 
   const handleOpen = (): void => {
-    onOpen(project.name);
+    onOpen(project);
   };
 
   const initial = project.name.trim().charAt(0).toUpperCase() || '·';
