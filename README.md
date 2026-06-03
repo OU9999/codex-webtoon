@@ -28,7 +28,7 @@ layers.
 
 Requirements:
 
-- Node.js 22.13.0 or newer
+- Node.js 22 or newer
 - npm, included with Node.js
 
 Install and run:
@@ -49,8 +49,6 @@ codex-webtoon serve
 codex-webtoon status
 codex-webtoon help
 ```
-
-The package also keeps `wps` as a legacy CLI alias.
 
 ## Screenshots
 
@@ -92,10 +90,6 @@ After setup, `serve` starts the local web server and launches the packaged
 | `CODEX_WEBTOON_OAUTH_PROXY_PORT` | `10531` | Local OAuth proxy port. |
 | `CODEX_WEBTOON_OAUTH_STARTUP_TIMEOUT_MS` | `20000` | OAuth proxy startup timeout. |
 
-Legacy `WPS_*` variables are still accepted as fallbacks. If no config
-directory is configured and `~/.config/webtoon-panel-studio` already exists,
-codex-webtoon reads it for compatibility.
-
 ## Development
 
 This repo uses pnpm for development.
@@ -106,7 +100,7 @@ Use the pinned Node.js version before installing dependencies:
 nvm use
 ```
 
-Tools that read `.node-version` can switch to the same `22.13.0` baseline
+Tools that read `.node-version` can switch to the pinned development baseline
 automatically.
 
 ```bash
@@ -116,13 +110,6 @@ pnpm dev
 
 The Vite dev server runs at <http://127.0.0.1:5173/> and the API server runs at
 <http://127.0.0.1:4321/>.
-
-## Stack
-
-- pnpm
-- Vite + React + TypeScript
-- Tailwind CSS v4
-- shadcn/ui-style local components
 
 ## Checks
 
