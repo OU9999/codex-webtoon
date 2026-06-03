@@ -36,7 +36,7 @@ authRouter.get('/status', async (_req, res) => {
       lastError: handle?.lastError ?? null,
     },
     recommendedProvider,
-    loginCommand: 'npx @openai/codex login',
+    loginCommand: 'codex-webtoon setup',
   };
   res.json(body);
 });

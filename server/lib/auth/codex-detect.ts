@@ -21,6 +21,10 @@ interface CodexAuthInfo {
   platform: NodeJS.Platform;
 }
 
+interface DetectCodexAuthOptions {
+  force?: boolean;
+}
+
 const HOME = homedir();
 const DETECT_TTL_MS = 10_000;
 
@@ -61,10 +65,19 @@ const codexLoginStatus = async (
 let detectCache: { value: CodexAuthInfo; expiresAt: number } | null = null;
 let detectInflight: Promise<CodexAuthInfo> | null = null;
 
-const detectCodexAuth = async (): Promise<CodexAuthInfo> => {
+const detectCodexAuth = async (
+  options: DetectCodexAuthOptions = {},
+): Promise<CodexAuthInfo> => {
   const now = Date.now();
-  if (detectCache && detectCache.expiresAt > now) return detectCache.value;
-  if (detectInflight) return detectInflight;
+  if (!options.force && detectCache && detectCache.expiresAt > now) {
+    return detectCache.value;
+  }
+  if (!options.force && detectInflight) return detectInflight;
+
+  if (options.force) {
+    detectCache = null;
+    detectInflight = null;
+  }
 
   detectInflight = (async (): Promise<CodexAuthInfo> => {
     try {
@@ -99,4 +112,4 @@ const detectCodexAuth = async (): Promise<CodexAuthInfo> => {
 };
 
 export { detectCodexAuth };
-export type { CodexAuthInfo, CodexAuthPaths };
+export type { CodexAuthInfo, CodexAuthPaths, DetectCodexAuthOptions };

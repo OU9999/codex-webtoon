@@ -1,5 +1,9 @@
 import type { ChildProcess } from 'node:child_process';
-import { spawnBin } from './platform.js';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { rootFromMetaUrl } from '../find-root.js';
+import { isWin, resolveBin } from './platform.js';
 
 type OAuthState = 'disabled' | 'pending' | 'ready' | 'failed';
 
@@ -20,6 +24,7 @@ interface OAuthLauncherOptions {
 }
 
 const READY_REGEX = /https?:\/\/(?:127\.0\.0\.1|localhost):\d+(?:\/v1)?/i;
+const rootDir = rootFromMetaUrl(import.meta.url);
 
 const stripTrailingV1 = (url: string): string => url.replace(/\/v1\/?$/, '');
 
@@ -36,6 +41,28 @@ const parseLocalhostPort = (url: string): number | null => {
   } catch {
     return null;
   }
+};
+
+const packageBinPath = (name: string): string =>
+  join(rootDir, 'node_modules', '.bin', isWin ? `${name}.cmd` : name);
+
+const resolveOpenAiOauthCommand = (
+  port: number,
+): { command: string; args: string[]; source: 'package' | 'npx' } => {
+  const packagedBin = packageBinPath('openai-oauth');
+  if (existsSync(packagedBin)) {
+    return {
+      command: packagedBin,
+      args: ['--port', String(port)],
+      source: 'package',
+    };
+  }
+
+  return {
+    command: resolveBin('npx'),
+    args: ['--yes', 'openai-oauth', '--port', String(port)],
+    source: 'npx',
+  };
 };
 
 const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
@@ -89,17 +116,16 @@ const startOAuthProxy = (options: OAuthLauncherOptions): OAuthHandle => {
   };
 
   const spawnProxy = (): void => {
+    const oauthCommand = resolveOpenAiOauthCommand(options.port);
     console.log(
-      `[codex-webtoon] starting openai-oauth on port ${options.port}…`,
+      `[codex-webtoon] starting openai-oauth on port ${options.port} (${oauthCommand.source})…`,
     );
-    const proc = spawnBin(
-      'npx',
-      ['openai-oauth', '--port', String(options.port)],
-      {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        env: { ...process.env },
-      },
-    );
+    const proc = spawn(oauthCommand.command, oauthCommand.args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env },
+      shell: isWin,
+      windowsHide: true,
+    });
     child = proc;
 
     proc.stdout?.on('data', (chunk: Buffer) => {
