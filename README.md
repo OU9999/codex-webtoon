@@ -23,7 +23,8 @@ stores projects on the user's machine.
 After the package is published:
 
 ```bash
-pnpm dlx codex-webtoon
+pnpm dlx codex-webtoon setup
+pnpm dlx codex-webtoon serve
 ```
 
 The server starts at <http://127.0.0.1:4321/> by default.
@@ -31,6 +32,7 @@ The server starts at <http://127.0.0.1:4321/> by default.
 Available commands:
 
 ```bash
+pnpm dlx codex-webtoon setup
 pnpm dlx codex-webtoon serve
 pnpm dlx codex-webtoon status
 pnpm dlx codex-webtoon help
@@ -40,12 +42,15 @@ The package also keeps `wps` as a legacy CLI alias.
 
 ## Authentication
 
-Image generation uses the local Codex OAuth proxy. Install and authenticate the
-Codex CLI before starting the server:
+Image generation uses the local Codex OAuth proxy. `setup` runs the packaged
+Codex CLI login flow and writes local config under the config directory:
 
 ```bash
-npx @openai/codex login
+pnpm dlx codex-webtoon setup
 ```
+
+After setup, `serve` starts the local web server and launches the packaged
+`openai-oauth` proxy when a Codex OAuth session is available.
 
 ## Environment
 
@@ -54,6 +59,7 @@ npx @openai/codex login
 | `CODEX_WEBTOON_HOST` | `127.0.0.1` | Local server host. |
 | `CODEX_WEBTOON_PORT` | `4321` | Local server port. |
 | `CODEX_WEBTOON_CONFIG_DIR` | `~/.config/codex-webtoon` | Config and server advertisement directory. |
+| config file | `~/.config/codex-webtoon/config.json` | Optional file layer written by `codex-webtoon setup`; env vars still win. |
 | `CODEX_WEBTOON_PROJECTS_ROOT` | `~/WebtoonProjects` | Local project storage root. |
 | `CODEX_WEBTOON_OAUTH` | `auto` | OAuth mode: `auto`, `on`, or `off`. |
 | `CODEX_WEBTOON_OAUTH_PROXY_PORT` | `10531` | Local OAuth proxy port. |
