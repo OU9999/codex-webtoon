@@ -1,7 +1,7 @@
 {
-  "name": "webtoon-panel-studio",
+  "name": "codex-webtoon",
   "version": "0.1.0",
-  "description": "Local-first webtoon panel editor with AI image generation. Runs from npx and authenticates through local Codex OAuth.",
+  "description": "Unofficial local-first webtoon studio that uses Codex CLI OAuth. Not affiliated with OpenAI.",
   "keywords": [
     "webtoon",
     "comic",
@@ -16,8 +16,8 @@
   "type": "module",
   "packageManager": "pnpm@11.0.9",
   "bin": {
-    "webtoon-panel-studio": "./build/bin/wps.js",
-    "wps": "./build/bin/wps.js"
+    "codex-webtoon": "./build/bin/codex-webtoon.js",
+    "wps": "./build/bin/codex-webtoon.js"
   },
   "files": [
     "build",
@@ -31,13 +31,14 @@
     "dev": "concurrently -n ui,server -c cyan,magenta \"pnpm dev:ui\" \"pnpm dev:server\"",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig-server.json",
     "build:ui": "vite build --config vite-config.ts",
-    "build:server": "tsc -p tsconfig-server.json && chmod +x build/bin/wps.js",
+    "build:server": "tsc -p tsconfig-server.json && chmod +x build/bin/codex-webtoon.js",
     "build": "pnpm build:ui && pnpm build:server",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "tsx --test tests/*.test.ts",
     "start": "node build/server/server.js",
-    "wps": "tsx bin/wps.ts",
+    "codex-webtoon": "tsx bin/codex-webtoon.ts",
+    "wps": "tsx bin/codex-webtoon.ts",
     "preview": "vite preview --config vite-config.ts --host 127.0.0.1",
     "prepublishOnly": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   },

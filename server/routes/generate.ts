@@ -222,10 +222,7 @@ const parseRequest = (body: GenerateRequestBody): ParsedRequest => {
 
   let provider: ProviderRequest = 'auto';
   if (typeof body.provider === 'string') {
-    if (
-      body.provider === 'auto' ||
-      body.provider === 'oauth'
-    ) {
+    if (body.provider === 'auto' || body.provider === 'oauth') {
       provider = body.provider;
     } else {
       throw new GenerateValidationError(
@@ -532,7 +529,7 @@ generateRouter.post('/', async (req, res) => {
         ? firstRejection.reason.message
         : String(firstRejection.reason);
     console.warn(
-      `[wps] generate: ${parsed.count - fulfilled.length}/${parsed.count} variants failed (${reason}); returning ${fulfilled.length}.`,
+      `[codex-webtoon] generate: ${parsed.count - fulfilled.length}/${parsed.count} variants failed (${reason}); returning ${fulfilled.length}.`,
     );
   }
 

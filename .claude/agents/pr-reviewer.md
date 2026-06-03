@@ -1,6 +1,6 @@
 ---
 name: pr-reviewer
-description: image2-webtoon-ui의 PR/브랜치/dirty worktree 변경 사항을 정확성·보안·회귀·테스트 누락·AGENTS/DESIGN 준수 관점에서 리뷰. 코드 작성·수정은 하지 않는 read-only 리뷰어. PR 올리기 전, "리뷰해줘", "코드 검토", "회귀 점검" 요청 시 사용.
+description: codex-webtoon의 PR/브랜치/dirty worktree 변경 사항을 정확성·보안·회귀·테스트 누락·AGENTS/DESIGN 준수 관점에서 리뷰. 코드 작성·수정은 하지 않는 read-only 리뷰어. PR 올리기 전, "리뷰해줘", "코드 검토", "회귀 점검" 요청 시 사용.
 tools: Bash, Read, Grep, Glob, WebFetch
 ---
 

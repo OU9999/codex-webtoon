@@ -8,6 +8,7 @@ import { AuthBadge } from '@/components/auth-badge';
 import { ProjectNameEditDialog } from '@/components/project-name-edit-dialog';
 import { Button } from '@/components/ui/button';
 import { useAuthStatus } from '@/hooks/use-auth-status';
+import { useServerHealth } from '@/hooks/use-server-health';
 import { deleteProject, listProjects, renameProject } from '@/api/client';
 import type { ProjectSummary } from '@shared/types';
 import { ContinueHero } from './_components/continue-hero';
@@ -15,7 +16,7 @@ import { NewProjectModal } from './_components/new-project-modal';
 import { RecentProjects } from './_components/recent-projects';
 
 interface ProjectPickerProps {
-  onPick: (projectName: string) => void;
+  onPick: (project: ProjectSummary) => void;
 }
 
 const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
@@ -31,6 +32,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
   );
   const searchRef = useRef<HTMLInputElement>(null);
   const auth = useAuthStatus();
+  const serverHealth = useServerHealth();
 
   const refresh = async (): Promise<void> => {
     setLoading(true);
@@ -68,9 +70,9 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
     setShowNewProject(false);
   };
 
-  const handleProjectCreated = (name: string): void => {
+  const handleProjectCreated = (project: ProjectSummary): void => {
     setShowNewProject(false);
-    onPick(name);
+    onPick(project);
   };
 
   const handleDeleteProject = async (name: string): Promise<void> => {
@@ -226,7 +228,7 @@ const ProjectPicker = ({ onPick }: ProjectPickerProps) => {
           })}
         </span>
         <span className="flex-1" />
-        <span>v0.3.2</span>
+        {serverHealth.health && <span>v{serverHealth.health.version}</span>}
       </footer>
 
       {showNewProject && (

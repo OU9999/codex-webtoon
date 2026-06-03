@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import type { ProjectSummary } from '@shared/types';
 import { useStudio } from './_hooks/use-studio';
 import type { StudioState } from './_lib/types';
 
@@ -19,7 +20,7 @@ interface StudioProviderProps {
   projectName: string;
   initialState: StudioState;
   onBack: () => void;
-  onProjectRename: (name: string) => void;
+  onProjectRename: (project: ProjectSummary) => void;
   children: ReactNode;
 }
 

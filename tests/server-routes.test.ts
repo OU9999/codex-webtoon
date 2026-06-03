@@ -7,11 +7,11 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { ProjectState } from '../shared/types.js';
 
-const testRoot = mkdtempSync(join(tmpdir(), 'wps-server-routes-'));
+const testRoot = mkdtempSync(join(tmpdir(), 'codex-webtoon-server-routes-'));
 
-process.env.WPS_PROJECTS_ROOT = join(testRoot, 'projects');
-process.env.WPS_CONFIG_DIR = join(testRoot, 'config');
-process.env.WPS_OAUTH = 'off';
+process.env.CODEX_WEBTOON_PROJECTS_ROOT = join(testRoot, 'projects');
+process.env.CODEX_WEBTOON_CONFIG_DIR = join(testRoot, 'config');
+process.env.CODEX_WEBTOON_OAUTH = 'off';
 
 let server: Server;
 let baseUrl: string;

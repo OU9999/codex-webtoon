@@ -33,16 +33,23 @@ test('dynamic canvas styles put gradients on canvas edges only', () => {
       createCanvas('canvas-b', '#eeeeee'),
     ]),
   );
-  const firstCanvasRule = styles.match(/\.wps-canvas-canvas-a\{[^}]+\}/)?.[0];
-  const secondCanvasRule = styles.match(/\.wps-canvas-canvas-b\{[^}]+\}/)?.[0];
+  const firstCanvasRule = styles.match(
+    /\.codex-webtoon-canvas-canvas-a\{[^}]+\}/,
+  )?.[0];
+  const secondCanvasRule = styles.match(
+    /\.codex-webtoon-canvas-canvas-b\{[^}]+\}/,
+  )?.[0];
 
   assert.ok(firstCanvasRule);
   assert.ok(secondCanvasRule);
   assert.match(
     styles,
-    /\.wps-canvas-connector\{height:56px;max-width:720px;background:transparent;\}/,
+    /\.codex-webtoon-canvas-connector\{height:56px;max-width:720px;background:transparent;\}/,
   );
-  assert.doesNotMatch(styles, /\.wps-canvas-connector-1\{background-image/);
+  assert.doesNotMatch(
+    styles,
+    /\.codex-webtoon-canvas-connector-1\{background-image/,
+  );
   assert.match(
     firstCanvasRule,
     /background-image:linear-gradient\(180deg,#111111 0%,#808080 100%\);/,

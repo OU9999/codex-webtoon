@@ -24,9 +24,7 @@ const AppHeader = ({
         </span>
       </span>
       <span>
-        <strong className="block text-base leading-none">
-          Webtoon Panel Studio
-        </strong>
+        <strong className="block text-base leading-none">Codex Webtoon</strong>
         <span className="mt-1 block text-xs font-normal text-muted-foreground">
           {subtitle}
         </span>

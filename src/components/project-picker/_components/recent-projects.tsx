@@ -10,7 +10,7 @@ interface RecentProjectsProps {
   projects: ProjectSummary[];
   totalCount: number;
   deletingName: string | null;
-  onOpen: (name: string) => void;
+  onOpen: (project: ProjectSummary) => void;
   onDelete: (name: string) => void;
   onNewProject: () => void;
   onRename: (name: string) => void;
@@ -31,7 +31,8 @@ const RecentProjects = ({
 
   const handleOpenClick = (event: MouseEvent<HTMLButtonElement>): void => {
     const name = event.currentTarget.dataset.projectName;
-    if (name) onOpen(name);
+    const project = projects.find((item) => item.name === name);
+    if (project) onOpen(project);
   };
 
   const handleDeleteClick = (event: MouseEvent<HTMLButtonElement>): void => {

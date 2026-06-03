@@ -1,4 +1,4 @@
-# Webtoon Panel Studio — Design
+# Codex Webtoon — Design
 
 A vertical-scroll comic editor with AI panel generation. Tone: a calm local instrument (Figma / Clip Studio), not a marketing SaaS. **White Hawk** brand: pristine ice-white surfaces, deep cobalt navy text, saturated sapphire accent.
 

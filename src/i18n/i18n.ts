@@ -5,7 +5,8 @@ import { resources } from './resources';
 
 type AppLanguage = 'ko' | 'en';
 
-const LANGUAGE_STORAGE_KEY = 'webtoon-panel-studio-language';
+const LANGUAGE_STORAGE_KEY = 'codex-webtoon-language';
+const LEGACY_LANGUAGE_STORAGE_KEY = 'webtoon-panel-studio-language';
 
 const isAppLanguage = (value: unknown): value is AppLanguage => {
   return value === 'ko' || value === 'en';
@@ -21,7 +22,9 @@ const getBrowserLanguage = (): AppLanguage => {
 const getStoredLanguage = (): AppLanguage | null => {
   if (typeof localStorage === 'undefined') return null;
 
-  const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  const stored =
+    localStorage.getItem(LANGUAGE_STORAGE_KEY) ??
+    localStorage.getItem(LEGACY_LANGUAGE_STORAGE_KEY);
   if (!isAppLanguage(stored)) return null;
 
   return stored;
@@ -41,6 +44,7 @@ const setAppLanguage = async (language: AppLanguage): Promise<void> => {
   await i18n.changeLanguage(language);
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    localStorage.removeItem(LEGACY_LANGUAGE_STORAGE_KEY);
   }
   setDocumentLanguage(language);
 };

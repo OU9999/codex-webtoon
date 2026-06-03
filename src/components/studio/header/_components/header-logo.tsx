@@ -14,7 +14,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
     >
       <defs>
         <linearGradient
-          id="wps-logo-surface"
+          id="codex-webtoon-logo-surface"
           x1="45"
           y1="43"
           x2="468"
@@ -26,7 +26,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#E5F0FF" />
         </linearGradient>
         <radialGradient
-          id="wps-logo-surface-glow"
+          id="codex-webtoon-logo-surface-glow"
           cx="0"
           cy="0"
           r="1"
@@ -38,7 +38,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </radialGradient>
         <linearGradient
-          id="wps-logo-stroke"
+          id="codex-webtoon-logo-stroke"
           x1="75"
           y1="46"
           x2="455"
@@ -50,7 +50,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#CAD8ED" />
         </linearGradient>
         <linearGradient
-          id="wps-logo-left-bar"
+          id="codex-webtoon-logo-left-bar"
           x1="25"
           y1="309"
           x2="210"
@@ -62,7 +62,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#2B69D6" />
         </linearGradient>
         <linearGradient
-          id="wps-logo-right-bar"
+          id="codex-webtoon-logo-right-bar"
           x1="246"
           y1="241"
           x2="487"
@@ -74,7 +74,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#19439D" />
         </linearGradient>
         <linearGradient
-          id="wps-logo-vertical-bar"
+          id="codex-webtoon-logo-vertical-bar"
           x1="228"
           y1="26"
           x2="228"
@@ -88,7 +88,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#2B6FEF" />
         </linearGradient>
         <radialGradient
-          id="wps-logo-core"
+          id="codex-webtoon-logo-core"
           cx="0"
           cy="0"
           r="1"
@@ -101,7 +101,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#173973" stopOpacity="0" />
         </radialGradient>
         <linearGradient
-          id="wps-logo-edge-shine"
+          id="codex-webtoon-logo-edge-shine"
           x1="210"
           y1="26"
           x2="246"
@@ -113,7 +113,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           <stop offset="1" stopColor="#081D45" stopOpacity="0.18" />
         </linearGradient>
         <filter
-          id="wps-logo-shadow"
+          id="codex-webtoon-logo-shadow"
           x="14"
           y="15"
           width="484"
@@ -130,7 +130,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           />
         </filter>
         <filter
-          id="wps-logo-bar-shadow"
+          id="codex-webtoon-logo-bar-shadow"
           x="18"
           y="19"
           width="476"
@@ -146,20 +146,20 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
             floodOpacity="0.24"
           />
         </filter>
-        <clipPath id="wps-logo-clip">
+        <clipPath id="codex-webtoon-logo-clip">
           <rect x="25" y="26" width="462" height="461" rx="38" />
         </clipPath>
       </defs>
 
-      <g filter="url(#wps-logo-shadow)">
-        <g clipPath="url(#wps-logo-clip)">
+      <g filter="url(#codex-webtoon-logo-shadow)">
+        <g clipPath="url(#codex-webtoon-logo-clip)">
           <rect
             x="25"
             y="26"
             width="462"
             height="461"
             rx="38"
-            fill="url(#wps-logo-surface)"
+            fill="url(#codex-webtoon-logo-surface)"
           />
           <rect
             x="25"
@@ -167,40 +167,40 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
             width="462"
             height="461"
             rx="38"
-            fill="url(#wps-logo-surface-glow)"
+            fill="url(#codex-webtoon-logo-surface-glow)"
           />
-          <g filter="url(#wps-logo-bar-shadow)">
+          <g filter="url(#codex-webtoon-logo-bar-shadow)">
             <rect
               x="210"
               y="26"
               width="36"
               height="461"
-              fill="url(#wps-logo-vertical-bar)"
+              fill="url(#codex-webtoon-logo-vertical-bar)"
             />
             <rect
               x="246"
               y="222"
               width="241"
               height="38"
-              fill="url(#wps-logo-right-bar)"
+              fill="url(#codex-webtoon-logo-right-bar)"
             />
             <rect
               x="25"
               y="290"
               width="185"
               height="37"
-              fill="url(#wps-logo-left-bar)"
+              fill="url(#codex-webtoon-logo-left-bar)"
             />
             <path
               d="M210 26H246V222H487V260H246V487H210V327H25V290H210V26Z"
-              fill="url(#wps-logo-core)"
+              fill="url(#codex-webtoon-logo-core)"
             />
             <rect
               x="210"
               y="26"
               width="36"
               height="461"
-              fill="url(#wps-logo-edge-shine)"
+              fill="url(#codex-webtoon-logo-edge-shine)"
               opacity="0.42"
             />
           </g>
@@ -211,7 +211,7 @@ const HeaderLogo = ({ className, ...props }: HeaderLogoProps) => {
           width="461"
           height="460"
           rx="37.5"
-          stroke="url(#wps-logo-stroke)"
+          stroke="url(#codex-webtoon-logo-stroke)"
         />
       </g>
     </svg>

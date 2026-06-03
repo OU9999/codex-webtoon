@@ -19,7 +19,7 @@ const readVersion = (): string => {
 };
 
 const status = (): void => {
-  console.log(`webtoon-panel-studio v${readVersion()}`);
+  console.log(`codex-webtoon v${readVersion()}`);
   console.log(`config dir : ${config.storage.configDir}`);
   console.log(`projects   : ${config.storage.projectsRoot}`);
   const ad = config.storage.advertiseFile;
@@ -56,7 +56,7 @@ const serve = (): void => {
 };
 
 const help = (): void => {
-  console.log(`webtoon-panel-studio v${readVersion()}
+  console.log(`codex-webtoon v${readVersion()}
 
 Commands:
   serve     Start the local server (default).

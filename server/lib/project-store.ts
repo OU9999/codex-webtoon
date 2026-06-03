@@ -102,10 +102,10 @@ const quarantineCorruptFile = (file: string): void => {
   try {
     const target = `${file}.corrupt-${Date.now()}`;
     renameSync(file, target);
-    console.warn(`[wps] quarantined corrupt file -> ${target}`);
+    console.warn(`[codex-webtoon] quarantined corrupt file -> ${target}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.warn(`[wps] failed to quarantine ${file}: ${message}`);
+    console.warn(`[codex-webtoon] failed to quarantine ${file}: ${message}`);
   }
 };
 

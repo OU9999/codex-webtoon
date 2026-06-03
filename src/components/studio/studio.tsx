@@ -6,16 +6,19 @@ import { Sidebar } from './sidebar/sidebar';
 import { StudioBody } from './_components/studio-body';
 import { StudioProvider } from './studio-context';
 import type { StudioState } from './_lib/types';
+import type { ProjectSummary } from '@shared/types';
 
 interface StudioProps {
   projectName: string;
+  projectPath: string;
   initialState: StudioState;
   onBack: () => void;
-  onProjectRename: (name: string) => void;
+  onProjectRename: (project: ProjectSummary) => void;
 }
 
 const Studio = ({
   projectName,
+  projectPath,
   initialState,
   onBack,
   onProjectRename,
@@ -27,7 +30,7 @@ const Studio = ({
       onBack={onBack}
       onProjectRename={onProjectRename}
     >
-      <Shell>
+      <Shell projectPath={projectPath}>
         <Header />
         <StudioBody>
           <Sidebar />

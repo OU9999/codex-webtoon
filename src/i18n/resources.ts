@@ -319,7 +319,6 @@ const resources = {
       },
       statusBar: {
         queue: '대기열: {{count}}개 생성 중',
-        tokensUsed: '사용 토큰: {{count}}',
       },
       studioErrors: {
         emptyGeneration: '이미지 생성 결과가 비어 있습니다.',
@@ -704,7 +703,6 @@ const resources = {
       },
       statusBar: {
         queue: 'queue: {{count}} generating',
-        tokensUsed: 'tokens used: {{count}}',
       },
       studioErrors: {
         emptyGeneration: 'Image generation returned no results.',
