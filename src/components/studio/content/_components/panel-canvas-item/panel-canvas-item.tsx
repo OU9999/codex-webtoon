@@ -20,6 +20,7 @@ interface PanelCanvasItemProps {
   index: number;
   canvasHeight: number;
   isGenerating: boolean;
+  isPrimarySelected: boolean;
   isSelected: boolean;
   onTransformStart: (payload: PanelTransformStartPayload) => void;
 }
@@ -40,6 +41,7 @@ const PanelCanvasItem = ({
   index,
   canvasHeight,
   isGenerating,
+  isPrimarySelected,
   isSelected,
   onTransformStart,
 }: PanelCanvasItemProps) => {
@@ -110,19 +112,23 @@ const PanelCanvasItem = ({
       {isSelected && (
         <>
           <span className="selected-rim" />
-          <span className="panel-selection-toolbar">
-            {panel.width} × {panel.height}
-          </span>
-          {PANEL_RESIZE_HANDLES.map((control) => (
-            <button
-              key={control.handle}
-              type="button"
-              aria-label={t(control.labelKey)}
-              className={cn('panel-resize-handle', control.className)}
-              data-resize-handle={control.handle}
-              onPointerDown={handleResizePointerDown}
-            />
-          ))}
+          {isPrimarySelected && (
+            <>
+              <span className="panel-selection-toolbar">
+                {panel.width} × {panel.height}
+              </span>
+              {PANEL_RESIZE_HANDLES.map((control) => (
+                <button
+                  key={control.handle}
+                  type="button"
+                  aria-label={t(control.labelKey)}
+                  className={cn('panel-resize-handle', control.className)}
+                  data-resize-handle={control.handle}
+                  onPointerDown={handleResizePointerDown}
+                />
+              ))}
+            </>
+          )}
         </>
       )}
     </article>

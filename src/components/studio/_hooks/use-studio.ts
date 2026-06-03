@@ -8,6 +8,10 @@ import {
   getSelectedCanvas,
   getSelectedCanvasPanels,
 } from '../_lib/canvas-state';
+import {
+  getSelectedBubbleIds,
+  getSelectedPanelIds,
+} from '../_lib/selection-state';
 import type {
   BubbleDragStartPayload,
   CanvasResizeStartPayload,
@@ -48,6 +52,8 @@ const useStudio = ({
   const [editingBubbleId, setEditingBubbleId] = useState<string | null>(null);
   const selectedCanvas = getSelectedCanvas(state);
   const selectedCanvasPanels = getSelectedCanvasPanels(state);
+  const selectedPanelIds = getSelectedPanelIds(state);
+  const selectedBubbleIds = getSelectedBubbleIds(state);
 
   const selectedPanelCandidate = state.selectedPanelId
     ? (state.panels.find((panel) => panel.id === state.selectedPanelId) ?? null)
@@ -98,9 +104,13 @@ const useStudio = ({
   const clipboard = useClipboardActions(state, setState);
   const exporting = useExport(state);
 
-  const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
+  const handleBubbleSelect = (
+    bubbleId: string,
+    panelId?: string,
+    additive = false,
+  ): void => {
     setEditingBubbleId(null);
-    layers.handleBubbleSelect(bubbleId, panelId);
+    layers.handleBubbleSelect(bubbleId, panelId, additive);
   };
 
   const handleBubbleTextEditStart = (
@@ -120,9 +130,9 @@ const useStudio = ({
     drag.handleBubbleDragStart(payload);
   };
 
-  const handlePanelSelect = (panelId: string): void => {
+  const handlePanelSelect = (panelId: string, additive = false): void => {
     setEditingBubbleId(null);
-    panels.handlePanelSelect(panelId);
+    panels.handlePanelSelect(panelId, additive);
   };
 
   const handlePanelTransformStart = (
@@ -149,12 +159,11 @@ const useStudio = ({
 
   const handleSelectionDelete = (): void => {
     setEditingBubbleId(null);
-    if (state.selectedBubbleId) {
+    if (selectedBubbleIds.length > 0) {
       layers.handleSelectedBubbleDelete();
-      return;
     }
 
-    if (!state.selectedPanelId) return;
+    if (selectedPanelIds.length === 0) return;
     panels.handleDeletePanel();
   };
 
@@ -183,7 +192,8 @@ const useStudio = ({
     onUndo: handleUndo,
     undoEnabled: canUndo,
     onSelectionDelete: handleSelectionDelete,
-    selectionDeleteEnabled: Boolean(state.selectedBubbleId || selectedPanel),
+    selectionDeleteEnabled:
+      selectedBubbleIds.length > 0 || selectedPanelIds.length > 0,
     onSelectionCopy: handleSelectionCopy,
     selectionCopyEnabled: clipboard.selectionCopyEnabled,
     onClipboardPaste: handleClipboardPaste,
@@ -194,6 +204,8 @@ const useStudio = ({
     state,
     selectedCanvas,
     selectedCanvasPanels,
+    selectedPanelIds,
+    selectedBubbleIds,
     selectedPanel,
     selectedPanelCanvas,
     selectedPanelCanvasPanels,

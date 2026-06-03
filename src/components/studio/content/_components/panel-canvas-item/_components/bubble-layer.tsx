@@ -30,6 +30,7 @@ interface BubbleLayerProps {
   onEditEnd: () => void;
   onEditStart: (panelId: string, bubbleId: string) => void;
   onTextChange: (panelId: string, bubbleId: string, text: string) => void;
+  isPrimarySelected: boolean;
 }
 
 interface BubbleTextEditorProps {
@@ -106,6 +107,7 @@ const BubbleLayer = ({
   canvasHeight,
   panel,
   isEditing,
+  isPrimarySelected,
   isSelected,
   onDragStart,
   onEditEnd,
@@ -186,6 +188,7 @@ const BubbleLayer = ({
           canvasHeight={canvasHeight}
           panel={panel}
           hasTailTip={Boolean(tailPoints)}
+          isPrimarySelected={isPrimarySelected}
           onDragStart={onDragStart}
         />
       )}

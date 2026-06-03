@@ -141,6 +141,26 @@ test('saveState and loadState round-trip project data through disk', async () =>
   assert.equal(summary.thumbnailUrl, state.panels[0]?.candidates[0]?.imageUrl);
 });
 
+test('saveState preserves mixed selection when a bubble is primary', async () => {
+  const { createProject, loadState, saveState } = await storePromise;
+  const project = createProject('Mixed Selection');
+  const state = createProjectState();
+
+  state.selectedPanelId = null;
+  state.selectedPanelIds = ['panel-1'];
+  state.selectedBubbleId = 'bubble-1';
+  state.selectedBubbleIds = ['bubble-1'];
+
+  saveState(project.name, state);
+
+  const loaded = loadState(project.name);
+  assert.ok(loaded);
+  assert.equal(loaded.selectedPanelId, null);
+  assert.deepEqual(loaded.selectedPanelIds, ['panel-1']);
+  assert.equal(loaded.selectedBubbleId, 'bubble-1');
+  assert.deepEqual(loaded.selectedBubbleIds, ['bubble-1']);
+});
+
 test('renameProject moves folders and rewrites project asset URLs', async () => {
   const { createProject, listProjects, loadState, renameProject, saveState } =
     await storePromise;

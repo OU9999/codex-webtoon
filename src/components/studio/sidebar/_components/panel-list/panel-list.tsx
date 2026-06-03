@@ -121,7 +121,7 @@ const PanelList = () => {
   const {
     selectedCanvas,
     selectedCanvasPanels,
-    selectedPanel,
+    selectedPanelIds,
     handleAddPanel,
     handleAutoAlignPanels,
     handleCanvasBackgroundColorChange,
@@ -139,10 +139,20 @@ const PanelList = () => {
   const canReorderPanel = selectedCanvasPanels.length > 1;
   const canAutoAlignPanel = selectedCanvasPanels.length > 0;
 
-  const handlePanelSelectRequest = (panelId: string): void => {
+  const suppressNextPanelClick = (): void => {
+    suppressPanelClickRef.current = true;
+    window.setTimeout(() => {
+      suppressPanelClickRef.current = false;
+    }, 0);
+  };
+
+  const handlePanelSelectRequest = (
+    panelId: string,
+    additive: boolean,
+  ): void => {
     if (suppressPanelClickRef.current) return;
 
-    handlePanelSelect(panelId);
+    handlePanelSelect(panelId, additive);
   };
 
   const setPanelDropTargetFromPoint = (
@@ -294,14 +304,12 @@ const PanelList = () => {
     setPanelDragTarget(null);
     stopPanelAutoScroll();
     if (!hasMoved) {
-      handlePanelSelect(drag.sourcePanelId);
+      suppressNextPanelClick();
+      handlePanelSelect(drag.sourcePanelId, event.shiftKey);
       return;
     }
 
-    suppressPanelClickRef.current = true;
-    window.setTimeout(() => {
-      suppressPanelClickRef.current = false;
-    }, 0);
+    suppressNextPanelClick();
     if (!target) return;
 
     handlePanelMove(drag.sourcePanelId, target.panelId, target.position);
@@ -411,7 +419,7 @@ const PanelList = () => {
               key={panel.id}
               panel={panel}
               index={index}
-              isActive={panel.id === selectedPanel?.id}
+              isActive={selectedPanelIds.includes(panel.id)}
               isDragging={
                 panel.id === panelPointerDrag?.sourcePanelId &&
                 panelPointerDrag.hasMoved

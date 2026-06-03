@@ -62,7 +62,9 @@ const createDefaultState = (): StudioState => {
     selectedCanvasId: canvas.id,
     panels,
     selectedPanelId: panels[0].id,
+    selectedPanelIds: [panels[0].id],
     selectedBubbleId: null,
+    selectedBubbleIds: [],
     panelGap,
     panelGapColor: DEFAULT_PANEL_GAP_COLOR,
     variantCount: 1,
@@ -83,6 +85,12 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
   const selectedPanelId = loaded.selectedBubbleId
     ? null
     : loaded.selectedPanelId;
+  const selectedPanelIds = loaded.selectedBubbleId
+    ? (loaded.selectedPanelIds ?? [])
+    : (loaded.selectedPanelIds ?? (selectedPanelId ? [selectedPanelId] : []));
+  const selectedBubbleIds =
+    loaded.selectedBubbleIds ??
+    (loaded.selectedBubbleId ? [loaded.selectedBubbleId] : []);
   const selectedCanvasId = normalizeSelectedCanvasId(
     (loaded as { selectedCanvasId?: unknown }).selectedCanvasId,
     canvases,
@@ -135,6 +143,8 @@ const normalizeLoadedState = (loaded: StudioState): StudioState => {
       };
     }),
     selectedBubbleId: loaded.selectedBubbleId,
+    selectedPanelIds,
+    selectedBubbleIds,
     panelGap: loaded.panelGap,
     panelGapColor: normalizePanelGapColor(
       (loaded as { panelGapColor?: unknown }).panelGapColor,

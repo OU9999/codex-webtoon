@@ -14,6 +14,12 @@ import {
   getPanelCanvas,
   getSelectedCanvas,
 } from '../_lib/canvas-state';
+import {
+  getPanelByBubbleId,
+  getPrimarySelectionId,
+  getSelectedBubbleIds,
+  getSelectedPanelIds,
+} from '../_lib/selection-state';
 import type { Bubble, BubbleType, Panel, StudioState } from '../_lib/types';
 
 interface CanvasPoint {
@@ -272,7 +278,9 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
         ),
         selectedCanvasId: target.panel.canvasId,
         selectedPanelId: null,
+        selectedPanelIds: [],
         selectedBubbleId: nextBubble.id,
+        selectedBubbleIds: [nextBubble.id],
         panels: panels.map((panel) =>
           panel.id === target.panel.id
             ? { ...panel, bubbles: [...panel.bubbles, nextBubble] }
@@ -282,7 +290,11 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
     });
   };
 
-  const handleBubbleSelect = (bubbleId: string, panelId?: string): void => {
+  const handleBubbleSelect = (
+    bubbleId: string,
+    panelId?: string,
+    additive = false,
+  ): void => {
     setState((current) => {
       const panel = panelId
         ? current.panels.find((item) => item.id === panelId)
@@ -290,12 +302,37 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
             item.bubbles.some((bubble) => bubble.id === bubbleId),
           );
       const canvas = panel ? getPanelCanvas(current, panel) : null;
+      const sameCanvasSelectedIds = canvas
+        ? getSelectedBubbleIds(current).filter((id) => {
+            const bubblePanel = getPanelByBubbleId(current, id);
+
+            return bubblePanel?.canvasId === canvas.id;
+          })
+        : [];
+      const nextSelectedBubbleIds = additive
+        ? sameCanvasSelectedIds.includes(bubbleId)
+          ? sameCanvasSelectedIds.filter((id) => id !== bubbleId)
+          : [...sameCanvasSelectedIds, bubbleId]
+        : [bubbleId];
+      const sameCanvasSelectedPanelIds =
+        additive && canvas
+          ? getSelectedPanelIds(current).filter((id) =>
+              current.panels.some(
+                (item) => item.id === id && item.canvasId === canvas.id,
+              ),
+            )
+          : [];
 
       return {
         ...current,
         selectedCanvasId: canvas?.id ?? current.selectedCanvasId,
-        selectedPanelId: null,
-        selectedBubbleId: bubbleId,
+        selectedPanelId:
+          nextSelectedBubbleIds.length > 0
+            ? null
+            : getPrimarySelectionId(sameCanvasSelectedPanelIds),
+        selectedPanelIds: sameCanvasSelectedPanelIds,
+        selectedBubbleId: getPrimarySelectionId(nextSelectedBubbleIds),
+        selectedBubbleIds: nextSelectedBubbleIds,
       };
     });
   };
@@ -417,19 +454,23 @@ const useLayerActions = (setState: Dispatch<SetStateAction<StudioState>>) => {
   };
 
   const handleSelectedBubbleDelete = (): void => {
-    setState((current) => ({
-      ...current,
-      selectedPanelId: null,
-      selectedBubbleId: null,
-      panels: current.panels.map((panel) => {
-        return {
+    setState((current) => {
+      const selectedBubbleIds = new Set(getSelectedBubbleIds(current));
+      if (selectedBubbleIds.size === 0) return current;
+
+      return {
+        ...current,
+        selectedPanelId: getPrimarySelectionId(getSelectedPanelIds(current)),
+        selectedBubbleId: null,
+        selectedBubbleIds: [],
+        panels: current.panels.map((panel) => ({
           ...panel,
           bubbles: panel.bubbles.filter(
-            (bubble) => bubble.id !== current.selectedBubbleId,
+            (bubble) => !selectedBubbleIds.has(bubble.id),
           ),
-        };
-      }),
-    }));
+        })),
+      };
+    });
   };
 
   return {

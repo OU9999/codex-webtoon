@@ -15,6 +15,12 @@ import {
   getSelectedCanvas,
 } from '../_lib/canvas-state';
 import {
+  getPanelByBubbleId,
+  getPrimarySelectionId,
+  getSelectedBubbleIds,
+  getSelectedPanelIds,
+} from '../_lib/selection-state';
+import {
   clampPanelToCanvas,
   getMinimumCanvasHeightForContent,
 } from '../_lib/panel-geometry';
@@ -226,7 +232,9 @@ const usePanelActions = (
         panels: [...current.panels, panel],
         selectedCanvasId: canvas.id,
         selectedPanelId: panel.id,
+        selectedPanelIds: [panel.id],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
   };
@@ -280,7 +288,9 @@ const usePanelActions = (
         panels,
         selectedCanvasId: selected.canvasId,
         selectedPanelId: duplicate.id,
+        selectedPanelIds: [duplicate.id],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
   };
@@ -289,18 +299,31 @@ const usePanelActions = (
     if (state.panels.length <= 1) return;
 
     setState((current) => {
-      const index = current.panels.findIndex(
-        (panel) => panel.id === current.selectedPanelId,
+      const selectedIds = getSelectedPanelIds(current);
+      const deletedPanelIds = new Set(
+        selectedIds.length > 0
+          ? selectedIds
+          : current.selectedPanelId
+            ? [current.selectedPanelId]
+            : [],
+      );
+      if (deletedPanelIds.size === 0) return current;
+
+      const index = current.panels.findIndex((panel) =>
+        deletedPanelIds.has(panel.id),
       );
       const panels = current.panels.filter(
-        (panel) => panel.id !== current.selectedPanelId,
+        (panel) => !deletedPanelIds.has(panel.id),
       );
+      if (panels.length === 0) return current;
+
       const nextPanel = panels[Math.min(index, panels.length - 1)];
       if (!nextPanel) return current;
       const normalizedPanels = panels.map((panel) => ({
         ...panel,
         referenceImages: panel.referenceImages.filter(
-          (reference) => reference.panelId !== current.selectedPanelId,
+          (reference) =>
+            !reference.panelId || !deletedPanelIds.has(reference.panelId),
         ),
       }));
 
@@ -309,7 +332,9 @@ const usePanelActions = (
         panels: normalizedPanels,
         selectedCanvasId: nextPanel.canvasId,
         selectedPanelId: nextPanel.id,
+        selectedPanelIds: [nextPanel.id],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
   };
@@ -418,15 +443,41 @@ const usePanelActions = (
     setState((current) => ({ ...current, variantCount }));
   };
 
-  const handlePanelSelect = (panelId: string): void => {
-    setState((current) => ({
-      ...current,
-      selectedCanvasId:
-        current.panels.find((panel) => panel.id === panelId)?.canvasId ??
-        current.selectedCanvasId,
-      selectedPanelId: panelId,
-      selectedBubbleId: null,
-    }));
+  const handlePanelSelect = (panelId: string, additive = false): void => {
+    setState((current) => {
+      const targetPanel = current.panels.find((panel) => panel.id === panelId);
+      if (!targetPanel) return current;
+
+      const sameCanvasSelectedIds = getSelectedPanelIds(current).filter((id) =>
+        current.panels.some(
+          (panel) => panel.id === id && panel.canvasId === targetPanel.canvasId,
+        ),
+      );
+      const nextSelectedPanelIds = additive
+        ? sameCanvasSelectedIds.includes(panelId)
+          ? sameCanvasSelectedIds.filter((id) => id !== panelId)
+          : [...sameCanvasSelectedIds, panelId]
+        : [panelId];
+      const sameCanvasSelectedBubbleIds = additive
+        ? getSelectedBubbleIds(current).filter((id) => {
+            const bubblePanel = getPanelByBubbleId(current, id);
+
+            return bubblePanel?.canvasId === targetPanel.canvasId;
+          })
+        : [];
+
+      return {
+        ...current,
+        selectedCanvasId: targetPanel.canvasId,
+        selectedPanelId: getPrimarySelectionId(nextSelectedPanelIds),
+        selectedPanelIds: nextSelectedPanelIds,
+        selectedBubbleId:
+          nextSelectedPanelIds.length > 0
+            ? null
+            : getPrimarySelectionId(sameCanvasSelectedBubbleIds),
+        selectedBubbleIds: sameCanvasSelectedBubbleIds,
+      };
+    });
     scrollPanelIntoView(panelId);
   };
 
@@ -439,7 +490,9 @@ const usePanelActions = (
         ...current,
         selectedCanvasId: canvas.id,
         selectedPanelId: null,
+        selectedPanelIds: [],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
     scrollCanvasIntoView(canvasId);
@@ -527,7 +580,9 @@ const usePanelActions = (
         panels,
         selectedCanvasId: sourcePanel.canvasId,
         selectedPanelId: sourcePanel.id,
+        selectedPanelIds: [sourcePanel.id],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
   };
@@ -544,7 +599,9 @@ const usePanelActions = (
       canvases: [...current.canvases, canvas],
       selectedCanvasId: canvas.id,
       selectedPanelId: null,
+      selectedPanelIds: [],
       selectedBubbleId: null,
+      selectedBubbleIds: [],
     }));
     scrollCanvasIntoView(canvas.id);
   };
@@ -589,6 +646,9 @@ const usePanelActions = (
       const selectedPanelExists =
         current.selectedPanelId !== null &&
         panels.some((panel) => panel.id === current.selectedPanelId);
+      const selectedPanelIds = getSelectedPanelIds(current).filter((panelId) =>
+        panels.some((panel) => panel.id === panelId),
+      );
       const selectedBubbleExists =
         current.selectedBubbleId !== null &&
         panels.some((panel) =>
@@ -596,6 +656,12 @@ const usePanelActions = (
             (bubble) => bubble.id === current.selectedBubbleId,
           ),
         );
+      const selectedBubbleIds = (current.selectedBubbleIds ?? []).filter(
+        (bubbleId) =>
+          panels.some((panel) =>
+            panel.bubbles.some((bubble) => bubble.id === bubbleId),
+          ),
+      );
 
       return {
         ...current,
@@ -605,9 +671,11 @@ const usePanelActions = (
           ? current.selectedCanvasId
           : fallbackCanvas.id,
         selectedPanelId: selectedPanelExists ? current.selectedPanelId : null,
+        selectedPanelIds,
         selectedBubbleId: selectedBubbleExists
           ? current.selectedBubbleId
           : null,
+        selectedBubbleIds,
       };
     });
 
@@ -618,12 +686,21 @@ const usePanelActions = (
 
   const handleSelectionClear = (): void => {
     setState((current) => {
-      if (!current.selectedPanelId && !current.selectedBubbleId) return current;
+      if (
+        !current.selectedPanelId &&
+        !current.selectedBubbleId &&
+        (current.selectedPanelIds?.length ?? 0) === 0 &&
+        (current.selectedBubbleIds?.length ?? 0) === 0
+      ) {
+        return current;
+      }
 
       return {
         ...current,
         selectedPanelId: null,
+        selectedPanelIds: [],
         selectedBubbleId: null,
+        selectedBubbleIds: [],
       };
     });
   };

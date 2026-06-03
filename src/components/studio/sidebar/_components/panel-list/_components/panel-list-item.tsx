@@ -1,5 +1,8 @@
 import { GripVertical, ImageIcon } from 'lucide-react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type {
@@ -14,7 +17,7 @@ interface PanelListItemProps {
   isDragging: boolean;
   canReorder: boolean;
   dropPosition: SidebarDropPosition | null;
-  onSelect: (panelId: string) => void;
+  onSelect: (panelId: string, additive: boolean) => void;
   onPointerDown: (
     event: ReactPointerEvent<HTMLLIElement>,
     panelId: string,
@@ -48,8 +51,8 @@ const PanelListItem = ({
       : 'empty';
   const dragTitle = t('sidebar.panelList.dragPanel', { title: panel.title });
 
-  const handleSelect = (): void => {
-    onSelect(panel.id);
+  const handleSelect = (event: ReactMouseEvent<HTMLButtonElement>): void => {
+    onSelect(panel.id, event.shiftKey);
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLLIElement>): void => {

@@ -26,6 +26,7 @@ interface TransformHandlesProps {
   canvasHeight: number;
   panel: Panel;
   hasTailTip: boolean;
+  isPrimarySelected: boolean;
   onDragStart: (payload: BubbleDragStartPayload) => void;
 }
 
@@ -96,6 +97,7 @@ const TransformHandles = ({
   canvasHeight,
   panel,
   hasTailTip,
+  isPrimarySelected,
   onDragStart,
 }: TransformHandlesProps) => {
   const { t } = useTranslation();
@@ -112,19 +114,20 @@ const TransformHandles = ({
       aria-label={t('bubbles.transform.controls')}
     >
       <span className="transform-box" aria-hidden="true" />
-      {RESIZE_HANDLES.map((handle) => (
-        <TransformResizeHandle
-          key={handle.anchor}
-          anchor={handle.anchor}
-          bubble={bubble}
-          canvasHeight={canvasHeight}
-          className={handle.className}
-          labelKey={handle.labelKey}
-          panel={panel}
-          onDragStart={onDragStart}
-        />
-      ))}
-      {hasTailTip && (
+      {isPrimarySelected &&
+        RESIZE_HANDLES.map((handle) => (
+          <TransformResizeHandle
+            key={handle.anchor}
+            anchor={handle.anchor}
+            bubble={bubble}
+            canvasHeight={canvasHeight}
+            className={handle.className}
+            labelKey={handle.labelKey}
+            panel={panel}
+            onDragStart={onDragStart}
+          />
+        ))}
+      {isPrimarySelected && hasTailTip && (
         <button
           type="button"
           className="tail-tip-handle"

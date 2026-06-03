@@ -5,11 +5,12 @@ import { useStudioContext } from '../../studio-context';
 
 const PanelActions = () => {
   const { t } = useTranslation();
-  const { handleDeletePanel, selectedPanel, state } = useStudioContext();
+  const { handleDeletePanel, selectedPanel, selectedPanelIds, state } =
+    useStudioContext();
 
   if (!selectedPanel) return null;
 
-  const isDeleteDisabled = state.panels.length <= 1;
+  const isDeleteDisabled = state.panels.length <= selectedPanelIds.length;
 
   return (
     <nav

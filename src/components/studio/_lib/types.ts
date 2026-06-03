@@ -109,6 +109,8 @@ interface StudioState {
   panels: Panel[];
   selectedPanelId: string | null;
   selectedBubbleId: string | null;
+  selectedPanelIds?: string[];
+  selectedBubbleIds?: string[];
   panelGap: number;
   panelGapColor: string;
   variantCount: number;
@@ -172,6 +174,10 @@ interface BubbleDrag {
   panelX: number;
   panelY: number;
   panelHeight: number;
+  panelStartPositions: PanelTransformStartPosition[];
+  bubbleStartPositions: BubbleDragStartPosition[];
+  pointerStageStartX: number;
+  pointerStageStartY: number;
   pointerStartX: number;
   pointerStartY: number;
   bubbleStartX: number;
@@ -180,6 +186,15 @@ interface BubbleDrag {
   bubbleStartHeight: number;
   offsetX: number;
   offsetY: number;
+}
+
+interface BubbleDragStartPosition {
+  bubbleId: string;
+  panelId: string;
+  startX: number;
+  startY: number;
+  startStageX: number;
+  startStageY: number;
 }
 
 interface BubbleDragStartPayload {
@@ -198,8 +213,18 @@ interface PanelTransform {
   rect: DOMRect;
   canvasHeight: number;
   historyStart: StudioState;
+  panelStartPositions: PanelTransformStartPosition[];
+  bubbleStartPositions: BubbleDragStartPosition[];
   offsetX: number;
   offsetY: number;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  startHeight: number;
+}
+
+interface PanelTransformStartPosition {
+  panelId: string;
   startX: number;
   startY: number;
   startWidth: number;
@@ -235,6 +260,7 @@ export type {
   Bubble,
   BubbleBorderStyle,
   BubbleDrag,
+  BubbleDragStartPosition,
   BubbleDragMode,
   BubbleResizeAnchor,
   BubbleDragStartPayload,
@@ -255,6 +281,7 @@ export type {
   PanelFitMode,
   PanelResizeHandle,
   PanelTransform,
+  PanelTransformStartPosition,
   PanelTransformMode,
   SidebarDropPosition,
   PanelTransformStartPayload,
