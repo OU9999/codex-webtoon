@@ -5,6 +5,13 @@
 <h1 align="center">codex-webtoon</h1>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/codex-webtoon">
+    <img src="https://img.shields.io/npm/v/codex-webtoon?style=flat-square" alt="npm version" />
+  </a>
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT" />
+</p>
+
+<p align="center">
   Local-first AI webtoon studio powered by Codex CLI OAuth.
 </p>
 
@@ -64,6 +71,11 @@ codex-webtoon help
 - Selected-panel generation with candidate history
 - Editable speech, monologue, thought, and SFX layers
 - Local JSON export and full-strip PNG export
+
+## Documentation
+
+- [Architecture](./docs/architecture.md)
+- [Web UI](./docs/web-ui.md)
 
 ## Authentication
 

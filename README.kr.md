@@ -5,6 +5,13 @@
 <h1 align="center">codex-webtoon</h1>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/codex-webtoon">
+    <img src="https://img.shields.io/npm/v/codex-webtoon?style=flat-square" alt="npm version" />
+  </a>
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT" />
+</p>
+
+<p align="center">
   Codex CLI OAuth로 구동되는 로컬 우선 AI 웹툰 스튜디오.
 </p>
 
@@ -63,6 +70,11 @@ codex-webtoon help
 - 선택한 패널의 이미지 생성과 후보 히스토리
 - 대사, 독백, 생각, 효과음 레이어 편집
 - 로컬 JSON 내보내기와 전체 스트립 PNG 내보내기
+
+## 문서
+
+- [아키텍처](./docs/architecture.kr.md)
+- [웹 UI](./docs/web-ui.kr.md)
 
 ## 인증
 
