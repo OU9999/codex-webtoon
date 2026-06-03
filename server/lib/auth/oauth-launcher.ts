@@ -48,7 +48,7 @@ const packageBinPath = (name: string): string =>
 
 const resolveOpenAiOauthCommand = (
   port: number,
-): { command: string; args: string[]; source: 'package' | 'pnpm-dlx' } => {
+): { command: string; args: string[]; source: 'package' | 'npx' } => {
   const packagedBin = packageBinPath('openai-oauth');
   if (existsSync(packagedBin)) {
     return {
@@ -59,9 +59,9 @@ const resolveOpenAiOauthCommand = (
   }
 
   return {
-    command: resolveBin('pnpm'),
-    args: ['dlx', 'openai-oauth', '--port', String(port)],
-    source: 'pnpm-dlx',
+    command: resolveBin('npx'),
+    args: ['--yes', 'openai-oauth', '--port', String(port)],
+    source: 'npx',
   };
 };
 

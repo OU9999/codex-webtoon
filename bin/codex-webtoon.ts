@@ -63,8 +63,8 @@ const resolveCodexLoginCommand = (): { command: string; args: string[] } => {
   }
 
   return {
-    command: resolveBin('pnpm'),
-    args: ['dlx', '@openai/codex', 'login'],
+    command: resolveBin('npx'),
+    args: ['--yes', '@openai/codex', 'login'],
   };
 };
 
