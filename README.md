@@ -16,15 +16,16 @@ stores projects on the user's machine.
 ## Requirements
 
 - Node.js 22.13.0 or newer
-- pnpm 11
+- npm, included with Node.js
 
 ## Use The CLI
 
 After the package is published:
 
 ```bash
-pnpm dlx codex-webtoon setup
-pnpm dlx codex-webtoon serve
+npm install -g codex-webtoon
+codex-webtoon setup
+codex-webtoon serve
 ```
 
 The server starts at <http://127.0.0.1:4321/> by default.
@@ -32,10 +33,10 @@ The server starts at <http://127.0.0.1:4321/> by default.
 Available commands:
 
 ```bash
-pnpm dlx codex-webtoon setup
-pnpm dlx codex-webtoon serve
-pnpm dlx codex-webtoon status
-pnpm dlx codex-webtoon help
+codex-webtoon setup
+codex-webtoon serve
+codex-webtoon status
+codex-webtoon help
 ```
 
 The package also keeps `wps` as a legacy CLI alias.
@@ -46,7 +47,7 @@ Image generation uses the local Codex OAuth proxy. `setup` runs the packaged
 Codex CLI login flow and writes local config under the config directory:
 
 ```bash
-pnpm dlx codex-webtoon setup
+codex-webtoon setup
 ```
 
 After setup, `serve` starts the local web server and launches the packaged
@@ -70,6 +71,8 @@ directory is configured and `~/.config/webtoon-panel-studio` already exists,
 codex-webtoon reads it for compatibility.
 
 ## Development
+
+This repo uses pnpm for development.
 
 Use the pinned Node.js version before installing dependencies:
 
