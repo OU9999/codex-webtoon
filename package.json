@@ -20,6 +20,7 @@
     "wps": "./build/bin/codex-webtoon.js"
   },
   "files": [
+    "asset",
     "build",
     "dist",
     "README.md",
