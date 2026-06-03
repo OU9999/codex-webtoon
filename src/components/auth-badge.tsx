@@ -117,9 +117,7 @@ const AuthBadge = ({ status, loading, error, onRefresh }: AuthBadgeProps) => {
                   : t('auth.loginRequired')}
               </p>
               <code className="block rounded bg-slate-950/50 px-2 py-1 font-mono text-[11px] text-slate-300">
-                {status.codex.probe === 'missing'
-                  ? 'npm i -g @openai/codex'
-                  : status.loginCommand}
+                {status.loginCommand}
               </code>
             </div>
           )}

@@ -144,8 +144,8 @@ const initOAuth = async (): Promise<OAuthHandle> => {
     if (!codex.authed) {
       return disabledHandle(
         codex.probe === 'missing'
-          ? 'Codex CLI not found. Install with: npm i -g @openai/codex'
-          : 'Codex not authenticated. Run: npx @openai/codex login',
+          ? 'Codex OAuth is not configured. Run: codex-webtoon setup'
+          : 'Codex not authenticated. Run: codex-webtoon setup',
       );
     }
   }
