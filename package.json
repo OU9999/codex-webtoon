@@ -22,6 +22,7 @@
   "files": [
     "asset",
     "build",
+    "docs",
     "dist",
     "README.md",
     "README.kr.md"
