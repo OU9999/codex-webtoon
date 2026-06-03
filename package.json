@@ -16,8 +16,8 @@
   "type": "module",
   "packageManager": "pnpm@11.0.9",
   "bin": {
-    "codex-webtoon": "./build/bin/codex-webtoon.js",
-    "wps": "./build/bin/codex-webtoon.js"
+    "codex-webtoon": "build/bin/codex-webtoon.js",
+    "wps": "build/bin/codex-webtoon.js"
   },
   "files": [
     "asset",
