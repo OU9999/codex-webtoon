@@ -6,6 +6,8 @@ The codex-webtoon web UI is split into a project picker and a studio screen.
 Users create or open projects, edit panels in the studio, generate images for
 selected panels, and manage candidates.
 
+All screenshots in this document were captured at 1920x1080 with Playwright CLI.
+
 ## User Flow
 
 1. Run `codex-webtoon serve`.
@@ -33,6 +35,8 @@ Main elements:
 - Project list
 - New project modal
 
+![Project picker with a recent project and new project action.](../asset/web-ui-project-picker.png)
+
 Creating a project calls `POST /api/projects` to create the project folder and
 metadata. Opening a project makes `ProjectShell` load its state JSON; if no state
 exists, it creates the default studio state.
@@ -48,6 +52,8 @@ areas.
 | Left Sidebar | Project, canvas, panel, bubble tools, and history                      |
 | Canvas Stage | Work area for selecting and transforming webtoon canvases and panels   |
 | Inspector    | Detail settings for the selected panel or bubble                       |
+
+![Studio screen with sidebar, canvas stage, selected panel inspector, candidates, and layers.](../asset/web-ui-studio-panel.png)
 
 ## Header
 
@@ -172,6 +178,8 @@ Main settings:
 - Stroke style
 - Bubble shape
 
+![Bubble inspector with text, font, fill, stroke, and shape controls.](../asset/web-ui-bubble-inspector.png)
+
 ## Image Generation UI Flow
 
 Image generation runs against the selected panel.
@@ -189,6 +197,8 @@ Image generation runs against the selected panel.
 
 If the prompt is empty, the UI does not send a generation request and shows an
 error message.
+
+![Reference image dialog showing selected references, external image input, and the candidate pool.](../asset/web-ui-reference-dialog.png)
 
 ## Saving
 
@@ -222,6 +232,8 @@ Supported modes:
 - Automatic split
 - Manual split
 - Canvas files
+
+![PNG export dialog with split mode choices and export statistics.](../asset/web-ui-export-dialog.png)
 
 Rendering order is panel images first and bubble layers above them.
 
