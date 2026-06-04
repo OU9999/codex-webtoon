@@ -25,10 +25,17 @@
 
 > 비공식 프로젝트입니다. codex-webtoon은 OpenAI와 제휴, 보증 또는 후원
 > 관계가 없습니다.
+>
+> `openai-oauth`는 제3자 OAuth 프록시입니다. OpenAI 공식 제품, SDK, API
+> endpoint 또는 지원되는 OpenAI 공식 API 경로가 아닙니다. 라이선스는
+> AGPL-3.0-only입니다. [제3자 고지](./docs/third-party-notices.kr.md)를
+> 참조하세요.
 
 codex-webtoon은 세로 웹툰 초안을 만들기 위한 로컬 우선 스튜디오입니다.
-프로젝트를 사용자의 컴퓨터에 저장하고, 로컬 Codex OAuth 프록시를 통해 선택한
-패널을 생성하며, 패널별 후보 이미지와 말풍선 레이어를 따로 관리합니다.
+프로젝트 파일, 생성 이미지 후보, export 파일은 사용자의 컴퓨터에 저장됩니다.
+하지만 이미지 생성 자체는 오프라인 처리가 아닙니다. 프로젝트 공통 prompt,
+선택된 패널 prompt, 선택된 reference image data는 로컬의 제3자
+`openai-oauth` 프록시를 통해 외부 모델 요청으로 전송됩니다.
 
 ## 빠른 시작
 
@@ -74,19 +81,30 @@ codex-webtoon help
 ## 문서
 
 - [아키텍처](./docs/architecture.kr.md)
+- [제3자 고지](./docs/third-party-notices.kr.md)
 - [웹 UI](./docs/web-ui.kr.md)
+
+## 라이선스
+
+codex-webtoon은 MIT License로 배포됩니다. [LICENSE](./LICENSE)를 참조하세요.
+함께 포함되는 `openai-oauth` 런타임 의존성은 제3자 프로젝트이며
+AGPL-3.0-only 라이선스입니다. [제3자 고지](./docs/third-party-notices.kr.md)를
+참조하세요.
 
 ## 인증
 
-이미지 생성은 로컬 Codex OAuth 프록시를 사용합니다. `setup`은 패키지에 포함된
-Codex CLI 로그인 흐름을 실행하고 config 디렉터리에 로컬 설정을 저장합니다.
+이미지 생성은 로컬 Codex OAuth 프록시 프로세스를 사용합니다. `setup`은 패키지에
+포함된 Codex CLI 로그인 흐름을 실행하고 config 디렉터리에 로컬 설정을
+저장합니다.
 
 ```bash
 codex-webtoon setup
 ```
 
 설정 후 `serve`는 로컬 웹 서버를 시작하고, Codex OAuth 세션이 있으면 패키지에
-포함된 `openai-oauth` 프록시를 함께 실행합니다.
+포함된 제3자 `openai-oauth` 프록시를 함께 실행합니다. 이 proxy는 localhost에서
+생성 prompt와 선택된 reference image data를 받은 뒤 외부 모델 서비스로 생성
+요청을 전달합니다.
 
 ## 환경 변수
 
