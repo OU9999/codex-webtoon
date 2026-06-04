@@ -1,4 +1,6 @@
 import { Router, type Response } from 'express';
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import {
   generateImageViaOAuth,
   OAuthGenerateError,
@@ -49,6 +51,7 @@ const MAX_REFERENCE_IMAGES = 4;
 const GENERATION_TIMEOUT_MS = 180_000;
 const EXTERNAL_REFERENCE_FETCH_TIMEOUT_MS = 15_000;
 const MAX_EXTERNAL_REFERENCE_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_EXTERNAL_REFERENCE_REDIRECTS = 3;
 const DATA_REFERENCE_IMAGE_PATTERN =
   /^data:(image\/(?:png|jpeg|webp));base64,([a-z0-9+/=\s]+)$/i;
 const SUPPORTED_REFERENCE_IMAGE_TYPES = new Set([
@@ -56,6 +59,7 @@ const SUPPORTED_REFERENCE_IMAGE_TYPES = new Set([
   'image/jpeg',
   'image/webp',
 ]);
+const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
 
 class GenerateValidationError extends Error {
   constructor(
@@ -65,6 +69,11 @@ class GenerateValidationError extends Error {
     super(message);
     this.name = 'GenerateValidationError';
   }
+}
+
+interface DnsAddress {
+  address: string;
+  family: number;
 }
 
 class GenerationTimeoutError extends Error {
@@ -91,6 +100,207 @@ const withGenerationTimeout = async <Result>(
     throw err;
   } finally {
     clearTimeout(timeout);
+  }
+};
+
+const referenceImageValidationError = (
+  message: string,
+): GenerateValidationError =>
+  new GenerateValidationError('referenceImages', message);
+
+const normalizeUrlHostname = (hostname: string): string => {
+  const withoutBrackets = hostname.replace(/^\[(.*)]$/, '$1');
+  return withoutBrackets.replace(/\.$/, '').toLowerCase();
+};
+
+const isLocalhostHostname = (hostname: string): boolean => {
+  const normalized = normalizeUrlHostname(hostname);
+  return normalized === 'localhost' || normalized.endsWith('.localhost');
+};
+
+const getIpv4Octets = (
+  address: string,
+): [number, number, number, number] | null => {
+  const normalized = normalizeUrlHostname(address);
+  if (isIP(normalized) !== 4) return null;
+
+  const octets = normalized.split('.').map((part) => Number(part));
+  if (
+    octets.length !== 4 ||
+    octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
+  ) {
+    return null;
+  }
+
+  return [octets[0] ?? 0, octets[1] ?? 0, octets[2] ?? 0, octets[3] ?? 0];
+};
+
+const isBlockedIpv4Address = (address: string): boolean => {
+  const octets = getIpv4Octets(address);
+  if (!octets) return false;
+
+  const [first, second, third] = octets;
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 100 && second >= 64 && second <= 127) ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168) ||
+    (first === 192 && second === 0 && third === 0) ||
+    (first === 192 && second === 0 && third === 2) ||
+    (first === 198 && (second === 18 || second === 19)) ||
+    (first === 198 && second === 51 && third === 100) ||
+    (first === 203 && second === 0 && third === 113) ||
+    first >= 224
+  );
+};
+
+const normalizeEmbeddedIpv4InIpv6 = (address: string): string => {
+  const match = address.match(/^(.*:)(\d{1,3}(?:\.\d{1,3}){3})$/);
+  if (!match) return address;
+
+  const [, prefix, ipv4Address] = match;
+  if (!prefix || !ipv4Address) return address;
+
+  const octets = getIpv4Octets(ipv4Address);
+  if (!octets) return address;
+
+  const high = (octets[0] << 8) + octets[1];
+  const low = (octets[2] << 8) + octets[3];
+  return `${prefix}${high.toString(16)}:${low.toString(16)}`;
+};
+
+const parseIpv6ToBigInt = (address: string): bigint | null => {
+  const normalized = normalizeEmbeddedIpv4InIpv6(
+    normalizeUrlHostname(address).split('%')[0] ?? '',
+  );
+  if (isIP(normalized) !== 6) return null;
+
+  const compactParts = normalized.split('::');
+  if (compactParts.length > 2) return null;
+
+  const left = compactParts[0] ? compactParts[0].split(':') : [];
+  const right = compactParts[1] ? compactParts[1].split(':') : [];
+  const missingGroupCount = 8 - left.length - right.length;
+
+  if (compactParts.length === 1 && missingGroupCount !== 0) return null;
+  if (compactParts.length === 2 && missingGroupCount < 1) return null;
+
+  const groups = [
+    ...left,
+    ...Array<string>(missingGroupCount).fill('0'),
+    ...right,
+  ];
+  if (groups.length !== 8) return null;
+
+  let value = 0n;
+  for (const group of groups) {
+    if (!/^[0-9a-f]{1,4}$/i.test(group)) return null;
+    value = (value << 16n) + BigInt(Number.parseInt(group, 16));
+  }
+
+  return value;
+};
+
+const ipv4AddressFromIpv6LowBits = (value: bigint): string => {
+  const lower = value & 0xffff_ffffn;
+  return [
+    Number((lower >> 24n) & 0xffn),
+    Number((lower >> 16n) & 0xffn),
+    Number((lower >> 8n) & 0xffn),
+    Number(lower & 0xffn),
+  ].join('.');
+};
+
+const ipv6MatchesPrefix = (
+  value: bigint,
+  prefix: string,
+  prefixLength: number,
+): boolean => {
+  const prefixValue = parseIpv6ToBigInt(prefix);
+  if (prefixValue === null) return false;
+
+  const shift = BigInt(128 - prefixLength);
+  return value >> shift === prefixValue >> shift;
+};
+
+const isBlockedIpv6Address = (address: string): boolean => {
+  const value = parseIpv6ToBigInt(address);
+  if (value === null) return false;
+
+  if (
+    ipv6MatchesPrefix(value, '::ffff:0:0', 96) &&
+    isBlockedIpv4Address(ipv4AddressFromIpv6LowBits(value))
+  ) {
+    return true;
+  }
+
+  if (
+    value > 1n &&
+    value >> 32n === 0n &&
+    isBlockedIpv4Address(ipv4AddressFromIpv6LowBits(value))
+  ) {
+    return true;
+  }
+
+  return (
+    value === 0n ||
+    value === 1n ||
+    ipv6MatchesPrefix(value, 'fc00::', 7) ||
+    ipv6MatchesPrefix(value, 'fe80::', 10) ||
+    ipv6MatchesPrefix(value, 'ff00::', 8)
+  );
+};
+
+const isBlockedIpAddress = (address: string): boolean => {
+  const normalized = normalizeUrlHostname(address);
+  const version = isIP(normalized);
+  if (version === 4) return isBlockedIpv4Address(normalized);
+  if (version === 6) return isBlockedIpv6Address(normalized);
+
+  return false;
+};
+
+const isSafeExternalReferenceHttpUrl = (url: URL): boolean => {
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+
+  const hostname = normalizeUrlHostname(url.hostname);
+  if (!hostname || isLocalhostHostname(hostname)) return false;
+  if (isIP(hostname) && isBlockedIpAddress(hostname)) return false;
+
+  return true;
+};
+
+const assertSafeExternalReferenceHttpUrl = async (url: URL): Promise<void> => {
+  if (!isSafeExternalReferenceHttpUrl(url)) {
+    throw referenceImageValidationError(
+      'External reference image URLs must use public http(s) URLs.',
+    );
+  }
+
+  const hostname = normalizeUrlHostname(url.hostname);
+  if (isIP(hostname)) return;
+
+  let addresses: DnsAddress[];
+  try {
+    addresses = await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    throw referenceImageValidationError(
+      'External reference image host could not be resolved.',
+    );
+  }
+
+  if (addresses.length === 0) {
+    throw referenceImageValidationError(
+      'External reference image host could not be resolved.',
+    );
+  }
+  if (addresses.some((address) => isBlockedIpAddress(address.address))) {
+    throw referenceImageValidationError(
+      'External reference image URLs must resolve to public IP addresses.',
+    );
   }
 };
 
@@ -137,7 +347,7 @@ const parseReferenceImages = (value: unknown): ReferenceImageRef[] => {
       if (!isSupportedExternalReferenceImageUrl(imageUrl)) {
         throw new GenerateValidationError(
           'referenceImages',
-          'external reference image URLs must be http(s) URLs or png/jpeg/webp data URLs.',
+          'external reference image URLs must be public http(s) URLs or png/jpeg/webp data URLs.',
         );
       }
 
@@ -184,7 +394,7 @@ const isSupportedExternalReferenceImageUrl = (imageUrl: string): boolean => {
 
   try {
     const url = new URL(imageUrl);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return isSafeExternalReferenceHttpUrl(url);
   } catch {
     return false;
   }
@@ -300,10 +510,12 @@ interface ReferenceImageBuffer {
 
 const assertReferenceImageSize = (buffer: Buffer): void => {
   if (buffer.length === 0) {
-    throw new Error('External reference image is empty.');
+    throw referenceImageValidationError('External reference image is empty.');
   }
   if (buffer.length > MAX_EXTERNAL_REFERENCE_IMAGE_BYTES) {
-    throw new Error('External reference image must be 10MB or smaller.');
+    throw referenceImageValidationError(
+      'External reference image must be 10MB or smaller.',
+    );
   }
 };
 
@@ -321,6 +533,114 @@ const parseDataReferenceImage = (
   return { buffer, mediaType: mediaType.toLowerCase() };
 };
 
+const isRedirectResponse = (response: globalThis.Response): boolean =>
+  REDIRECT_STATUS_CODES.has(response.status);
+
+const cancelResponseBody = async (
+  response: globalThis.Response,
+): Promise<void> => {
+  try {
+    await response.body?.cancel();
+  } catch {}
+};
+
+const getRedirectUrl = (
+  response: globalThis.Response,
+  currentUrl: URL,
+): URL => {
+  const location = response.headers.get('location');
+  if (!location) {
+    throw referenceImageValidationError(
+      'External reference image redirect is missing a location.',
+    );
+  }
+
+  try {
+    return new URL(location, currentUrl);
+  } catch {
+    throw referenceImageValidationError(
+      'External reference image redirect location is invalid.',
+    );
+  }
+};
+
+const fetchExternalReferenceResponse = async (
+  url: URL,
+  signal: AbortSignal,
+  redirectCount = 0,
+): Promise<globalThis.Response> => {
+  await assertSafeExternalReferenceHttpUrl(url);
+
+  const response = await fetch(url, {
+    signal,
+    redirect: 'manual',
+  });
+
+  if (!isRedirectResponse(response)) return response;
+
+  await cancelResponseBody(response);
+  if (redirectCount >= MAX_EXTERNAL_REFERENCE_REDIRECTS) {
+    throw referenceImageValidationError(
+      'External reference image redirected too many times.',
+    );
+  }
+
+  return fetchExternalReferenceResponse(
+    getRedirectUrl(response, url),
+    signal,
+    redirectCount + 1,
+  );
+};
+
+const readExternalReferenceBody = async (
+  response: globalThis.Response,
+  abortFetch: () => void,
+): Promise<Buffer> => {
+  if (!response.body) {
+    throw referenceImageValidationError(
+      'External reference image returned no body.',
+    );
+  }
+
+  const contentLength = response.headers.get('content-length');
+  if (
+    contentLength &&
+    Number(contentLength) > MAX_EXTERNAL_REFERENCE_IMAGE_BYTES
+  ) {
+    abortFetch();
+    await cancelResponseBody(response);
+    throw referenceImageValidationError(
+      'External reference image must be 10MB or smaller.',
+    );
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    const chunk = Buffer.from(value);
+    totalBytes += chunk.length;
+    if (totalBytes > MAX_EXTERNAL_REFERENCE_IMAGE_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      abortFetch();
+      throw referenceImageValidationError(
+        'External reference image must be 10MB or smaller.',
+      );
+    }
+
+    chunks.push(chunk);
+  }
+
+  const buffer = Buffer.concat(chunks, totalBytes);
+  assertReferenceImageSize(buffer);
+  return buffer;
+};
+
 const fetchExternalReferenceImage = async (
   imageUrl: string,
 ): Promise<{ buffer: Buffer; mediaType: string }> => {
@@ -331,9 +651,15 @@ const fetchExternalReferenceImage = async (
   );
 
   try {
-    const response = await fetch(imageUrl, { signal: controller.signal });
+    const response = await fetchExternalReferenceResponse(
+      new URL(imageUrl),
+      controller.signal,
+    );
     if (!response.ok) {
-      throw new Error(`External reference image returned ${response.status}.`);
+      await cancelResponseBody(response);
+      throw referenceImageValidationError(
+        `External reference image returned ${response.status}.`,
+      );
     }
 
     const mediaType = response.headers
@@ -342,12 +668,29 @@ const fetchExternalReferenceImage = async (
       ?.trim()
       .toLowerCase();
     if (!mediaType || !SUPPORTED_REFERENCE_IMAGE_TYPES.has(mediaType)) {
-      throw new Error('External reference image must be png, jpeg, or webp.');
+      await cancelResponseBody(response);
+      throw referenceImageValidationError(
+        'External reference image must be png, jpeg, or webp.',
+      );
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    assertReferenceImageSize(buffer);
+    const buffer = await readExternalReferenceBody(response, () =>
+      controller.abort(),
+    );
     return { buffer, mediaType };
+  } catch (err) {
+    if (err instanceof GenerateValidationError) throw err;
+    if (controller.signal.aborted) {
+      throw referenceImageValidationError(
+        'External reference image request was aborted.',
+      );
+    }
+
+    throw referenceImageValidationError(
+      err instanceof Error
+        ? err.message
+        : 'External reference image could not be loaded.',
+    );
   } finally {
     clearTimeout(timeout);
   }
@@ -423,6 +766,11 @@ const generatePng = async (
   });
 
 const sendGenerationError = (res: Response, err: unknown): void => {
+  if (err instanceof GenerateValidationError) {
+    const body: ApiError = { error: 'invalid_request', message: err.message };
+    res.status(400).json(body);
+    return;
+  }
   if (err instanceof ImageStoreError) {
     const body: ApiError = { error: err.code, message: err.message };
     res.status(400).json(body);

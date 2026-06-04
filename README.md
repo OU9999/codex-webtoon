@@ -25,11 +25,16 @@
 
 > Unofficial project. codex-webtoon is not affiliated with, endorsed by, or
 > sponsored by OpenAI.
+>
+> `openai-oauth` is a third-party OAuth proxy. It is not an official OpenAI
+> product, SDK, API endpoint, or supported OpenAI API path. It is licensed
+> AGPL-3.0-only; see [Third-party notices](./docs/third-party-notices.md).
 
 codex-webtoon is a local-first studio for building vertical webtoon drafts. It
-keeps projects on your machine, generates selected panels through a local Codex
-OAuth proxy, stores panel-level candidates, and edits speech bubbles as separate
-layers.
+keeps project files, generated image candidates, and exports on your machine.
+Image generation itself is not offline: the common prompt, selected panel
+prompt, and any selected reference image data are sent through the local
+third-party `openai-oauth` proxy as an external model request.
 
 ## Quick Start
 
@@ -75,19 +80,29 @@ codex-webtoon help
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
+- [Third-party notices](./docs/third-party-notices.md)
 - [Web UI](./docs/web-ui.md)
+
+## License
+
+codex-webtoon is distributed under the MIT License. See [LICENSE](./LICENSE).
+The bundled `openai-oauth` runtime dependency is third-party and licensed
+AGPL-3.0-only; see [Third-party notices](./docs/third-party-notices.md).
 
 ## Authentication
 
-Image generation uses a local Codex OAuth proxy. `setup` runs the packaged Codex
-CLI login flow and writes local config under the config directory:
+Image generation uses a local Codex OAuth proxy process. `setup` runs the
+packaged Codex CLI login flow and writes local config under the config
+directory:
 
 ```bash
 codex-webtoon setup
 ```
 
 After setup, `serve` starts the local web server and launches the packaged
-`openai-oauth` proxy when a Codex OAuth session is available.
+third-party `openai-oauth` proxy when a Codex OAuth session is available. The
+proxy receives generation prompts and selected reference image data on
+localhost, then forwards the generation request to external model services.
 
 ## Environment
 

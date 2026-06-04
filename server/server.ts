@@ -93,6 +93,24 @@ const jsonErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
   res.status(500).json(body);
 };
 
+const projectsStaticErrorHandler: ErrorRequestHandler = (
+  _err,
+  _req,
+  res,
+  next,
+) => {
+  if (res.headersSent) {
+    next(_err);
+    return;
+  }
+
+  const body: ApiError = {
+    error: 'asset_not_found',
+    message: 'Project asset was not found.',
+  };
+  res.status(404).json(body);
+};
+
 const buildApp = (opts: { startedAt: number; version: string }) => {
   const app = express();
   app.disable('x-powered-by');
@@ -116,6 +134,7 @@ const buildApp = (opts: { startedAt: number; version: string }) => {
   app.use(
     '/projects',
     express.static(projectsStaticRoot(), { fallthrough: false }),
+    projectsStaticErrorHandler,
   );
 
   const distDir = join(rootDir, 'dist');
