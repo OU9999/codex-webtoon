@@ -68,6 +68,15 @@ codex-webtoon help
   <img src="./asset/project.png" alt="Codex Webtoon project picker screenshot" />
 </p>
 
+## Example
+
+<p align="center">
+  <img src="./asset/example-comic.webp" alt="Sample vertical webtoon page made with codex-webtoon" width="420" />
+</p>
+
+This sample page was assembled in codex-webtoon from generated panel candidates
+and editable speech bubble layers.
+
 ## Features
 
 - Vertical webtoon canvas with selectable panels
