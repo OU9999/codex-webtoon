@@ -85,6 +85,9 @@
     "node": ">=22"
   },
   "pnpm": {
+    "overrides": {
+      "qs": "6.15.2"
+    },
     "onlyBuiltDependencies": [
       "esbuild"
     ]
