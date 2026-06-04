@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { ProjectState } from '../shared/types.js';
+import type { ApiError, ProjectState } from '../shared/types.js';
 
 const testRoot = mkdtempSync(join(tmpdir(), 'codex-webtoon-server-routes-'));
 
@@ -206,6 +206,42 @@ test('project routes create, list, save, load, and delete project data', async (
     `${baseUrl}/api/projects/${encodedRenamedName}`,
   );
   assert.equal(getDeleted.status, 404);
+});
+
+test('GET /projects serves existing candidate images', async () => {
+  const projectName = 'Static Project';
+  const candidateDir = join(
+    testRoot,
+    'projects',
+    projectName,
+    'candidates',
+    'panel-1',
+  );
+  const pngFixture = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  mkdirSync(candidateDir, { recursive: true });
+  writeFileSync(join(candidateDir, 'candidate-1.png'), pngFixture);
+
+  const res = await fetch(
+    `${baseUrl}/projects/${encodeURIComponent(projectName)}/candidates/panel-1/candidate-1.png`,
+  );
+  const body = Buffer.from(await res.arrayBuffer());
+
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type') ?? '', /^image\/png\b/);
+  assert.deepEqual(body, pngFixture);
+});
+
+test('GET /projects returns path-safe 404 for missing candidate images', async () => {
+  const res = await fetch(
+    `${baseUrl}/projects/${encodeURIComponent('Missing Project')}/candidates/panel-1/missing.png`,
+  );
+  const bodyText = await res.text();
+  const body = JSON.parse(bodyText) as ApiError;
+
+  assert.equal(res.status, 404);
+  assert.equal(body.error, 'asset_not_found');
+  assert.equal(body.message, 'Project asset was not found.');
+  assert.equal(bodyText.includes(testRoot), false);
 });
 
 test('project routes return structured errors for invalid requests', async () => {
