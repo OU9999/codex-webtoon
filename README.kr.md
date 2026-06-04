@@ -69,6 +69,15 @@ codex-webtoon help
   <img src="./asset/project.png" alt="Codex Webtoon 프로젝트 선택 화면" />
 </p>
 
+## 예시
+
+<p align="center">
+  <img src="./asset/example-comic.webp" alt="codex-webtoon으로 만든 세로 웹툰 샘플" width="420" />
+</p>
+
+이 샘플 페이지는 codex-webtoon에서 생성 이미지 후보와 편집 가능한 말풍선
+레이어를 조합해 만든 예시입니다.
+
 ## 기능
 
 - 선택 가능한 패널이 있는 세로 웹툰 캔버스
