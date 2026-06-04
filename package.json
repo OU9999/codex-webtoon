@@ -13,6 +13,14 @@
     "oauth"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OU9999/codex-webtoon.git"
+  },
+  "homepage": "https://github.com/OU9999/codex-webtoon#readme",
+  "bugs": {
+    "url": "https://github.com/OU9999/codex-webtoon/issues"
+  },
   "type": "module",
   "packageManager": "pnpm@11.0.9",
   "bin": {
