@@ -23,14 +23,6 @@
   <img src="./asset/main.png" alt="Codex Webtoon 에디터 화면" />
 </p>
 
-> 비공식 프로젝트입니다. codex-webtoon은 OpenAI와 제휴, 보증 또는 후원
-> 관계가 없습니다.
->
-> `openai-oauth`는 제3자 OAuth 프록시입니다. OpenAI 공식 제품, SDK, API
-> endpoint 또는 지원되는 OpenAI 공식 API 경로가 아닙니다. 라이선스는
-> AGPL-3.0-only입니다. [제3자 고지](./docs/third-party-notices.kr.md)를
-> 참조하세요.
-
 codex-webtoon은 세로 웹툰 초안을 만들기 위한 로컬 우선 스튜디오입니다.
 프로젝트 파일, 생성 이미지 후보, export 파일은 사용자의 컴퓨터에 저장됩니다.
 하지만 이미지 생성 자체는 오프라인 처리가 아닙니다. 프로젝트 공통 prompt,
@@ -114,6 +106,9 @@ codex-webtoon setup
 포함된 제3자 `openai-oauth` 프록시를 함께 실행합니다. 이 proxy는 localhost에서
 생성 prompt와 선택된 reference image data를 받은 뒤 외부 모델 서비스로 생성
 요청을 전달합니다.
+
+codex-webtoon은 독립 프로젝트이며 OpenAI와 제휴, 보증 또는 후원 관계가
+없습니다.
 
 ## 환경 변수
 

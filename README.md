@@ -23,13 +23,6 @@
   <img src="./asset/main.png" alt="Codex Webtoon editor screenshot" />
 </p>
 
-> Unofficial project. codex-webtoon is not affiliated with, endorsed by, or
-> sponsored by OpenAI.
->
-> `openai-oauth` is a third-party OAuth proxy. It is not an official OpenAI
-> product, SDK, API endpoint, or supported OpenAI API path. It is licensed
-> AGPL-3.0-only; see [Third-party notices](./docs/third-party-notices.md).
-
 codex-webtoon is a local-first studio for building vertical webtoon drafts. It
 keeps project files, generated image candidates, and exports on your machine.
 Image generation itself is not offline: the common prompt, selected panel
@@ -112,6 +105,9 @@ After setup, `serve` starts the local web server and launches the packaged
 third-party `openai-oauth` proxy when a Codex OAuth session is available. The
 proxy receives generation prompts and selected reference image data on
 localhost, then forwards the generation request to external model services.
+
+codex-webtoon is an independent project and is not affiliated with, endorsed by,
+or sponsored by OpenAI.
 
 ## Environment
 
