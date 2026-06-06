@@ -121,11 +121,15 @@ const resources = {
           title: '말풍선',
         },
         candidateGrid: {
+          candidateNumber: '후보 {{number}}',
           candidatesLabel: '이미지 후보',
           deleteCandidate: '후보 삭제',
           empty: '후보 없음',
+          localMockProvider: 'MOCK',
           meta: '{{count}}개 이미지',
           restore: '복원',
+          selectCandidate: '후보 {{number}} 선택',
+          selected: '선택됨',
           title: '후보',
         },
         layers: {
@@ -504,11 +508,15 @@ const resources = {
           title: 'Bubble',
         },
         candidateGrid: {
+          candidateNumber: 'Candidate {{number}}',
           candidatesLabel: 'Image candidates',
           deleteCandidate: 'Delete candidate',
           empty: 'No candidates',
+          localMockProvider: 'MOCK',
           meta: '{{count}} images',
           restore: 'Restore',
+          selectCandidate: 'Select candidate {{number}}',
+          selected: 'Selected',
           title: 'Candidates',
         },
         layers: {

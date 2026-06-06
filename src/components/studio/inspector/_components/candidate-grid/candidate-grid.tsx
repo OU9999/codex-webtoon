@@ -39,16 +39,17 @@ const CandidateGrid = () => {
           </Button>
         )}
         <section
-          className="grid grid-cols-3 gap-2"
+          className="grid grid-cols-2 gap-2"
           aria-label={t('inspector.candidateGrid.candidatesLabel')}
         >
           {selectedPanel.candidates.length === 0 && (
             <EmptyState>{t('inspector.candidateGrid.empty')}</EmptyState>
           )}
-          {selectedPanel.candidates.map((candidate) => (
+          {selectedPanel.candidates.map((candidate, index) => (
             <CandidateCard
               key={candidate.id}
               candidate={candidate}
+              candidateNumber={index + 1}
               isActive={candidate.id === selectedPanel.selectedCandidateId}
               onDelete={handleCandidateDelete}
               onSelect={handleCandidateSelect}
