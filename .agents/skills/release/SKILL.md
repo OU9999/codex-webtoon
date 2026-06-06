@@ -1,9 +1,9 @@
 ---
 name: release
-description: npm 릴리스 운영. develop을 실질 메인 브랜치로 두고 release 브랜치에 선택 커밋을 cherry-pick한 뒤, 수동 트리거로 검증·publish·tag를 진행할 때 사용한다.
+description: npm 릴리스 운영. release 브랜치 선택 커밋 반영, 수동 검증, publish, tag 진행
 ---
 
-실제 실행 지침은 `.claude/skills/release/SKILL.md`를 먼저 읽고 그대로 따른다.
-
-중복된 릴리스 규칙을 만들지 않는다.
-`.claude/skills/release/SKILL.md`의 내용이 이 스킬보다 우선한다.
+- `.claude/skills/release/SKILL.md` 선행 읽기
+- 실제 실행 지침은 `.claude/skills/release/SKILL.md` 기준
+- 중복 릴리스 규칙 작성 금지
+- `.claude/skills/release/SKILL.md` 내용 우선
