@@ -19,6 +19,10 @@ interface GenerateCandidateRequest {
   referenceImages?: ReferenceImageRef[];
 }
 
+interface GenerateCandidateOptions {
+  signal?: AbortSignal;
+}
+
 class ApiClientError extends Error {
   constructor(
     public status: number,
@@ -104,11 +108,13 @@ const saveProjectState = (name: string, state: ProjectState): Promise<void> =>
 
 const generateCandidates = (
   request: GenerateCandidateRequest,
+  options?: GenerateCandidateOptions,
 ): Promise<Candidate[]> =>
   requestJson<Candidate[]>('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
+    signal: options?.signal,
   });
 
 const deleteProject = (name: string): Promise<void> =>
@@ -135,4 +141,4 @@ export {
   renameProject,
   saveProjectState,
 };
-export type { GenerateCandidateRequest };
+export type { GenerateCandidateOptions, GenerateCandidateRequest };

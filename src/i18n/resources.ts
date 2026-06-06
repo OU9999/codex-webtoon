@@ -143,6 +143,7 @@ const resources = {
           title: '레이어',
         },
         panelForm: {
+          cancelGeneration: '생성 중단',
           dismissGenerationError: '생성 오류 닫기',
           finalPrompt: '최종 생성 조건',
           fitContain: '맞춤',
@@ -150,6 +151,7 @@ const resources = {
           fitFill: '늘이기',
           fitMode: '이미지 채우기',
           generate: '이미지 생성',
+          generationCanceled: '생성 중단됨',
           generationFailed: '생성 실패',
           generating: '생성 중',
           name: '패널 이름',
@@ -334,6 +336,7 @@ const resources = {
       },
       studioErrors: {
         emptyGeneration: '이미지 생성 결과가 비어 있습니다.',
+        generationCanceled: '이미지 생성을 중단했습니다.',
         generateFailed: '이미지 생성에 실패했습니다.',
         missingPrompt: '프롬프트를 입력하세요.',
       },
@@ -535,6 +538,7 @@ const resources = {
           title: 'Layers',
         },
         panelForm: {
+          cancelGeneration: 'Cancel generation',
           dismissGenerationError: 'Dismiss generation error',
           finalPrompt: 'Final generation prompt',
           fitContain: 'Contain',
@@ -542,6 +546,7 @@ const resources = {
           fitFill: 'Fill',
           fitMode: 'Image fit',
           generate: 'Generate image',
+          generationCanceled: 'Generation canceled',
           generationFailed: 'Generation failed',
           generating: 'Generating',
           name: 'Panel name',
@@ -730,6 +735,7 @@ const resources = {
       },
       studioErrors: {
         emptyGeneration: 'Image generation returned no results.',
+        generationCanceled: 'Image generation was canceled.',
         generateFailed: 'Image generation failed.',
         missingPrompt: 'Enter a prompt.',
       },
