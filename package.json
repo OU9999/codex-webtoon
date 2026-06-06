@@ -1,6 +1,6 @@
 {
   "name": "codex-webtoon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unofficial local-first webtoon studio that uses Codex CLI OAuth. Not affiliated with OpenAI.",
   "keywords": [
     "webtoon",
