@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/studio/_components/empty-state';
 import { useStudioContext } from '@/components/studio/studio-context';
 import { InspectorSection } from '../inspector-section';
 import { CandidateCard } from './_components/candidate-card';
+import { SelectedCandidateSnapshot } from './_components/selected-candidate-snapshot';
 
 const CandidateGrid = () => {
   const { t } = useTranslation();
@@ -12,6 +13,7 @@ const CandidateGrid = () => {
     handleCandidateDelete,
     handleCandidateSelect,
     handleRestoreCandidate,
+    latestGeneratedCandidateIds,
     selectedPanel,
   } = useStudioContext();
 
@@ -20,6 +22,14 @@ const CandidateGrid = () => {
   const meta = t('inspector.candidateGrid.meta', {
     count: selectedPanel.candidates.length,
   });
+  const selectedCandidateIndex = selectedPanel.candidates.findIndex(
+    (candidate) => candidate.id === selectedPanel.selectedCandidateId,
+  );
+  const selectedCandidate =
+    selectedCandidateIndex >= 0
+      ? (selectedPanel.candidates[selectedCandidateIndex] ?? null)
+      : null;
+  const latestGeneratedCandidateIdSet = new Set(latestGeneratedCandidateIds);
 
   return (
     <InspectorSection
@@ -39,22 +49,31 @@ const CandidateGrid = () => {
           </Button>
         )}
         <section
-          className="grid grid-cols-3 gap-2"
+          className="grid grid-cols-2 gap-2"
           aria-label={t('inspector.candidateGrid.candidatesLabel')}
         >
           {selectedPanel.candidates.length === 0 && (
             <EmptyState>{t('inspector.candidateGrid.empty')}</EmptyState>
           )}
-          {selectedPanel.candidates.map((candidate) => (
+          {selectedPanel.candidates.map((candidate, index) => (
             <CandidateCard
               key={candidate.id}
               candidate={candidate}
+              candidateNumber={index + 1}
               isActive={candidate.id === selectedPanel.selectedCandidateId}
+              isNew={latestGeneratedCandidateIdSet.has(candidate.id)}
               onDelete={handleCandidateDelete}
               onSelect={handleCandidateSelect}
             />
           ))}
         </section>
+        {selectedCandidate && (
+          <SelectedCandidateSnapshot
+            key={selectedCandidate.id}
+            candidate={selectedCandidate}
+            candidateNumber={selectedCandidateIndex + 1}
+          />
+        )}
       </section>
     </InspectorSection>
   );

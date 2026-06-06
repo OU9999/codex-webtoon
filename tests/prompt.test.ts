@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFinalPrompt } from '../src/components/studio/_lib/prompt.ts';
+import {
+  buildFinalPrompt,
+  buildGenerationPromptInput,
+} from '../src/components/studio/_lib/prompt.ts';
 import type { Panel } from '../src/components/studio/_lib/types.ts';
 
 const createPanel = (overrides: Partial<Panel> = {}): Panel => ({
@@ -42,4 +45,24 @@ test('buildFinalPrompt describes portrait panels by actual aspect ratio', () => 
 
   assert.match(prompt, /portrait webtoon panel/);
   assert.match(prompt, /420px wide by 720px tall/);
+});
+
+test('buildGenerationPromptInput excludes automatic panel spec text', () => {
+  const prompt = buildGenerationPromptInput({
+    projectCommonPrompt: '',
+    canvasCommonPrompt: '',
+    panel: createPanel({ prompt: '' }),
+  });
+
+  assert.equal(prompt, '');
+});
+
+test('buildGenerationPromptInput joins user prompt scopes only', () => {
+  const prompt = buildGenerationPromptInput({
+    projectCommonPrompt: 'modern webtoon',
+    canvasCommonPrompt: 'rainy night',
+    panel: createPanel({ prompt: 'close-up reaction' }),
+  });
+
+  assert.equal(prompt, 'modern webtoon\n\nrainy night\n\nclose-up reaction');
 });

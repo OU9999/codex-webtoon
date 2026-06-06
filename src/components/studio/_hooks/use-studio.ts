@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { renameProject, saveProjectState } from '@/api/client';
 import type { ProjectState, ProjectSummary } from '@shared/types';
-import { buildFinalPrompt } from '../_lib/prompt';
+import { buildFinalPrompt, buildGenerationPromptInput } from '../_lib/prompt';
 import {
   getCanvasPanels,
   getPanelCanvas,
@@ -87,6 +87,13 @@ const useStudio = ({
     canvasCommonPrompt: selectedPanelCanvas?.commonPrompt ?? '',
     panel: selectedPanel ?? undefined,
   });
+  const generationPromptInput = buildGenerationPromptInput({
+    projectCommonPrompt: state.commonPrompt,
+    canvasCommonPrompt: selectedPanelCanvas?.commonPrompt ?? '',
+    panel: selectedPanel ?? undefined,
+  });
+  const hasGenerationPrompt = Boolean(generationPromptInput);
+  const generationPromptInputLength = generationPromptInput.length;
 
   const panels = usePanelActions(state, setState);
   const generation = useGeneratePanel(
@@ -94,6 +101,7 @@ const useStudio = ({
     setState,
     selectedPanel,
     finalPrompt,
+    hasGenerationPrompt,
     projectName,
   );
   const candidates = useCandidateActions(setState, panels.patchSelectedPanel);
@@ -188,7 +196,8 @@ const useStudio = ({
   useDynamicStyles(state);
   useKeyboardShortcuts({
     onGenerate: generation.handleGenerateSelectedPanel,
-    generateEnabled: Boolean(selectedPanel) && !generation.isGenerating,
+    generateEnabled:
+      Boolean(selectedPanel) && !generation.isGenerating && hasGenerationPrompt,
     onUndo: handleUndo,
     undoEnabled: canUndo,
     onSelectionDelete: handleSelectionDelete,
@@ -213,6 +222,8 @@ const useStudio = ({
     selectedCandidate,
     selectedBubble,
     finalPrompt,
+    generationPromptInputLength,
+    hasGenerationPrompt,
     projectName,
     saveStatus,
     historyEntries,
