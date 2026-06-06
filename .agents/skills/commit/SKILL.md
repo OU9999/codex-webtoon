@@ -1,9 +1,9 @@
 ---
 name: commit
-description: 커밋 생성. 변경사항을 분석하고 .claude/skills/commit 지침에 따라 커밋 메시지를 만든 뒤 커밋한다.
+description: 커밋 생성. 변경사항 분석 후 .claude/skills/commit 기준 커밋 메시지 작성과 커밋 실행
 ---
 
-실제 실행 지침은 `.claude/skills/commit/SKILL.md`를 먼저 읽고 그대로 따른다.
-
-중복된 커밋 규칙을 만들지 않는다.
-`.claude/skills/commit/SKILL.md`의 내용이 이 스킬보다 우선한다.
+- `.claude/skills/commit/SKILL.md` 선행 읽기
+- 실제 실행 지침은 `.claude/skills/commit/SKILL.md` 기준
+- 중복 커밋 규칙 작성 금지
+- `.claude/skills/commit/SKILL.md` 내용 우선

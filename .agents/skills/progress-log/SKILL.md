@@ -1,15 +1,17 @@
 ---
 name: progress-log
-description: 작업 진행 상황을 .progress/날짜/주제.md 로 기록합니다. 작업 청크 종료 시점에 사용합니다.
+description: 작업 청크 종료 시점의 .progress/날짜/주제.md 진행 기록
 ---
 
 # Progress Log
 
-이 Codex 스킬은 `.claude/skills/progress-log/SKILL.md`를 감싸는 래퍼이며, 실제 기준 워크플로우는 해당 파일에 있습니다.
+`.claude/skills/progress-log/SKILL.md` 래퍼. 실제 기준 워크플로우는 해당 파일.
 
-호출되면 다음 순서로 동작합니다.
-1. 먼저 `.claude/skills/progress-log/SKILL.md`를 읽습니다.
-2. 인자($ARGUMENTS)가 있으면 주제 슬러그로 사용하고, 없으면 대화 컨텍스트에서 핵심 주제를 1-3 단어 kebab-case로 추론합니다.
-3. `date +%y%m%d`로 날짜를 구해 `.progress/YYMMDD/<주제>.md` 경로를 결정합니다.
-4. 파일이 이미 존재하면 Edit으로 갱신, 없으면 Write로 신규 생성합니다.
-5. 이 저장소의 `AGENTS.md` 규칙을 따르고 패키지 매니저는 `pnpm`을 사용합니다.
+## 실행 순서
+
+1. `.claude/skills/progress-log/SKILL.md` 선행 읽기
+2. `$ARGUMENTS` 존재 시 주제 슬러그로 사용
+3. `$ARGUMENTS` 부재 시 대화 컨텍스트에서 핵심 주제 1-3단어 kebab-case 추론
+4. `date +%y%m%d` 기준 `.progress/YYMMDD/<주제>.md` 경로 결정
+5. 기존 파일은 Edit 갱신, 신규 파일은 Write 생성
+6. `AGENTS.md` 규칙과 `pnpm` 패키지 매니저 기준 적용

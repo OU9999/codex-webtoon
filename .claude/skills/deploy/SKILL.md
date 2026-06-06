@@ -5,8 +5,7 @@ allowed-tools: ["Bash", "Read", "AskUserQuestion"]
 
 # 배포 Skill
 
-`release` 브랜치에 `main`을 반영하고 빌드 검증까지 통과한 뒤 push하여
-Vercel 자동 배포를 트리거합니다.
+`release` 브랜치에 `main` 반영, 빌드 검증 통과 후 push, Vercel 자동 배포 트리거.
 
 ## 배포 플로우 개요
 
@@ -20,7 +19,7 @@ Vercel 자동 배포를 트리거합니다.
 
 ### 1. 사전 상태 점검
 
-아래 명령으로 현재 상태를 확인하세요:
+아래 명령으로 현재 상태 확인:
 
 ```bash
 git status --porcelain
@@ -29,10 +28,10 @@ git rev-parse --abbrev-ref HEAD
 
 **중단 조건:**
 
-- working tree가 깨끗하지 않으면 중단하고 사용자에게 커밋/스태시를 요청
-- 현재 브랜치를 변수로 기억해두기 (작업 후 복귀용)
+- working tree dirty 상태면 중단, 사용자에게 커밋/스태시 요청
+- 현재 브랜치 변수 저장 (작업 후 복귀용)
 
-`origin/main`과 `origin/release`를 최신 상태로 가져옵니다:
+`origin/main`과 `origin/release` 최신화:
 
 ```bash
 git fetch origin main release --prune
@@ -48,13 +47,13 @@ git merge origin/main --no-edit
 
 **주의:**
 
-- `--ff-only`가 실패하면 원격 release가 로컬과 divergence → 사용자 확인 필수
-- merge 중 conflict 발생 시 **즉시 중단**하고 사용자에게 알림
+- `--ff-only` 실패 시 원격 release와 로컬 divergence → 사용자 확인 필수
+- merge conflict 발생 시 **즉시 중단** 및 사용자 알림
   (자동으로 `git merge --abort` 실행 후 원래 브랜치로 복귀)
 
 ### 3. 빌드 검증
 
-`pnpm build`로 프로덕션 빌드를 검증합니다.
+`pnpm build`로 프로덕션 빌드 검증.
 (빌드는 장시간 실행 가능 작업이므로 `run_in_background` 사용을 고려)
 
 ```bash
@@ -76,7 +75,7 @@ pnpm build
 git push origin release
 ```
 
-push 성공 후 Vercel이 자동으로 배포를 시작합니다.
+push 성공 후 Vercel 자동 배포 시작.
 
 ### 5. 원래 브랜치로 복귀
 
@@ -95,7 +94,7 @@ git checkout <원래 브랜치>
 
 ## 확장 포인트 (추후 추가)
 
-이 섹션은 CI/CD 인프라 확장 시 스킬 내부로 통합되어야 할 단계입니다.
+CI/CD 인프라 확장 시 스킬 내부 통합 후보.
 
 - 배포 전 lint/type-check 통합 (`pnpm lint`)
 - 버전 태그 자동 생성 (`git tag v0.x.y`)

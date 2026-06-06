@@ -5,13 +5,13 @@ allowed-tools: ["Bash", "Read", "Grep", "AskUserQuestion"]
 
 # PR 생성 Skill
 
-현재 브랜치의 변경사항을 분석하여 PR을 생성합니다.
+현재 브랜치 변경사항 분석 후 PR 생성.
 
 ## 실행 순서
 
 ### 1. 변경 내용 분석
 
-먼저 PR 생성 가능 상태인지 확인하세요:
+PR 생성 가능 상태 확인:
 
 ```bash
 git status --short
@@ -21,12 +21,12 @@ git fetch origin main --prune
 
 **중단 조건:**
 
-- working tree가 깨끗하지 않으면 중단하고, 커밋 또는 스태시 후 다시 실행하도록 안내
+- working tree dirty 상태면 중단, 커밋 또는 스태시 후 재실행 안내
 - 현재 브랜치가 `main`이면 중단
 - `git fetch origin main --prune` 실패 시 원격 기준 검사가 불완전하다는 점을 사용자에게 알리고 진행 여부 확인
-- 기준 브랜치 대비 커밋이 0개이면 PR 생성할 변경사항이 없으므로 중단
+- 기준 브랜치 대비 커밋 0개면 PR 생성 변경사항 없음으로 중단
 
-기준 브랜치는 `origin/main`을 우선 사용하고, 불가능한 경우에만 로컬 `main`을 사용하세요:
+기준 브랜치는 `origin/main` 우선, 불가 시 로컬 `main` 사용:
 
 ```bash
 git log --oneline origin/main..HEAD
@@ -44,22 +44,22 @@ git diff --stat main...HEAD
 git diff --name-status --find-renames main...HEAD
 ```
 
-**주의:** `git diff main..HEAD` 또는 `git diff origin/main..HEAD`는 사용하지 마세요!
+**주의:** `git diff main..HEAD` 또는 `git diff origin/main..HEAD` 사용 금지.
 
-- `A..B` 형태의 `git diff`는 PR 기준 diff가 아니라 A와 B의 직접 비교입니다.
-- base 브랜치에만 있는 변경사항이 이 브랜치에서 삭제된 것처럼 보일 수 있습니다.
-- 실제 PR diff 확인은 반드시 `origin/main...HEAD`처럼 triple-dot을 사용하세요.
-- 커밋 기반 변경 파일 확인은 `git log --name-status --find-renames origin/main..HEAD`를 사용하세요.
+- `A..B` 형태의 `git diff`는 PR 기준 diff가 아니라 A와 B 직접 비교
+- base 브랜치에만 있는 변경사항이 이 브랜치에서 삭제된 것처럼 보일 위험
+- 실제 PR diff 확인은 `origin/main...HEAD` 같은 triple-dot 사용
+- 커밋 기반 변경 파일 확인은 `git log --name-status --find-renames origin/main..HEAD` 사용
 
 ### 2. 사전 검사 체크리스트
 
-PR 제목과 본문을 만들기 전에 `.claude/skills/pr/check-list.md`를 읽고 체크리스트를 작성하세요.
+PR 제목과 본문 작성 전 `.claude/skills/pr/check-list.md` 읽기와 체크리스트 작성.
 
-체크리스트에서 중단 조건에 해당하는 항목이 있으면 PR 생성 전 먼저 수정하세요.
+체크리스트 중단 조건 항목은 PR 생성 전 수정.
 
 ### 3. PR 제목 생성
 
-변경 내용을 분석하여 다음 형식으로 제목을 생성하세요:
+변경 내용 분석 후 다음 형식으로 제목 생성:
 
 - `feat: 새로운 기능 설명` - 새 기능 추가
 - `fix: 버그 수정 설명` - 버그 수정
@@ -71,7 +71,7 @@ PR 제목과 본문을 만들기 전에 `.claude/skills/pr/check-list.md`를 읽
 
 ### 4. PR 본문 생성
 
-다음 형식으로 PR 본문을 생성하세요:
+다음 형식으로 PR 본문 생성:
 
 ```markdown
 ## 요약
@@ -99,7 +99,7 @@ PR 제목과 본문을 만들기 전에 `.claude/skills/pr/check-list.md`를 읽
 
 ### 5. 라벨 결정
 
-제목의 prefix에 따라 라벨을 결정하세요:
+제목 prefix 기준 라벨 결정:
 
 | Prefix     | Label         | 설명            |
 | ---------- | ------------- | --------------- |
@@ -119,7 +119,7 @@ PR 제목과 본문을 만들기 전에 `.claude/skills/pr/check-list.md`를 읽
 
 ### 6. PR 내용 확인 (필수)
 
-PR을 생성하기 전에 **반드시** 사용자에게 다음 내용을 보여주고 확인을 받으세요:
+PR 생성 전 **반드시** 사용자에게 다음 내용 공유 후 확인:
 
 ```
 PR 미리보기
@@ -142,13 +142,13 @@ Base: main
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-AskUserQuestion 도구를 사용하여 확인을 받으세요.
+AskUserQuestion 도구로 확인 수집.
 
-**중요:** 사용자가 승인하기 전까지 절대로 PR을 생성하지 마세요.
+**중요:** 사용자 승인 전 PR 생성 금지.
 
 ### 7. PR 생성
 
-사용자가 승인한 경우에만 gh CLI를 사용하여 PR을 생성하세요:
+사용자 승인 후에만 gh CLI로 PR 생성:
 
 ```bash
 gh pr create \
@@ -165,8 +165,8 @@ EOF
   --base main
 ```
 
-**중요:** body는 반드시 HEREDOC을 사용하세요.
+**중요:** body는 HEREDOC 필수.
 
 ### 8. 결과 출력
 
-PR 생성 후 URL을 사용자에게 알려주세요.
+PR 생성 후 URL 공유.
