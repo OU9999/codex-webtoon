@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/studio/_components/empty-state';
 import { useStudioContext } from '@/components/studio/studio-context';
 import { InspectorSection } from '../inspector-section';
 import { CandidateCard } from './_components/candidate-card';
+import { SelectedCandidateSnapshot } from './_components/selected-candidate-snapshot';
 
 const CandidateGrid = () => {
   const { t } = useTranslation();
@@ -20,6 +21,13 @@ const CandidateGrid = () => {
   const meta = t('inspector.candidateGrid.meta', {
     count: selectedPanel.candidates.length,
   });
+  const selectedCandidateIndex = selectedPanel.candidates.findIndex(
+    (candidate) => candidate.id === selectedPanel.selectedCandidateId,
+  );
+  const selectedCandidate =
+    selectedCandidateIndex >= 0
+      ? (selectedPanel.candidates[selectedCandidateIndex] ?? null)
+      : null;
 
   return (
     <InspectorSection
@@ -56,6 +64,12 @@ const CandidateGrid = () => {
             />
           ))}
         </section>
+        {selectedCandidate && (
+          <SelectedCandidateSnapshot
+            candidate={selectedCandidate}
+            candidateNumber={selectedCandidateIndex + 1}
+          />
+        )}
       </section>
     </InspectorSection>
   );

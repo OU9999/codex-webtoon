@@ -3,16 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { Candidate } from '@/components/studio/_lib/types';
-
-const formatCandidateTime = (createdAt: string, language: string): string => {
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return '';
-
-  return new Intl.DateTimeFormat(language, {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(date);
-};
+import {
+  formatCandidateProvider,
+  formatCandidateTime,
+} from '../candidate-meta';
 
 interface CandidateCardProps {
   candidate: Candidate;
@@ -38,10 +32,10 @@ const CandidateCard = ({
     candidate.createdAt,
     i18n.language,
   );
-  const providerLabel =
-    candidate.provider === 'local-mock'
-      ? t('inspector.candidateGrid.localMockProvider')
-      : candidate.provider.toUpperCase();
+  const providerLabel = formatCandidateProvider(
+    candidate.provider,
+    t('inspector.candidateGrid.localMockProvider'),
+  );
   const selectLabel = t('inspector.candidateGrid.selectCandidate', {
     number: formattedNumber,
   });
