@@ -12,6 +12,7 @@ interface CandidateCardProps {
   candidate: Candidate;
   candidateNumber: number;
   isActive: boolean;
+  isNew: boolean;
   onDelete: (candidateId: string) => void;
   onSelect: (candidateId: string) => void;
 }
@@ -20,6 +21,7 @@ const CandidateCard = ({
   candidate,
   candidateNumber,
   isActive,
+  isNew,
   onDelete,
   onSelect,
 }: CandidateCardProps) => {
@@ -52,6 +54,7 @@ const CandidateCard = ({
     <article
       className={cn(
         'group relative overflow-hidden rounded-[4px] border border-rim bg-background transition-[background,border-color,box-shadow]',
+        isNew && 'border-status-blue/45 bg-status-blue/5',
         isActive && 'border-brand bg-brand-soft ring-2 ring-brand/15',
       )}
     >
@@ -74,6 +77,11 @@ const CandidateCard = ({
           {isActive && (
             <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-brand text-on-brand transition-opacity group-hover:opacity-0">
               <Check className="size-3.5" />
+            </span>
+          )}
+          {isNew && (
+            <span className="absolute bottom-1 left-1 rounded-[3px] bg-status-blue px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white uppercase">
+              {t('inspector.candidateGrid.newCandidate')}
             </span>
           )}
         </span>

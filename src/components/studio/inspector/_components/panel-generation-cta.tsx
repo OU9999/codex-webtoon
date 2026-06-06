@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 type PanelGenerationCtaTone =
   | 'generating'
+  | 'new-added'
   | 'needs-prompt'
   | 'needs-selection'
   | 'ready'
@@ -19,7 +20,9 @@ type PanelGenerationCtaTone =
 interface PanelGenerationCtaProps {
   candidateCount: number;
   isGenerating: boolean;
+  latestGeneratedCandidateCount: number;
   promptInputLength: number;
+  selectionPreservedAfterGeneration: boolean;
   selectedCandidateIndex: number;
   variantCount: number;
 }
@@ -35,7 +38,9 @@ interface PanelGenerationCtaState {
 interface PanelGenerationCtaInput {
   candidateCount: number;
   isGenerating: boolean;
+  latestGeneratedCandidateCount: number;
   promptInputLength: number;
+  selectionPreservedAfterGeneration: boolean;
   selectedCandidateIndex: number;
   t: ReturnType<typeof useTranslation>['t'];
   variantCount: number;
@@ -44,7 +49,9 @@ interface PanelGenerationCtaInput {
 const getPanelGenerationCtaState = ({
   candidateCount,
   isGenerating,
+  latestGeneratedCandidateCount,
   promptInputLength,
+  selectionPreservedAfterGeneration,
   selectedCandidateIndex,
   t,
   variantCount,
@@ -56,6 +63,29 @@ const getPanelGenerationCtaState = ({
       iconSpin: true,
       title: t('inspector.panelForm.ctaGeneratingTitle'),
       tone: 'generating',
+    };
+  }
+
+  if (latestGeneratedCandidateCount > 0 && selectionPreservedAfterGeneration) {
+    return {
+      detail: t('inspector.panelForm.ctaNewCandidatesPreservedDetail', {
+        count: latestGeneratedCandidateCount,
+        number: String(selectedCandidateIndex + 1).padStart(2, '0'),
+      }),
+      icon: CheckCircle2,
+      title: t('inspector.panelForm.ctaNewCandidatesTitle'),
+      tone: 'new-added',
+    };
+  }
+
+  if (latestGeneratedCandidateCount > 0 && selectedCandidateIndex < 0) {
+    return {
+      detail: t('inspector.panelForm.ctaNewCandidatesNoSelectionDetail', {
+        count: latestGeneratedCandidateCount,
+      }),
+      icon: MousePointer2,
+      title: t('inspector.panelForm.ctaNewCandidatesTitle'),
+      tone: 'new-added',
     };
   }
 
@@ -104,6 +134,7 @@ const getPanelGenerationCtaState = ({
 
 const toneClassNames: Record<PanelGenerationCtaTone, string> = {
   generating: 'border-brand/35 bg-brand/10 text-brand',
+  'new-added': 'border-status-blue/35 bg-status-blue/10 text-status-blue',
   'needs-prompt':
     'border-status-yellow/45 bg-status-yellow/10 text-status-yellow',
   'needs-selection': 'border-status-blue/35 bg-status-blue/10 text-status-blue',
@@ -114,7 +145,9 @@ const toneClassNames: Record<PanelGenerationCtaTone, string> = {
 const PanelGenerationCta = ({
   candidateCount,
   isGenerating,
+  latestGeneratedCandidateCount,
   promptInputLength,
+  selectionPreservedAfterGeneration,
   selectedCandidateIndex,
   variantCount,
 }: PanelGenerationCtaProps) => {
@@ -122,7 +155,9 @@ const PanelGenerationCta = ({
   const cta = getPanelGenerationCtaState({
     candidateCount,
     isGenerating,
+    latestGeneratedCandidateCount,
     promptInputLength,
+    selectionPreservedAfterGeneration,
     selectedCandidateIndex,
     t,
     variantCount,

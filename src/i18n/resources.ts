@@ -131,6 +131,7 @@ const resources = {
           emptySnapshot: '생성 조건 기록 없음',
           localMockProvider: 'MOCK',
           meta: '{{count}}개 이미지',
+          newCandidate: '신규',
           restore: '복원',
           selectCandidate: '후보 {{number}} 선택',
           selected: '선택됨',
@@ -150,6 +151,10 @@ const resources = {
           ctaNeedsPromptTitle: '프롬프트 필요',
           ctaNeedsSelectionDetail: '{{count}}개 후보 · 선택 없음',
           ctaNeedsSelectionTitle: '후보 선택 필요',
+          ctaNewCandidatesNoSelectionDetail: '{{count}}개 추가 · 선택 없음',
+          ctaNewCandidatesPreservedDetail:
+            '{{count}}개 추가 · 후보 {{number}} 유지',
+          ctaNewCandidatesTitle: '새 후보 추가됨',
           ctaReadyDetail: '입력 조건 {{count}}자 · 변형 {{variants}}개',
           ctaReadyTitle: '생성 준비됨',
           ctaSelectedDetail: '{{count}}개 후보 · 후보 {{number}} 적용',
@@ -537,6 +542,7 @@ const resources = {
           emptySnapshot: 'No generation prompt recorded',
           localMockProvider: 'MOCK',
           meta: '{{count}} images',
+          newCandidate: 'New',
           restore: 'Restore',
           selectCandidate: 'Select candidate {{number}}',
           selected: 'Selected',
@@ -556,6 +562,10 @@ const resources = {
           ctaNeedsPromptTitle: 'Prompt required',
           ctaNeedsSelectionDetail: '{{count}} candidates · none selected',
           ctaNeedsSelectionTitle: 'Select a candidate',
+          ctaNewCandidatesNoSelectionDetail: '{{count}} added · none selected',
+          ctaNewCandidatesPreservedDetail:
+            '{{count}} added · candidate {{number}} kept',
+          ctaNewCandidatesTitle: 'New candidates added',
           ctaReadyDetail:
             'Input prompt {{count}} chars · {{variants}} variants',
           ctaReadyTitle: 'Ready to generate',

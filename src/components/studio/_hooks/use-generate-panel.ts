@@ -3,12 +3,22 @@ import type { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiClientError, generateCandidates } from '@/api/client';
 import type { Candidate as ApiCandidate } from '@shared/types';
+import {
+  getValidSelectedCandidateId,
+  mergeGeneratedCandidates,
+} from '../_lib/generated-candidates';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
 interface GenerationErrorState {
   kind: 'canceled' | 'failed';
   message: string;
   panelId: string;
+}
+
+interface LatestGeneratedCandidatesState {
+  candidateIds: string[];
+  panelId: string;
+  preservedCandidateId: string | null;
 }
 
 const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
@@ -39,6 +49,8 @@ const useGeneratePanel = (
   const generationControllerRef = useRef<AbortController | null>(null);
   const [generationError, setGenerationError] =
     useState<GenerationErrorState | null>(null);
+  const [latestGeneratedCandidates, setLatestGeneratedCandidates] =
+    useState<LatestGeneratedCandidatesState | null>(null);
 
   const setPanelGenerationError = (
     panelId: string,
@@ -65,6 +77,7 @@ const useGeneratePanel = (
     setIsGenerating(true);
     setGeneratingPanelId(targetPanelId);
     setGenerationError(null);
+    setLatestGeneratedCandidates(null);
 
     try {
       const apiCandidates = await generateCandidates(
@@ -93,14 +106,15 @@ const useGeneratePanel = (
         ...current,
         panels: current.panels.map((panel) =>
           panel.id === targetPanelId
-            ? {
-                ...panel,
-                candidates: [...newCandidates, ...panel.candidates],
-                selectedCandidateId: newCandidates[0].id,
-              }
+            ? { ...panel, ...mergeGeneratedCandidates(panel, newCandidates) }
             : panel,
         ),
       }));
+      setLatestGeneratedCandidates({
+        candidateIds: newCandidates.map((candidate) => candidate.id),
+        panelId: targetPanelId,
+        preservedCandidateId: getValidSelectedCandidateId(selectedPanel),
+      });
     } catch (err) {
       const message =
         err instanceof ApiClientError
@@ -136,6 +150,10 @@ const useGeneratePanel = (
     generationError && generationError.panelId === selectedPanel?.id
       ? generationError
       : null;
+  const selectedPanelLatestGeneratedCandidates =
+    latestGeneratedCandidates?.panelId === selectedPanel?.id
+      ? latestGeneratedCandidates
+      : null;
 
   return {
     handleCancelGeneration,
@@ -144,6 +162,10 @@ const useGeneratePanel = (
     generatingPanelId,
     generationError: selectedPanelGenerationError?.message ?? null,
     generationErrorKind: selectedPanelGenerationError?.kind ?? null,
+    latestGeneratedCandidateIds:
+      selectedPanelLatestGeneratedCandidates?.candidateIds ?? [],
+    latestGenerationPreservedCandidateId:
+      selectedPanelLatestGeneratedCandidates?.preservedCandidateId ?? null,
     dismissGenerationError,
   };
 };

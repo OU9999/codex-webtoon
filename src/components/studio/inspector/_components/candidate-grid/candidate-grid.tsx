@@ -13,6 +13,7 @@ const CandidateGrid = () => {
     handleCandidateDelete,
     handleCandidateSelect,
     handleRestoreCandidate,
+    latestGeneratedCandidateIds,
     selectedPanel,
   } = useStudioContext();
 
@@ -28,6 +29,7 @@ const CandidateGrid = () => {
     selectedCandidateIndex >= 0
       ? (selectedPanel.candidates[selectedCandidateIndex] ?? null)
       : null;
+  const latestGeneratedCandidateIdSet = new Set(latestGeneratedCandidateIds);
 
   return (
     <InspectorSection
@@ -59,6 +61,7 @@ const CandidateGrid = () => {
               candidate={candidate}
               candidateNumber={index + 1}
               isActive={candidate.id === selectedPanel.selectedCandidateId}
+              isNew={latestGeneratedCandidateIdSet.has(candidate.id)}
               onDelete={handleCandidateDelete}
               onSelect={handleCandidateSelect}
             />

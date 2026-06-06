@@ -41,6 +41,8 @@ const PanelForm = () => {
     handleVariantCountChange,
     hasGenerationPrompt,
     isGenerating,
+    latestGeneratedCandidateIds,
+    latestGenerationPreservedCandidateId,
     selectedCandidate,
     selectedPanel,
     selectedPanelCanvas,
@@ -71,6 +73,14 @@ const PanelForm = () => {
     (candidate) => candidate.id === selectedPanel.selectedCandidateId,
   );
   const hasCandidates = candidateCount > 0;
+  const latestGeneratedCandidateIdSet = new Set(latestGeneratedCandidateIds);
+  const latestGeneratedCandidateCount = selectedPanel.candidates.filter(
+    (candidate) => latestGeneratedCandidateIdSet.has(candidate.id),
+  ).length;
+  const selectionPreservedAfterGeneration = Boolean(
+    selectedCandidate?.id &&
+    selectedCandidate.id === latestGenerationPreservedCandidateId,
+  );
   const generateButtonDisabled = isGenerating || !hasGenerationPrompt;
   const generateButtonLabel = isGenerating
     ? t('inspector.panelForm.generating')
@@ -138,6 +148,8 @@ const PanelForm = () => {
           candidateCount={candidateCount}
           promptInputLength={generationPromptInputLength}
           isGenerating={isGenerating}
+          latestGeneratedCandidateCount={latestGeneratedCandidateCount}
+          selectionPreservedAfterGeneration={selectionPreservedAfterGeneration}
           selectedCandidateIndex={selectedCandidateIndex}
           variantCount={state.variantCount}
         />
