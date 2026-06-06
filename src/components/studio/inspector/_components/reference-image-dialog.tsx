@@ -44,6 +44,7 @@ interface CandidateReferenceGroup {
 }
 
 interface ReferenceImageTileProps {
+  index: number;
   item: ReferenceImageItem;
   onRemove: (reference: ReferenceImageRef) => void;
 }
@@ -197,6 +198,16 @@ const selectedReferenceItems = (
   });
 };
 
+const getReferenceOrdinal = (index: number): string =>
+  `R${String(index + 1).padStart(2, '0')}`;
+
+const getSelectedGroupItemCount = (
+  items: ReferenceImageItem[],
+  draftKeys: Set<string>,
+): number =>
+  items.filter((item) => draftKeys.has(getReferenceImageKey(item.reference)))
+    .length;
+
 const ReferenceTriggerPreview = ({ items }: ReferenceTriggerPreviewProps) => {
   const { t } = useTranslation();
 
@@ -223,22 +234,38 @@ const ReferenceTriggerPreview = ({ items }: ReferenceTriggerPreviewProps) => {
   );
 };
 
-const ReferenceImageTile = ({ item, onRemove }: ReferenceImageTileProps) => {
+const ReferenceImageTile = ({
+  index,
+  item,
+  onRemove,
+}: ReferenceImageTileProps) => {
   const { t } = useTranslation();
 
   const handleRemove = (): void => {
     onRemove(item.reference);
   };
 
+  const ordinal = getReferenceOrdinal(index);
+
   return (
     <article className="grid grid-cols-[54px_minmax(0,1fr)_24px] items-center gap-2 rounded-[4px] border border-rim bg-background p-1.5">
-      <span className="block h-12 overflow-hidden rounded-[3px] border border-rim bg-panel">
+      <span className="relative block h-12 overflow-hidden rounded-[3px] border border-rim bg-panel">
         <img src={item.imageUrl} alt="" className="size-full object-cover" />
+        <span className="absolute top-1 left-1 rounded-[3px] bg-background/95 px-1 font-mono text-[8.5px] font-black text-fg-muted">
+          {ordinal}
+        </span>
       </span>
       <span className="min-w-0">
-        <strong className="block truncate text-[12px] font-black text-foreground">
-          {item.title}
-        </strong>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <strong className="block min-w-0 flex-1 truncate text-[12px] font-black text-foreground">
+            {item.title}
+          </strong>
+          {item.isPrimary && (
+            <span className="shrink-0 rounded-[3px] bg-brand-soft px-1.5 py-0.5 font-mono text-[8.5px] font-black text-brand uppercase">
+              {t('referenceImages.primary')}
+            </span>
+          )}
+        </span>
         <small className="block font-mono text-[9.5px] font-semibold text-fg-muted uppercase">
           {item.meta} · {t(`referenceImages.${item.source}`)}
         </small>
@@ -275,24 +302,33 @@ const ReferenceImageOptionButton = ({
       disabled={disabled}
       aria-pressed={isSelected}
       className={cn(
-        'group relative w-[72px] shrink-0 overflow-hidden rounded-[4px] border border-rim bg-background text-left transition-colors hover:border-brand disabled:cursor-not-allowed disabled:opacity-40',
-        isSelected && 'border-brand bg-brand-soft',
+        'group relative w-[88px] shrink-0 overflow-hidden rounded-[4px] border border-rim bg-background text-left transition-colors hover:border-brand disabled:cursor-not-allowed disabled:opacity-40',
+        isSelected && 'border-brand bg-brand-soft ring-2 ring-brand/15',
       )}
       onClick={handleToggle}
     >
       <img
         src={item.imageUrl}
         alt=""
-        className="aspect-square w-full object-cover"
+        className="aspect-[4/3] w-full object-cover"
       />
-      <span className="absolute bottom-0 left-0 max-w-full bg-background/95 px-1.5 py-0.5 font-mono text-[9px] font-bold text-fg-muted">
+      <span className="absolute top-1 left-1 rounded-[3px] bg-background/95 px-1.5 py-0.5 font-mono text-[9px] font-black text-fg-muted">
         {item.meta}
-        {item.isPrimary && (
-          <strong className="ml-1 text-primary">
-            {t('referenceImages.primary')}
-          </strong>
-        )}
       </span>
+      {(item.isPrimary || isSelected) && (
+        <span className="absolute right-1 bottom-1 left-1 flex min-w-0 items-center justify-between gap-1">
+          {item.isPrimary && (
+            <span className="min-w-0 truncate rounded-[3px] bg-background/95 px-1.5 py-0.5 font-mono text-[8.5px] font-black text-brand uppercase">
+              {t('referenceImages.primary')}
+            </span>
+          )}
+          {isSelected && (
+            <span className="ml-auto min-w-0 truncate rounded-[3px] bg-brand px-1.5 py-0.5 font-mono text-[8.5px] font-black text-on-brand uppercase">
+              {t('referenceImages.selected')}
+            </span>
+          )}
+        </span>
+      )}
       {isSelected && (
         <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-[3px] bg-brand text-on-brand">
           <Check className="size-3" />
@@ -475,7 +511,14 @@ const ReferenceImageDialog = () => {
           </span>
           <span className="flex shrink-0 items-center gap-2">
             <ReferenceTriggerPreview items={selectedItems} />
-            <span className="text-fg-muted">{selectedMeta}</span>
+            <span
+              className={cn(
+                'rounded-[3px] px-1.5 py-0.5 text-fg-muted',
+                selectedItems.length > 0 && 'bg-brand-soft text-brand',
+              )}
+            >
+              {selectedMeta}
+            </span>
           </span>
         </Button>
       </DialogTrigger>
@@ -501,9 +544,10 @@ const ReferenceImageDialog = () => {
               {draftItems.length === 0 && (
                 <EmptyState>{t('referenceImages.emptySelected')}</EmptyState>
               )}
-              {draftItems.map((item) => (
+              {draftItems.map((item, index) => (
                 <ReferenceImageTile
                   key={getReferenceImageKey(item.reference)}
+                  index={index}
                   item={item}
                   onRemove={handleReferenceRemove}
                 />
@@ -604,43 +648,57 @@ const ReferenceImageDialog = () => {
                     {t('referenceImages.emptyCandidates')}
                   </EmptyState>
                 )}
-                {candidateGroups.map((group) => (
-                  <article
-                    key={group.panelId}
-                    className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3 rounded-[4px] border border-rim-subtle bg-background p-2"
-                  >
-                    <header className="min-w-0 pt-1">
-                      <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
-                        {t('referenceImages.panelLabel', {
-                          count: group.panelIndex + 1,
-                        })}
-                      </strong>
-                      <span className="mt-0.5 block truncate text-[11px] font-black text-foreground">
-                        {group.title}
-                      </span>
-                      <small className="mt-1 block font-mono text-[9px] font-semibold text-fg-muted">
-                        {group.items.length} {t('referenceImages.candidate')}
-                      </small>
-                    </header>
-                    <section className="flex min-w-0 gap-2 overflow-x-auto pb-1">
-                      {group.items.map((item) => {
-                        const key = getReferenceImageKey(item.reference);
-                        const isSelected = draftKeys.has(key);
-                        const disabled = !isSelected && isAtLimit;
+                {candidateGroups.map((group) => {
+                  const selectedGroupItemCount = getSelectedGroupItemCount(
+                    group.items,
+                    draftKeys,
+                  );
 
-                        return (
-                          <ReferenceImageOptionButton
-                            key={key}
-                            disabled={disabled}
-                            isSelected={isSelected}
-                            item={item}
-                            onToggle={handleReferenceToggle}
-                          />
-                        );
-                      })}
-                    </section>
-                  </article>
-                ))}
+                  return (
+                    <article
+                      key={group.panelId}
+                      className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3 rounded-[4px] border border-rim-subtle bg-background p-2"
+                    >
+                      <header className="min-w-0 pt-1">
+                        <strong className="block font-mono text-[9.5px] font-black tracking-[0.08em] text-fg-muted uppercase">
+                          {t('referenceImages.panelLabel', {
+                            count: group.panelIndex + 1,
+                          })}
+                        </strong>
+                        <span className="mt-0.5 block truncate text-[11px] font-black text-foreground">
+                          {group.title}
+                        </span>
+                        <small className="mt-1 block font-mono text-[9px] font-semibold text-fg-muted">
+                          {group.items.length} {t('referenceImages.candidate')}
+                        </small>
+                        {selectedGroupItemCount > 0 && (
+                          <small className="mt-1 block font-mono text-[9px] font-black text-brand">
+                            {t('referenceImages.selectedCount', {
+                              count: selectedGroupItemCount,
+                            })}
+                          </small>
+                        )}
+                      </header>
+                      <section className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+                        {group.items.map((item) => {
+                          const key = getReferenceImageKey(item.reference);
+                          const isSelected = draftKeys.has(key);
+                          const disabled = !isSelected && isAtLimit;
+
+                          return (
+                            <ReferenceImageOptionButton
+                              key={key}
+                              disabled={disabled}
+                              isSelected={isSelected}
+                              item={item}
+                              onToggle={handleReferenceToggle}
+                            />
+                          );
+                        })}
+                      </section>
+                    </article>
+                  );
+                })}
               </section>
             </section>
           </section>
