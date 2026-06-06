@@ -123,6 +123,9 @@ const resources = {
         candidateGrid: {
           candidateNumber: '후보 {{number}}',
           candidatesLabel: '이미지 후보',
+          copiedSnapshot: '복사됨',
+          copySnapshot: '복사',
+          copySnapshotFailed: '실패',
           deleteCandidate: '후보 삭제',
           empty: '후보 없음',
           emptySnapshot: '생성 조건 기록 없음',
@@ -512,6 +515,9 @@ const resources = {
         candidateGrid: {
           candidateNumber: 'Candidate {{number}}',
           candidatesLabel: 'Image candidates',
+          copiedSnapshot: 'Copied',
+          copySnapshot: 'Copy',
+          copySnapshotFailed: 'Failed',
           deleteCandidate: 'Delete candidate',
           empty: 'No candidates',
           emptySnapshot: 'No generation prompt recorded',

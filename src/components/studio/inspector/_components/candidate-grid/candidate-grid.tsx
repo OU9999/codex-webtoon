@@ -66,6 +66,7 @@ const CandidateGrid = () => {
         </section>
         {selectedCandidate && (
           <SelectedCandidateSnapshot
+            key={selectedCandidate.id}
             candidate={selectedCandidate}
             candidateNumber={selectedCandidateIndex + 1}
           />
