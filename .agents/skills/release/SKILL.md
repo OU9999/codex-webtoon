@@ -1,6 +1,6 @@
 ---
 name: release
-description: npm 릴리스 운영. release 브랜치 선택 커밋 반영, 수동 검증, publish, tag 진행
+description: npm 릴리스 운영. release 브랜치 선택 커밋 반영, 검증, publish, tag, GitHub Release 진행
 ---
 
 - `.claude/skills/release/SKILL.md` 선행 읽기
