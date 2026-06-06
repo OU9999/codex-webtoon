@@ -28,6 +28,7 @@ const useGeneratePanel = (
   setState: Dispatch<SetStateAction<StudioState>>,
   selectedPanel: Panel | null,
   finalPrompt: string,
+  hasGenerationPrompt: boolean,
   projectName: string,
 ) => {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ const useGeneratePanel = (
   const handleGenerateSelectedPanel = async (): Promise<void> => {
     if (!selectedPanel) return;
     if (isGenerating) return;
-    if (!finalPrompt.trim()) {
+    if (!hasGenerationPrompt) {
       setPanelGenerationError(
         selectedPanel.id,
         t('studioErrors.missingPrompt'),

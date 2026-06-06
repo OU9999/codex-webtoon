@@ -21,6 +21,7 @@ import { PromptTextarea } from '../../_components/prompt-textarea';
 import { RangeField } from '../../_components/range-field';
 import { useStudioContext } from '../../studio-context';
 import { InspectorSection } from './inspector-section';
+import { PanelGenerationCta } from './panel-generation-cta';
 import { ReferenceImageDialog } from './reference-image-dialog';
 
 const PanelForm = () => {
@@ -30,6 +31,7 @@ const PanelForm = () => {
     finalPrompt,
     generationError,
     generationErrorKind,
+    generationPromptInputLength,
     handleCancelGeneration,
     handleGenerateSelectedPanel,
     handleSelectedPanelHeightChange,
@@ -37,6 +39,7 @@ const PanelForm = () => {
     handleSelectedPanelTitleChange,
     handleSelectedPanelWidthChange,
     handleVariantCountChange,
+    hasGenerationPrompt,
     isGenerating,
     selectedCandidate,
     selectedPanel,
@@ -62,7 +65,20 @@ const PanelForm = () => {
     panelIndex >= 0
       ? `${selectedPanelCanvas?.title ?? t('defaults.canvasTitle')} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
-  const canRetryGeneration = Boolean(finalPrompt.trim()) && !isGenerating;
+  const canRetryGeneration = hasGenerationPrompt && !isGenerating;
+  const candidateCount = selectedPanel.candidates.length;
+  const selectedCandidateIndex = selectedPanel.candidates.findIndex(
+    (candidate) => candidate.id === selectedPanel.selectedCandidateId,
+  );
+  const hasCandidates = candidateCount > 0;
+  const generateButtonDisabled = isGenerating || !hasGenerationPrompt;
+  const generateButtonLabel = isGenerating
+    ? t('inspector.panelForm.generating')
+    : selectedCandidate
+      ? t('inspector.panelForm.regenerate')
+      : hasCandidates
+        ? t('inspector.panelForm.generateMore')
+        : t('inspector.panelForm.generate');
   const isGenerationCanceled = generationErrorKind === 'canceled';
   const generationAlertTitle = isGenerationCanceled
     ? t('inspector.panelForm.generationCanceled')
@@ -118,23 +134,26 @@ const PanelForm = () => {
       />
 
       <section className="grid gap-2">
+        <PanelGenerationCta
+          candidateCount={candidateCount}
+          promptInputLength={generationPromptInputLength}
+          isGenerating={isGenerating}
+          selectedCandidateIndex={selectedCandidateIndex}
+          variantCount={state.variantCount}
+        />
         <section className="grid gap-2">
           <Button
             type="button"
             className="w-full"
             onClick={handleGenerateSelectedPanel}
-            disabled={isGenerating}
+            disabled={generateButtonDisabled}
           >
             {isGenerating ? (
               <RefreshCcw className="size-4 animate-spin" />
             ) : (
               <Sparkles className="size-4" />
             )}
-            {isGenerating
-              ? t('inspector.panelForm.generating')
-              : selectedCandidate
-                ? t('inspector.panelForm.regenerate')
-                : t('inspector.panelForm.generate')}
+            {generateButtonLabel}
             <kbd className="ml-1 rounded bg-primary-foreground/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide opacity-80">
               ⌘↵
             </kbd>

@@ -1,5 +1,11 @@
 import type { Panel } from './types';
 
+interface BuildPromptOptions {
+  canvasCommonPrompt: string;
+  panel?: Panel;
+  projectCommonPrompt: string;
+}
+
 const getPanelOrientation = (panel: Panel): string => {
   const ratio = panel.width / panel.height;
   if (ratio > 1.15) return 'landscape';
@@ -20,29 +26,38 @@ const getPanelSpecPrompt = (panel: Panel): string => {
   ].join(' ');
 };
 
-const buildFinalPrompt = ({
+const buildGenerationPromptInput = ({
   projectCommonPrompt,
   canvasCommonPrompt,
   panel,
-}: {
-  projectCommonPrompt: string;
-  canvasCommonPrompt: string;
-  panel?: Panel;
-}): string => {
-  if (!panel) {
-    return [projectCommonPrompt.trim(), canvasCommonPrompt.trim()]
-      .filter(Boolean)
-      .join('\n\n');
-  }
-
+}: BuildPromptOptions): string => {
   return [
     projectCommonPrompt.trim(),
     canvasCommonPrompt.trim(),
-    panel.prompt.trim(),
-    getPanelSpecPrompt(panel),
+    panel?.prompt.trim() ?? '',
   ]
     .filter(Boolean)
     .join('\n\n');
 };
 
-export { buildFinalPrompt, getPanelSpecPrompt };
+const buildFinalPrompt = ({
+  projectCommonPrompt,
+  canvasCommonPrompt,
+  panel,
+}: BuildPromptOptions): string => {
+  const generationPromptInput = buildGenerationPromptInput({
+    projectCommonPrompt,
+    canvasCommonPrompt,
+    panel,
+  });
+
+  if (!panel) {
+    return generationPromptInput;
+  }
+
+  return [generationPromptInput, getPanelSpecPrompt(panel)]
+    .filter(Boolean)
+    .join('\n\n');
+};
+
+export { buildFinalPrompt, buildGenerationPromptInput, getPanelSpecPrompt };
