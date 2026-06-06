@@ -1,4 +1,11 @@
-import { RefreshCcw, Sparkles, SquarePen, X } from 'lucide-react';
+import {
+  AlertCircle,
+  RefreshCcw,
+  RotateCcw,
+  Sparkles,
+  SquarePen,
+  X,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +58,7 @@ const PanelForm = () => {
     panelIndex >= 0
       ? `${selectedPanelCanvas?.title ?? t('defaults.canvasTitle')} · PANEL ${String(panelIndex + 1).padStart(2, '0')} / ${selectedPanelCanvasPanels.length}`
       : `${selectedPanel.width}x${selectedPanel.height}`;
+  const canRetryGeneration = Boolean(finalPrompt.trim()) && !isGenerating;
 
   return (
     <InspectorSection
@@ -125,17 +133,37 @@ const PanelForm = () => {
         {generationError && (
           <aside
             role="alert"
-            className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive"
+            className="grid gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive"
           >
-            <span className="flex-1 leading-relaxed">{generationError}</span>
+            <header className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+              <section className="min-w-0 flex-1">
+                <h3 className="font-mono text-[10px] font-semibold tracking-[0.08em] uppercase">
+                  {t('inspector.panelForm.generationFailed')}
+                </h3>
+                <p className="mt-1 leading-relaxed">{generationError}</p>
+              </section>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t('inspector.panelForm.dismissGenerationError')}
+                className="size-5 text-destructive hover:bg-destructive/10"
+                onClick={dismissGenerationError}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </header>
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
-              className="size-5 text-destructive hover:bg-destructive/10"
-              onClick={dismissGenerationError}
+              variant="outline"
+              size="sm"
+              className="h-7 justify-self-start border-destructive/30 bg-background px-2 font-mono text-[10px] font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={handleGenerateSelectedPanel}
+              disabled={!canRetryGeneration}
             >
-              <X className="size-3.5" />
+              <RotateCcw className="size-3.5" />
+              {t('inspector.panelForm.retryGeneration')}
             </Button>
           </aside>
         )}

@@ -5,6 +5,11 @@ import { ApiClientError, generateCandidates } from '@/api/client';
 import type { Candidate as ApiCandidate } from '@shared/types';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
+interface GenerationErrorState {
+  message: string;
+  panelId: string;
+}
+
 const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
   id: candidate.id,
   imageUrl: candidate.imageUrl,
@@ -29,13 +34,17 @@ const useGeneratePanel = (
   const [generatingPanelId, setGeneratingPanelId] = useState<string | null>(
     null,
   );
-  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationError, setGenerationError] =
+    useState<GenerationErrorState | null>(null);
 
   const handleGenerateSelectedPanel = async (): Promise<void> => {
     if (!selectedPanel) return;
     if (isGenerating) return;
     if (!finalPrompt.trim()) {
-      setGenerationError(t('studioErrors.missingPrompt'));
+      setGenerationError({
+        message: t('studioErrors.missingPrompt'),
+        panelId: selectedPanel.id,
+      });
       return;
     }
 
@@ -55,7 +64,10 @@ const useGeneratePanel = (
       });
       const newCandidates = apiCandidates.map(toLocalCandidate);
       if (newCandidates.length === 0) {
-        setGenerationError(t('studioErrors.emptyGeneration'));
+        setGenerationError({
+          message: t('studioErrors.emptyGeneration'),
+          panelId: targetPanelId,
+        });
         return;
       }
 
@@ -78,7 +90,7 @@ const useGeneratePanel = (
           : err instanceof Error
             ? err.message
             : t('studioErrors.generateFailed');
-      setGenerationError(message);
+      setGenerationError({ message, panelId: targetPanelId });
     } finally {
       setIsGenerating(false);
       setGeneratingPanelId(null);
@@ -86,12 +98,16 @@ const useGeneratePanel = (
   };
 
   const dismissGenerationError = (): void => setGenerationError(null);
+  const selectedPanelGenerationError =
+    generationError && generationError.panelId === selectedPanel?.id
+      ? generationError.message
+      : null;
 
   return {
     handleGenerateSelectedPanel,
     isGenerating,
     generatingPanelId,
-    generationError,
+    generationError: selectedPanelGenerationError,
     dismissGenerationError,
   };
 };
