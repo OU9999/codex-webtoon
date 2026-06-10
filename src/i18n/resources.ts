@@ -184,11 +184,14 @@ const resources = {
       layerActions: {
         box: '박스',
         cloud: '구름',
-        jagged: '강조',
+        'impact-thought-thick': '임팩트 생각(두꺼움)',
         oval: '타원',
+        shockThought: '생각',
+        'shock-thought-thick': '생각(두꺼움)',
+        'simple-thought-thick': '단순 생각(두꺼움)',
         sfx: '효과음',
         speech: '대사',
-        thought: '생각',
+        thought: '점선 생각',
       },
       panelCanvas: {
         empty: '빈 패널',
@@ -598,11 +601,14 @@ const resources = {
       layerActions: {
         box: 'Box',
         cloud: 'Cloud',
-        jagged: 'Jagged',
+        'impact-thought-thick': 'Impact Thought (Thick)',
         oval: 'Oval',
+        shockThought: 'Thought',
+        'shock-thought-thick': 'Thought (Thick)',
+        'simple-thought-thick': 'Simple Thought (Thick)',
         sfx: 'SFX',
         speech: 'Speech',
-        thought: 'Thought',
+        thought: 'Dashed Thought',
       },
       panelCanvas: {
         empty: 'Empty panel',

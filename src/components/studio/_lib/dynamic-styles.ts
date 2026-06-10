@@ -5,7 +5,11 @@ import {
   getPanelClassName,
   getStripGapClassName,
 } from './class-names';
-import { getThoughtTailDots, resolveBubbleStyle } from './bubble-style';
+import {
+  getBubbleOutlineSvgPath,
+  getThoughtTailDots,
+  resolveBubbleStyle,
+} from './bubble-style';
 import { normalizePanelGapColor } from '@shared/project-state';
 import { getCanvasPanels } from './canvas-state';
 import {
@@ -130,6 +134,13 @@ const buildDynamicStyles = (state: StudioState): string => {
         const height = (bubble.height / canvas.height) * 100;
         const viewportSize = (bubble.fontSize / CANVAS_WIDTH) * 100;
         const thoughtTailDots = getThoughtTailDots(bubble);
+        const outlinePath = getBubbleOutlineSvgPath(bubble);
+        const outlineStrokeWidth =
+          style.borderWidth * (outlinePath?.outlineStrokeScale ?? 1);
+        const decorationStrokeWidth = Math.max(
+          0.6,
+          style.borderWidth * (outlinePath?.decorationStrokeScale ?? 0.46),
+        );
 
         rules.push(
           [
@@ -145,6 +156,10 @@ const buildDynamicStyles = (state: StudioState): string => {
             `--bubble-border-width:${style.borderWidth}px;`,
             `--bubble-border-style:${style.borderStyle};`,
             `--bubble-stroke-dasharray:${strokeDasharray};`,
+            `--bubble-outline-opacity:${outlinePath?.outlineOpacity ?? 1};`,
+            `--bubble-outline-stroke-width:${outlineStrokeWidth}px;`,
+            `--bubble-decoration-opacity:${outlinePath?.decorationOpacity ?? 1};`,
+            `--bubble-decoration-stroke-width:${decorationStrokeWidth}px;`,
             `--bubble-radius:${style.borderRadius};`,
             `--bubble-radius-tl:${style.radiusTopLeft}px;`,
             `--bubble-radius-tr:${style.radiusTopRight}px;`,

@@ -352,14 +352,36 @@
   .bubble-outline-shape {
     fill: var(--bubble-fill, #ffffff);
     stroke: var(--bubble-border, #1a1f30);
-    stroke-width: var(--bubble-border-width, 1.5px);
+    stroke-width: var(
+      --bubble-outline-stroke-width,
+      var(--bubble-border-width, 1.5px)
+    );
     stroke-dasharray: var(--bubble-stroke-dasharray, none);
     stroke-linejoin: round;
+    stroke-opacity: var(--bubble-outline-opacity, 1);
+    vector-effect: non-scaling-stroke;
+  }
+
+  .bubble-outline-decoration {
+    fill: none;
+    stroke: var(--bubble-border, #1a1f30);
+    stroke-width: var(
+      --bubble-decoration-stroke-width,
+      calc(var(--bubble-border-width, 1.5px) * 0.46)
+    );
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: var(--bubble-decoration-opacity, 1);
     vector-effect: non-scaling-stroke;
   }
 
   .bubble-layer.shape-jagged .bubble-outline-shape {
-    stroke-linejoin: miter;
+    stroke-linejoin: round;
+  }
+
+  .bubble-layer.shape-jagged > span,
+  .bubble-layer.shape-jagged .bubble-text-editor {
+    font-style: italic;
   }
 
   .bubble-layer.thought {

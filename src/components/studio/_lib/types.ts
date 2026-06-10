@@ -1,8 +1,4 @@
-import type {
-  PointerEvent as ReactPointerEvent,
-  ReactNode,
-  SetStateAction,
-} from 'react';
+import type { PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize' | 'tail';
@@ -10,6 +6,10 @@ type BubbleResizeAnchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
 type BubbleFontWeight = 'regular' | 'medium' | 'bold';
+type BubbleImpactStyle =
+  | 'impact-thought-thick'
+  | 'shock-thought-thick'
+  | 'simple-thought-thick';
 type BubbleShape =
   | 'rounded'
   | 'oval'
@@ -71,6 +71,7 @@ interface Bubble {
   borderStyle?: BubbleBorderStyle;
   fontFamily?: BubbleFontFamily;
   fontWeight?: BubbleFontWeight;
+  impactStyle?: BubbleImpactStyle;
   shape?: BubbleShape;
   radiusTopLeft?: number;
   radiusTopRight?: number;
@@ -243,7 +244,9 @@ type LayerActionId =
   | 'speech'
   | 'oval'
   | 'cloud'
-  | 'jagged'
+  | 'impact-thought-thick'
+  | 'shock-thought-thick'
+  | 'simple-thought-thick'
   | 'box'
   | 'thought'
   | 'sfx';
@@ -252,7 +255,7 @@ interface LayerAction {
   id: LayerActionId;
   type: BubbleType;
   label: string;
-  icon: ReactNode;
+  labelKey?: string;
   patch?: Partial<Bubble>;
 }
 
@@ -266,6 +269,7 @@ export type {
   BubbleDragStartPayload,
   BubbleFontFamily,
   BubbleFontWeight,
+  BubbleImpactStyle,
   BubbleShape,
   BubbleTailSide,
   BubbleType,

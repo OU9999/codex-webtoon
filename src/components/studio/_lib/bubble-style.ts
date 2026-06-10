@@ -3,6 +3,7 @@ import type {
   BubbleBorderStyle,
   BubbleFontFamily,
   BubbleFontWeight,
+  BubbleImpactStyle,
   BubbleShape,
   BubbleTailSide,
 } from './types';
@@ -15,6 +16,7 @@ interface BubbleStyleValues {
   borderStyle: BubbleBorderStyle;
   fontFamily: BubbleFontFamily;
   fontWeight: BubbleFontWeight;
+  impactStyle: BubbleImpactStyle;
   shape: BubbleShape;
   radiusTopLeft: number;
   radiusTopRight: number;
@@ -51,11 +53,36 @@ interface BubbleTailPoint {
 
 interface BubbleOutlineSvgPath {
   path: string;
+  decorationPath?: string;
+  decorationOpacity?: number;
+  decorationStrokeScale?: number;
+  outlineOpacity?: number;
+  outlineStrokeScale?: number;
 }
 
 interface ThoughtTailDots {
   large: BubbleTailPoint;
   small: BubbleTailPoint;
+}
+
+interface ImpactBubbleConfig {
+  angleEndNoise: number;
+  angleStartNoise: number;
+  decorationOpacity: number;
+  decorationStrokeScale: number;
+  innerNoise: number;
+  innerRadius: number;
+  longRayLarge: number;
+  longRayMedium: number;
+  longRayLargeEvery: number;
+  longRayMediumEvery: number;
+  outerNoise: number;
+  outerRadius: number;
+  outlineNoise: number;
+  outlineOpacity: number;
+  outlineRadius: number;
+  outlineStrokeScale: number;
+  rayCount: number;
 }
 
 const BUBBLE_BORDER_STYLE_VALUES: readonly BubbleBorderStyle[] = [
@@ -73,6 +100,11 @@ const BUBBLE_FONT_WEIGHT_VALUES: readonly BubbleFontWeight[] = [
   'regular',
   'medium',
   'bold',
+];
+const BUBBLE_IMPACT_STYLE_VALUES: readonly BubbleImpactStyle[] = [
+  'impact-thought-thick',
+  'shock-thought-thick',
+  'simple-thought-thick',
 ];
 const BUBBLE_SHAPE_VALUES: readonly BubbleShape[] = [
   'rounded',
@@ -102,6 +134,7 @@ const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
   borderStyle: 'solid',
   fontFamily: 'inter',
   fontWeight: 'bold',
+  impactStyle: 'shock-thought-thick',
   shape: 'rounded',
   radiusTopLeft: 18,
   radiusTopRight: 18,
@@ -114,6 +147,72 @@ const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
   tailSkew: 16,
   tailTipX: 76,
   tailTipY: 126,
+};
+
+const IMPACT_BUBBLE_CONFIGS: Record<BubbleImpactStyle, ImpactBubbleConfig> = {
+  'impact-thought-thick': {
+    angleEndNoise: 0.09,
+    angleStartNoise: 0.07,
+    decorationOpacity: 1,
+    decorationStrokeScale: 0.72,
+    innerNoise: 4.2,
+    innerRadius: 33.4,
+    longRayLarge: 6.6,
+    longRayMedium: 3.2,
+    longRayLargeEvery: 29,
+    longRayMediumEvery: 9,
+    outerNoise: 6.8,
+    outerRadius: 43.8,
+    outlineNoise: 0.8,
+    outlineOpacity: 0,
+    outlineRadius: 43.8,
+    outlineStrokeScale: 0,
+    rayCount: 520,
+  },
+  'shock-thought-thick': {
+    angleEndNoise: 0.07,
+    angleStartNoise: 0.05,
+    decorationOpacity: 1,
+    decorationStrokeScale: 0.92,
+    innerNoise: 1.3,
+    innerRadius: 38.8,
+    longRayLarge: 6.4,
+    longRayMedium: 3,
+    longRayLargeEvery: 25,
+    longRayMediumEvery: 7,
+    outerNoise: 6.2,
+    outerRadius: 47.8,
+    outlineNoise: 0.35,
+    outlineOpacity: 0,
+    outlineRadius: 36.8,
+    outlineStrokeScale: 0,
+    rayCount: 560,
+  },
+  'simple-thought-thick': {
+    angleEndNoise: 0.005,
+    angleStartNoise: 0.005,
+    decorationOpacity: 1,
+    decorationStrokeScale: 0.86,
+    innerNoise: 0.35,
+    innerRadius: 42.6,
+    longRayLarge: 1.1,
+    longRayMedium: 0.5,
+    longRayLargeEvery: 17,
+    longRayMediumEvery: 6,
+    outerNoise: 0.9,
+    outerRadius: 55.4,
+    outlineNoise: 0,
+    outlineOpacity: 0,
+    outlineRadius: 40.8,
+    outlineStrokeScale: 0,
+    rayCount: 112,
+  },
+};
+
+const LEGACY_BUBBLE_IMPACT_STYLE_MAP: Record<string, BubbleImpactStyle> = {
+  'impact-thought-thin': 'impact-thought-thick',
+  'shock-thought-thin': 'shock-thought-thick',
+  'simple-thought-thin': 'simple-thought-thick',
 };
 
 const CSS_FONT_FAMILIES: Record<BubbleFontFamily, string> = {
@@ -410,6 +509,25 @@ const pathFromPoints = (points: readonly BubbleTailPoint[]): string => {
   ].join(' ');
 };
 
+const roundedPathNumber = (value: number): number => {
+  return Math.round(value * 100) / 100;
+};
+
+const getRadialPoint = (angle: number, radius: number): BubbleTailPoint => {
+  return {
+    x: roundedPathNumber(50 + Math.cos(angle) * radius),
+    y: roundedPathNumber(50 + Math.sin(angle) * radius),
+  };
+};
+
+const getJaggedNoise = (index: number, phase: number): number => {
+  const broadWave = Math.sin(index * 1.917 + phase);
+  const midWave = Math.cos(index * 3.731 + phase * 0.7);
+  const fineWave = Math.sin(index * 7.193 + phase * 1.4);
+
+  return broadWave * 0.5 + midWave * 0.34 + fineWave * 0.16;
+};
+
 const getOvalFallbackAngle = (tailSide: BubbleTailSide): number => {
   if (tailSide === 'top') return -Math.PI / 2;
   if (tailSide === 'right') return 0;
@@ -506,27 +624,69 @@ const getCloudOutlinePath = (): string =>
     'Z',
   ].join(' ');
 
-const getJaggedOutlinePath = (): string =>
-  pathFromPoints([
-    { x: 6, y: 44 },
-    { x: 18, y: 36 },
-    { x: 11, y: 18 },
-    { x: 31, y: 24 },
-    { x: 38, y: 8 },
-    { x: 51, y: 22 },
-    { x: 69, y: 9 },
-    { x: 72, y: 29 },
-    { x: 94, y: 32 },
-    { x: 80, y: 48 },
-    { x: 94, y: 66 },
-    { x: 73, y: 65 },
-    { x: 69, y: 90 },
-    { x: 52, y: 76 },
-    { x: 35, y: 91 },
-    { x: 32, y: 70 },
-    { x: 10, y: 76 },
-    { x: 20, y: 57 },
-  ]);
+const getImpactConfig = (
+  impactStyle: BubbleImpactStyle,
+): ImpactBubbleConfig => {
+  return IMPACT_BUBBLE_CONFIGS[impactStyle];
+};
+
+const normalizeImpactStyle = (impactStyle: unknown): BubbleImpactStyle => {
+  if (includesValue(BUBBLE_IMPACT_STYLE_VALUES, impactStyle)) {
+    return impactStyle;
+  }
+
+  if (
+    typeof impactStyle === 'string' &&
+    impactStyle in LEGACY_BUBBLE_IMPACT_STYLE_MAP
+  ) {
+    return LEGACY_BUBBLE_IMPACT_STYLE_MAP[impactStyle];
+  }
+
+  return DEFAULT_BUBBLE_STYLE.impactStyle;
+};
+
+const getJaggedOutlinePath = (config: ImpactBubbleConfig): string => {
+  const pointCount = 132;
+  const points = Array.from({ length: pointCount }, (_, index) => {
+    const angle = (index / pointCount) * Math.PI * 2;
+    const radius =
+      config.outlineRadius + getJaggedNoise(index, 0.8) * config.outlineNoise;
+
+    return getRadialPoint(angle, radius);
+  });
+
+  return pathFromPoints(points);
+};
+
+const getJaggedDecorationPath = (config: ImpactBubbleConfig): string => {
+  const rayCount = config.rayCount;
+  const commands: string[] = [];
+
+  for (let index = 0; index < rayCount; index += 1) {
+    const angle = (index / rayCount) * Math.PI * 2;
+    const startAngle =
+      angle + getJaggedNoise(index, 2.1) * config.angleStartNoise;
+    const endAngle = angle + getJaggedNoise(index, 8.7) * config.angleEndNoise;
+    const longRay =
+      index % config.longRayLargeEvery === 0
+        ? config.longRayLarge
+        : index % config.longRayMediumEvery === 0
+          ? config.longRayMedium
+          : 0;
+    const innerRadius =
+      config.innerRadius + getJaggedNoise(index, 4.4) * config.innerNoise;
+    const outerRadius =
+      config.outerRadius +
+      longRay +
+      Math.max(0, getJaggedNoise(index, 6.2)) * config.outerNoise;
+    const start = getRadialPoint(startAngle, innerRadius);
+    const end = getRadialPoint(endAngle, outerRadius);
+
+    commands.push(`M ${start.x} ${start.y} L ${end.x} ${end.y}`);
+  }
+
+  return commands.join(' ');
+};
 
 const getRoundedRectOutlinePath = (
   bubble: Bubble,
@@ -599,6 +759,7 @@ const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
   const fontWeight = includesValue(BUBBLE_FONT_WEIGHT_VALUES, bubble.fontWeight)
     ? bubble.fontWeight
     : DEFAULT_BUBBLE_STYLE.fontWeight;
+  const impactStyle = normalizeImpactStyle(bubble.impactStyle);
   const shape = includesValue(BUBBLE_SHAPE_VALUES, bubble.shape)
     ? bubble.shape
     : DEFAULT_BUBBLE_STYLE.shape;
@@ -647,6 +808,7 @@ const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
     borderStyle,
     fontFamily,
     fontWeight,
+    impactStyle,
     shape,
     radiusTopLeft,
     radiusTopRight,
@@ -743,6 +905,7 @@ const withDefaultBubbleStyle = (bubble: Bubble): Bubble => {
     borderStyle: style.borderStyle,
     fontFamily: style.fontFamily,
     fontWeight: style.fontWeight,
+    impactStyle: style.impactStyle,
     shape: style.shape,
     radiusTopLeft: style.radiusTopLeft,
     radiusTopRight: style.radiusTopRight,
@@ -877,7 +1040,16 @@ const getBubbleOutlineSvgPath = (
   }
 
   if (style.shape === 'jagged') {
-    return { path: getJaggedOutlinePath() };
+    const config = getImpactConfig(style.impactStyle);
+
+    return {
+      path: getJaggedOutlinePath(config),
+      decorationPath: getJaggedDecorationPath(config),
+      decorationOpacity: config.decorationOpacity,
+      decorationStrokeScale: config.decorationStrokeScale,
+      outlineOpacity: config.outlineOpacity,
+      outlineStrokeScale: config.outlineStrokeScale,
+    };
   }
 
   return { path: getRoundedRectOutlinePath(bubble, style, tailPoints) };
@@ -895,6 +1067,10 @@ const isBubbleFontWeight = (value: unknown): value is BubbleFontWeight => {
   return includesValue(BUBBLE_FONT_WEIGHT_VALUES, value);
 };
 
+const isBubbleImpactStyle = (value: unknown): value is BubbleImpactStyle => {
+  return includesValue(BUBBLE_IMPACT_STYLE_VALUES, value);
+};
+
 const isBubbleShape = (value: unknown): value is BubbleShape => {
   return includesValue(BUBBLE_SHAPE_VALUES, value);
 };
@@ -907,6 +1083,7 @@ export {
   BUBBLE_BORDER_STYLE_VALUES,
   BUBBLE_FONT_FAMILY_VALUES,
   BUBBLE_FONT_WEIGHT_VALUES,
+  BUBBLE_IMPACT_STYLE_VALUES,
   BUBBLE_SHAPE_VALUES,
   BUBBLE_TAIL_SIDE_VALUES,
   DEFAULT_BUBBLE_STYLE,
@@ -918,6 +1095,7 @@ export {
   isBubbleBorderStyle,
   isBubbleFontFamily,
   isBubbleFontWeight,
+  isBubbleImpactStyle,
   isBubbleShape,
   isBubbleTailSide,
   resolveBubbleStyle,

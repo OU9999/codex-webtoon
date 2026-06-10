@@ -11,7 +11,7 @@ import { RangeField } from '@/components/studio/_components/range-field';
 import {
   getLayerActionById,
   getLayerActionIdForBubble,
-  getLayerActionPatch,
+  getLayerActionStylePatch,
   layerActions,
 } from '@/components/studio/_lib/layer-actions';
 import { resolveBubbleStyle } from '@/components/studio/_lib/bubble-style';
@@ -117,7 +117,7 @@ const BubbleForm = () => {
   ): void => {
     const action = getLayerActionById(event.target.value);
     if (!action) return;
-    handleBubbleStylePatch(getLayerActionPatch(action));
+    handleBubbleStylePatch(getLayerActionStylePatch(action));
   };
 
   return (

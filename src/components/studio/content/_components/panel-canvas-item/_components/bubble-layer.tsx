@@ -171,6 +171,12 @@ const BubbleLayer = ({
           aria-hidden="true"
         >
           <path className="bubble-outline-shape" d={outlinePath.path} />
+          {outlinePath.decorationPath && (
+            <path
+              className="bubble-outline-decoration"
+              d={outlinePath.decorationPath}
+            />
+          )}
         </svg>
       )}
       {isEditing ? (
