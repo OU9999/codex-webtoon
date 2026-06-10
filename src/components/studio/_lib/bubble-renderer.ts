@@ -232,6 +232,42 @@ const drawOutlinePathToCanvas = (
   offsetY: number,
   path: string,
   borderWidth: number,
+  strokeAlpha = 1,
+): void => {
+  const sourcePath = new Path2D(path);
+  const strokePath = (targetPath: Path2D): void => {
+    if (borderWidth <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha *= strokeAlpha;
+    ctx.stroke(targetPath);
+    ctx.restore();
+  };
+
+  if (typeof DOMMatrix === 'function') {
+    const matrix = new DOMMatrix()
+      .translateSelf(bubble.x, offsetY + bubble.y)
+      .scaleSelf(bubble.width / 100, bubble.height / 100);
+    const canvasPath = new Path2D();
+    canvasPath.addPath(sourcePath, matrix);
+    ctx.fill(canvasPath);
+    strokePath(canvasPath);
+    return;
+  }
+
+  ctx.save();
+  ctx.translate(bubble.x, offsetY + bubble.y);
+  ctx.scale(bubble.width / 100, bubble.height / 100);
+  ctx.fill(sourcePath);
+  strokePath(sourcePath);
+  ctx.restore();
+};
+
+const strokeOutlineDecorationToCanvas = (
+  ctx: CanvasRenderingContext2D,
+  bubble: Bubble,
+  offsetY: number,
+  path: string,
 ): void => {
   const sourcePath = new Path2D(path);
 
@@ -241,16 +277,14 @@ const drawOutlinePathToCanvas = (
       .scaleSelf(bubble.width / 100, bubble.height / 100);
     const canvasPath = new Path2D();
     canvasPath.addPath(sourcePath, matrix);
-    ctx.fill(canvasPath);
-    if (borderWidth > 0) ctx.stroke(canvasPath);
+    ctx.stroke(canvasPath);
     return;
   }
 
   ctx.save();
   ctx.translate(bubble.x, offsetY + bubble.y);
   ctx.scale(bubble.width / 100, bubble.height / 100);
-  ctx.fill(sourcePath);
-  if (borderWidth > 0) ctx.stroke(sourcePath);
+  ctx.stroke(sourcePath);
   ctx.restore();
 };
 
@@ -290,7 +324,8 @@ const getTextLineY = (
 
 const getBubbleCanvasFont = (bubble: Bubble): string => {
   const style = resolveBubbleStyle(bubble);
-  const fontStyle = bubble.type === 'sfx' ? 'italic ' : '';
+  const fontStyle =
+    bubble.type === 'sfx' || style.shape === 'jagged' ? 'italic ' : '';
 
   return `${fontStyle}${style.canvasFontWeight} ${bubble.fontSize}px ${style.canvasFontFamily}`;
 };
@@ -343,8 +378,28 @@ const drawBubbleToCanvas = (
       bubble,
       offsetY,
       outlinePath.path,
-      style.borderWidth,
+      style.borderWidth * (outlinePath.outlineStrokeScale ?? 1),
+      outlinePath.outlineOpacity ?? 1,
     );
+    if (outlinePath.decorationPath && style.borderWidth > 0) {
+      const previousGlobalAlpha = ctx.globalAlpha;
+      ctx.lineWidth = Math.max(
+        0.6,
+        style.borderWidth * (outlinePath.decorationStrokeScale ?? 0.46),
+      );
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha *= outlinePath.decorationOpacity ?? 1;
+      strokeOutlineDecorationToCanvas(
+        ctx,
+        bubble,
+        offsetY,
+        outlinePath.decorationPath,
+      );
+      ctx.globalAlpha = previousGlobalAlpha;
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'miter';
+    }
     if (bubble.type === 'thought') {
       drawThoughtTailDots(ctx, bubble, offsetY, style.borderWidth);
     }

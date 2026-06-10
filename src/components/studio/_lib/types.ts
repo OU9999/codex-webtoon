@@ -10,6 +10,13 @@ type BubbleResizeAnchor = 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
 type BubbleFontWeight = 'regular' | 'medium' | 'bold';
+type BubbleImpactStyle =
+  | 'impact-thought-thin'
+  | 'impact-thought-thick'
+  | 'shock-thought-thin'
+  | 'shock-thought-thick'
+  | 'simple-thought-thin'
+  | 'simple-thought-thick';
 type BubbleShape =
   | 'rounded'
   | 'oval'
@@ -71,6 +78,7 @@ interface Bubble {
   borderStyle?: BubbleBorderStyle;
   fontFamily?: BubbleFontFamily;
   fontWeight?: BubbleFontWeight;
+  impactStyle?: BubbleImpactStyle;
   shape?: BubbleShape;
   radiusTopLeft?: number;
   radiusTopRight?: number;
@@ -243,7 +251,12 @@ type LayerActionId =
   | 'speech'
   | 'oval'
   | 'cloud'
-  | 'jagged'
+  | 'impact-thought-thin'
+  | 'impact-thought-thick'
+  | 'shock-thought-thin'
+  | 'shock-thought-thick'
+  | 'simple-thought-thin'
+  | 'simple-thought-thick'
   | 'box'
   | 'thought'
   | 'sfx';
@@ -266,6 +279,7 @@ export type {
   BubbleDragStartPayload,
   BubbleFontFamily,
   BubbleFontWeight,
+  BubbleImpactStyle,
   BubbleShape,
   BubbleTailSide,
   BubbleType,
