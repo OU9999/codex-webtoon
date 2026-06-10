@@ -1,8 +1,4 @@
-import type {
-  PointerEvent as ReactPointerEvent,
-  ReactNode,
-  SetStateAction,
-} from 'react';
+import type { PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 
 type BubbleType = 'speech' | 'monologue' | 'thought' | 'sfx';
 type BubbleDragMode = 'move' | 'resize' | 'tail';
@@ -260,7 +256,6 @@ interface LayerAction {
   type: BubbleType;
   label: string;
   labelKey?: string;
-  icon: ReactNode;
   patch?: Partial<Bubble>;
 }
 

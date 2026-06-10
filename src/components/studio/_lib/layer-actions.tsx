@@ -1,11 +1,3 @@
-import {
-  Bot,
-  Cloud,
-  MessageCircle,
-  Sparkles,
-  SquarePen,
-  Type,
-} from 'lucide-react';
 import { getBubbleShapePatch, resolveBubbleStyle } from './bubble-style';
 import type {
   Bubble,
@@ -43,63 +35,54 @@ const layerActions: LayerAction[] = [
     id: 'speech',
     type: 'speech',
     label: 'Speech',
-    icon: <MessageCircle className="size-4" />,
     patch: getBubbleShapePatch('rounded'),
   },
   {
     id: 'oval',
     type: 'speech',
     label: 'Oval',
-    icon: <MessageCircle className="size-4" />,
     patch: getBubbleShapePatch('oval'),
   },
   {
     id: 'cloud',
     type: 'speech',
     label: 'Cloud',
-    icon: <Cloud className="size-4" />,
     patch: getBubbleShapePatch('cloud'),
   },
   {
     id: 'impact-thought-thick',
     type: 'speech',
     label: 'Impact Thought Thick',
-    icon: <Sparkles className="size-4" />,
     patch: getImpactPatch('impact-thought-thick', '임팩트 생각\n(두꺼움)', 1.7),
   },
   {
     id: 'shock-thought-thick',
     type: 'speech',
     label: 'Thought Thick',
-    icon: <Sparkles className="size-4" />,
     patch: getImpactPatch('shock-thought-thick', '생각\n(두꺼움)', 1.7),
   },
   {
     id: 'simple-thought-thick',
     type: 'speech',
     label: 'Simple Thought Thick',
-    icon: <Sparkles className="size-4" />,
     patch: getImpactPatch('simple-thought-thick', '단순 생각\n(두꺼움)', 1.7),
   },
   {
     id: 'box',
     type: 'monologue',
     label: 'Box',
-    icon: <SquarePen className="size-4" />,
     patch: getBubbleShapePatch('square'),
   },
   {
     id: 'thought',
     type: 'thought',
     label: 'Thought',
-    icon: <Bot className="size-4" />,
     patch: { ...getBubbleShapePatch('rounded'), borderStyle: 'dashed' },
   },
   {
     id: 'sfx',
     type: 'sfx',
     label: 'SFX',
-    icon: <Type className="size-4" />,
     patch: {
       borderWidth: 0,
       fontFamily: 'display',

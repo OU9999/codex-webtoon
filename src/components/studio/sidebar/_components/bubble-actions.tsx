@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { getLayerActionPatch, layerAddActions } from '../../_lib/layer-actions';
 import type { BubbleType, LayerAction } from '../../_lib/types';
 import { useStudioContext } from '../../studio-context';
+import { BubbleActionPreviewIcon } from './bubble-action-preview-icon';
 import { SidebarCollapsibleSection } from './sidebar-collapsible-section';
 
 interface BubbleActionButtonProps {
@@ -30,9 +31,9 @@ const BubbleActionButton = ({
       size="sm"
       disabled={disabled}
       onClick={handleAdd}
-      className="h-7 justify-start rounded-[4px] px-2 font-mono text-[10px] font-semibold uppercase"
+      className="h-8 justify-start rounded-[4px] px-2 font-mono text-[10px] font-semibold uppercase"
     >
-      {action.icon}
+      <BubbleActionPreviewIcon action={action} />
       <span>+ {t(action.labelKey ?? `layerActions.${action.id}`)}</span>
     </Button>
   );
