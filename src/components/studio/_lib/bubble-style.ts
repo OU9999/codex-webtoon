@@ -102,11 +102,8 @@ const BUBBLE_FONT_WEIGHT_VALUES: readonly BubbleFontWeight[] = [
   'bold',
 ];
 const BUBBLE_IMPACT_STYLE_VALUES: readonly BubbleImpactStyle[] = [
-  'impact-thought-thin',
   'impact-thought-thick',
-  'shock-thought-thin',
   'shock-thought-thick',
-  'simple-thought-thin',
   'simple-thought-thick',
 ];
 const BUBBLE_SHAPE_VALUES: readonly BubbleShape[] = [
@@ -137,7 +134,7 @@ const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
   borderStyle: 'solid',
   fontFamily: 'inter',
   fontWeight: 'bold',
-  impactStyle: 'impact-thought-thin',
+  impactStyle: 'shock-thought-thick',
   shape: 'rounded',
   radiusTopLeft: 18,
   radiusTopRight: 18,
@@ -153,25 +150,6 @@ const DEFAULT_BUBBLE_STYLE: BubbleStyleValues = {
 };
 
 const IMPACT_BUBBLE_CONFIGS: Record<BubbleImpactStyle, ImpactBubbleConfig> = {
-  'impact-thought-thin': {
-    angleEndNoise: 0.08,
-    angleStartNoise: 0.06,
-    decorationOpacity: 1,
-    decorationStrokeScale: 0.46,
-    innerNoise: 4.8,
-    innerRadius: 34.2,
-    longRayLarge: 5.8,
-    longRayMedium: 2.8,
-    longRayLargeEvery: 31,
-    longRayMediumEvery: 11,
-    outerNoise: 6.2,
-    outerRadius: 43.4,
-    outlineNoise: 0.9,
-    outlineOpacity: 0,
-    outlineRadius: 43.4,
-    outlineStrokeScale: 0,
-    rayCount: 420,
-  },
   'impact-thought-thick': {
     angleEndNoise: 0.09,
     angleStartNoise: 0.07,
@@ -190,25 +168,6 @@ const IMPACT_BUBBLE_CONFIGS: Record<BubbleImpactStyle, ImpactBubbleConfig> = {
     outlineRadius: 43.8,
     outlineStrokeScale: 0,
     rayCount: 520,
-  },
-  'shock-thought-thin': {
-    angleEndNoise: 0.065,
-    angleStartNoise: 0.045,
-    decorationOpacity: 1,
-    decorationStrokeScale: 0.62,
-    innerNoise: 1.5,
-    innerRadius: 38.2,
-    longRayLarge: 5.8,
-    longRayMedium: 2.4,
-    longRayLargeEvery: 27,
-    longRayMediumEvery: 8,
-    outerNoise: 5.8,
-    outerRadius: 47.2,
-    outlineNoise: 0.4,
-    outlineOpacity: 0,
-    outlineRadius: 36.8,
-    outlineStrokeScale: 0,
-    rayCount: 440,
   },
   'shock-thought-thick': {
     angleEndNoise: 0.07,
@@ -229,25 +188,6 @@ const IMPACT_BUBBLE_CONFIGS: Record<BubbleImpactStyle, ImpactBubbleConfig> = {
     outlineStrokeScale: 0,
     rayCount: 560,
   },
-  'simple-thought-thin': {
-    angleEndNoise: 0.005,
-    angleStartNoise: 0.005,
-    decorationOpacity: 1,
-    decorationStrokeScale: 0.52,
-    innerNoise: 0.3,
-    innerRadius: 42.4,
-    longRayLarge: 0.8,
-    longRayMedium: 0.4,
-    longRayLargeEvery: 19,
-    longRayMediumEvery: 7,
-    outerNoise: 0.8,
-    outerRadius: 55.2,
-    outlineNoise: 0,
-    outlineOpacity: 0,
-    outlineRadius: 40.6,
-    outlineStrokeScale: 0,
-    rayCount: 104,
-  },
   'simple-thought-thick': {
     angleEndNoise: 0.005,
     angleStartNoise: 0.005,
@@ -267,6 +207,12 @@ const IMPACT_BUBBLE_CONFIGS: Record<BubbleImpactStyle, ImpactBubbleConfig> = {
     outlineStrokeScale: 0,
     rayCount: 112,
   },
+};
+
+const LEGACY_BUBBLE_IMPACT_STYLE_MAP: Record<string, BubbleImpactStyle> = {
+  'impact-thought-thin': 'impact-thought-thick',
+  'shock-thought-thin': 'shock-thought-thick',
+  'simple-thought-thin': 'simple-thought-thick',
 };
 
 const CSS_FONT_FAMILIES: Record<BubbleFontFamily, string> = {
@@ -684,6 +630,21 @@ const getImpactConfig = (
   return IMPACT_BUBBLE_CONFIGS[impactStyle];
 };
 
+const normalizeImpactStyle = (impactStyle: unknown): BubbleImpactStyle => {
+  if (includesValue(BUBBLE_IMPACT_STYLE_VALUES, impactStyle)) {
+    return impactStyle;
+  }
+
+  if (
+    typeof impactStyle === 'string' &&
+    impactStyle in LEGACY_BUBBLE_IMPACT_STYLE_MAP
+  ) {
+    return LEGACY_BUBBLE_IMPACT_STYLE_MAP[impactStyle];
+  }
+
+  return DEFAULT_BUBBLE_STYLE.impactStyle;
+};
+
 const getJaggedOutlinePath = (config: ImpactBubbleConfig): string => {
   const pointCount = 132;
   const points = Array.from({ length: pointCount }, (_, index) => {
@@ -798,12 +759,7 @@ const resolveBubbleStyle = (bubble: Bubble): ResolvedBubbleStyle => {
   const fontWeight = includesValue(BUBBLE_FONT_WEIGHT_VALUES, bubble.fontWeight)
     ? bubble.fontWeight
     : DEFAULT_BUBBLE_STYLE.fontWeight;
-  const impactStyle = includesValue(
-    BUBBLE_IMPACT_STYLE_VALUES,
-    bubble.impactStyle,
-  )
-    ? bubble.impactStyle
-    : DEFAULT_BUBBLE_STYLE.impactStyle;
+  const impactStyle = normalizeImpactStyle(bubble.impactStyle);
   const shape = includesValue(BUBBLE_SHAPE_VALUES, bubble.shape)
     ? bubble.shape
     : DEFAULT_BUBBLE_STYLE.shape;

@@ -23,7 +23,7 @@ const IMPACT_BASE_PATCH: Partial<Bubble> = {
   fillColor: '#ffffff',
   textColor: '#000000',
   borderColor: '#000000',
-  fontFamily: 'serif',
+  fontFamily: 'inter',
   fontWeight: 'bold',
 };
 
@@ -61,13 +61,6 @@ const layerActions: LayerAction[] = [
     patch: getBubbleShapePatch('cloud'),
   },
   {
-    id: 'impact-thought-thin',
-    type: 'speech',
-    label: 'Impact Thought Thin',
-    icon: <Sparkles className="size-4" />,
-    patch: getImpactPatch('impact-thought-thin', '임팩트 생각\n(얇음)', 1.4),
-  },
-  {
     id: 'impact-thought-thick',
     type: 'speech',
     label: 'Impact Thought Thick',
@@ -75,25 +68,11 @@ const layerActions: LayerAction[] = [
     patch: getImpactPatch('impact-thought-thick', '임팩트 생각\n(두꺼움)', 1.7),
   },
   {
-    id: 'shock-thought-thin',
-    type: 'speech',
-    label: 'Shock Thought Thin',
-    icon: <Sparkles className="size-4" />,
-    patch: getImpactPatch('shock-thought-thin', '충격 생각\n(얇음)', 1.4),
-  },
-  {
     id: 'shock-thought-thick',
     type: 'speech',
-    label: 'Shock Thought Thick',
+    label: 'Thought Thick',
     icon: <Sparkles className="size-4" />,
-    patch: getImpactPatch('shock-thought-thick', '충격 생각\n(두꺼움)', 1.7),
-  },
-  {
-    id: 'simple-thought-thin',
-    type: 'speech',
-    label: 'Simple Thought Thin',
-    icon: <Sparkles className="size-4" />,
-    patch: getImpactPatch('simple-thought-thin', '단순 생각\n(얇음)', 1.4),
+    patch: getImpactPatch('shock-thought-thick', '생각\n(두꺼움)', 1.7),
   },
   {
     id: 'simple-thought-thick',
@@ -128,6 +107,29 @@ const layerActions: LayerAction[] = [
     },
   },
 ];
+
+const layerAddActionIds: LayerActionId[] = [
+  'speech',
+  'oval',
+  'cloud',
+  'shock-thought-thick',
+  'box',
+  'thought',
+  'sfx',
+];
+
+const layerAddActions: LayerAction[] = layerAddActionIds.map((id) => {
+  const action = layerActions.find((candidate) => candidate.id === id);
+  if (!action) {
+    throw new Error(`Missing layer action: ${id}`);
+  }
+
+  if (id === 'shock-thought-thick') {
+    return { ...action, labelKey: 'layerActions.shockThought' };
+  }
+
+  return action;
+});
 
 const getLayerActionById = (id: string): LayerAction | null => {
   return layerActions.find((action) => action.id === id) ?? null;
@@ -167,5 +169,6 @@ export {
   getLayerActionIdForBubble,
   getLayerActionPatch,
   getLayerActionStylePatch,
+  layerAddActions,
   layerActions,
 };

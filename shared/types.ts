@@ -63,11 +63,8 @@ type BubbleBorderStyle = 'solid' | 'dashed' | 'dotted';
 type BubbleFontFamily = 'inter' | 'mono' | 'display' | 'serif';
 type BubbleFontWeight = 'regular' | 'medium' | 'bold';
 type BubbleImpactStyle =
-  | 'impact-thought-thin'
   | 'impact-thought-thick'
-  | 'shock-thought-thin'
   | 'shock-thought-thick'
-  | 'simple-thought-thin'
   | 'simple-thought-thick';
 type BubbleShape =
   | 'rounded'
