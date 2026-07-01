@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
-import { createServer, type IncomingMessage, type Server } from 'node:http';
-import { mkdtempSync, rmSync } from 'node:fs';
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from 'node:http';
+import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, afterEach, before, test } from 'node:test';
@@ -58,6 +63,12 @@ let setOAuthHandle: (handle: OAuthHandle | null) => void;
 let externalFetch:
   | ((context: ExternalFetchContext) => Response | Promise<Response>)
   | null = null;
+let customOAuthHandler:
+  | ((
+      req: IncomingMessage,
+      res: ServerResponse,
+    ) => Response | Promise<Response>)
+  | null = null;
 const oauthRequests: OAuthRequest[] = [];
 const originalFetch = globalThis.fetch;
 
@@ -94,9 +105,16 @@ const readRequestBody = async (req: IncomingMessage): Promise<string> => {
   return Buffer.concat(chunks).toString('utf-8');
 };
 
-const handleOAuthRequest = async (req: IncomingMessage): Promise<Response> => {
+const handleOAuthRequest = async (
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<Response> => {
   if (req.method !== 'POST' || req.url !== '/v1/responses') {
     return new Response('Not found', { status: 404 });
+  }
+
+  if (customOAuthHandler) {
+    return customOAuthHandler(req, res);
   }
 
   oauthRequests.push({ body: await readRequestBody(req) });
@@ -161,6 +179,64 @@ const createProject = async (): Promise<string> => {
   return name;
 };
 
+const createCompletedOAuthResponse = (): Response => {
+  const payload = {
+    type: 'response.completed',
+    response: {
+      model: 'test-image-model',
+      output: [
+        {
+          type: 'image_generation_call',
+          result: tinyPngBase64,
+          revised_prompt: null,
+        },
+      ],
+    },
+  };
+
+  return new Response(`data: ${JSON.stringify(payload)}\n\n`, {
+    status: 200,
+    headers: { 'content-type': 'text/event-stream' },
+  });
+};
+
+const countCandidatePngFiles = (projectName: string): number => {
+  const candidatesRoot = join(testRoot, 'projects', projectName, 'candidates');
+  if (!existsSync(candidatesRoot)) return 0;
+
+  const walk = (dir: string): number =>
+    readdirSync(dir, { withFileTypes: true }).reduce((count, entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return count + walk(path);
+      return entry.isFile() && entry.name.endsWith('.png') ? count + 1 : count;
+    }, 0);
+
+  return walk(candidatesRoot);
+};
+
+const sleep = async (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const generateProject = (
+  projectName: string,
+  options?: { signal?: AbortSignal },
+): Promise<Response> =>
+  fetch(`${baseUrl}/api/generate`, {
+    method: 'POST',
+    headers: jsonHeaders,
+    signal: options?.signal,
+    body: JSON.stringify({
+      projectName,
+      panelId: 'panel-1',
+      prompt: 'Draw a small test panel.',
+      height: 600,
+      provider: 'oauth',
+      referenceImages: [],
+    }),
+  });
+
 const generateWithExternalReference = async (
   imageUrl: string,
 ): Promise<Response> => {
@@ -193,7 +269,7 @@ before(async () => {
   setOAuthHandle = runtime.setOAuthHandle;
 
   oauthServer = createServer((req, res) => {
-    void handleOAuthRequest(req)
+    void handleOAuthRequest(req, res)
       .then((response) => writeNodeResponse(response, res))
       .catch((err: unknown) => {
         res.writeHead(500, { 'content-type': 'text/plain' });
@@ -218,6 +294,7 @@ before(async () => {
 
 afterEach(() => {
   externalFetch = null;
+  customOAuthHandler = null;
   oauthRequests.length = 0;
 });
 
@@ -299,6 +376,51 @@ test('generate blocks redirects to localhost external reference URLs', async () 
   assert.equal(oauthRequests.length, 0);
 });
 
+test('generate blocks redirects to private IP external reference URLs', async () => {
+  let fetchCount = 0;
+  externalFetch = ({ init }) => {
+    fetchCount += 1;
+    assert.equal(init?.redirect, 'manual');
+
+    return new Response(null, {
+      status: 302,
+      headers: { location: 'http://10.0.0.8/private.png' },
+    });
+  };
+
+  const res = await generateWithExternalReference(
+    `http://${publicReferenceHost}/redirect-private.png`,
+  );
+  const body = await readError(res);
+
+  assert.equal(res.status, 400);
+  assert.equal(body.error, 'invalid_request');
+  assert.match(body.message, /public http\(s\)/);
+  assert.equal(fetchCount, 1);
+  assert.equal(oauthRequests.length, 0);
+});
+
+test('generate blocks unsupported external reference content types', async () => {
+  externalFetch = ({ init }) => {
+    assert.equal(init?.redirect, 'manual');
+
+    return new Response(tinyPngBuffer, {
+      status: 200,
+      headers: { 'content-type': 'text/plain' },
+    });
+  };
+
+  const res = await generateWithExternalReference(
+    `http://${publicReferenceHost}/not-image.txt`,
+  );
+  const body = await readError(res);
+
+  assert.equal(res.status, 400);
+  assert.equal(body.error, 'invalid_request');
+  assert.match(body.message, /png, jpeg, or webp/);
+  assert.equal(oauthRequests.length, 0);
+});
+
 test('generate aborts oversized external reference streams', async () => {
   const state = { aborted: false, canceled: false, pulls: 0 };
   externalFetch = ({ init }) => {
@@ -367,4 +489,41 @@ test('generate accepts a small valid external reference image response', async (
     referenceImage?.image_url,
     `data:image/png;base64,${tinyPngBuffer.toString('base64')}`,
   );
+});
+
+test('generate aborts provider work and skips candidate save after client cancel', async () => {
+  const projectName = await createProject();
+  const controller = new AbortController();
+  let releaseOAuth: (() => void) | null = null;
+  let providerRequestClosed = false;
+  const providerStarted = new Promise<void>((resolve) => {
+    customOAuthHandler = async (req, res) => {
+      res.on('close', () => {
+        providerRequestClosed = true;
+      });
+      oauthRequests.push({ body: await readRequestBody(req) });
+      resolve();
+
+      await new Promise<void>((release) => {
+        releaseOAuth = release;
+      });
+
+      return createCompletedOAuthResponse();
+    };
+  });
+
+  const request = generateProject(projectName, {
+    signal: controller.signal,
+  }).catch((err: unknown) => err);
+
+  await providerStarted;
+  controller.abort();
+  await sleep(50);
+  const closedAfterClientAbort = providerRequestClosed;
+  releaseOAuth?.();
+  await request;
+  await sleep(50);
+
+  assert.equal(closedAfterClientAbort, true);
+  assert.equal(countCandidatePngFiles(projectName), 0);
 });

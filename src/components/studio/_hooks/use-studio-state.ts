@@ -4,6 +4,13 @@ import type { SetStateAction } from 'react';
 import { ApiClientError, saveProjectState } from '@/api/client';
 import { i18n } from '@/i18n/i18n';
 import type { ProjectState } from '@shared/types';
+import {
+  createLatestSaveQueue,
+  finishLatestSave,
+  queueLatestSave,
+  startNextLatestSave,
+} from '../_lib/latest-save-queue';
+import type { LatestSaveJob, LatestSaveQueue } from '../_lib/latest-save-queue';
 import type { StudioState, StudioStateSetter } from '../_lib/types';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -21,6 +28,11 @@ interface HistoryEntry {
 
 interface HistoryRecord extends HistoryEntry {
   state: StudioState;
+}
+
+interface AutosavePayload {
+  projectName: string;
+  state: ProjectState;
 }
 
 const SAVE_DEBOUNCE_MS = 500;
@@ -179,6 +191,11 @@ const useStudioState = ({
   const historyRef = useRef<HistoryRecord[]>([]);
   const stateRef = useRef(initialState);
   const trackedSetStateRef = useRef<StudioStateSetter | null>(null);
+  const saveQueueRef = useRef<LatestSaveQueue<AutosavePayload> | null>(null);
+
+  if (!saveQueueRef.current) {
+    saveQueueRef.current = createLatestSaveQueue<AutosavePayload>();
+  }
 
   const setHistory = (history: HistoryRecord[]): void => {
     historyRef.current = history;
@@ -254,6 +271,58 @@ const useStudioState = ({
     setStateInternal(restoredState);
   };
 
+  const logSaveError = (err: unknown): void => {
+    if (err instanceof ApiClientError) {
+      console.error(
+        '[codex-webtoon] failed to save project state:',
+        err.message,
+      );
+      return;
+    }
+
+    console.error('[codex-webtoon] failed to save project state:', err);
+  };
+
+  const runSaveJob = (
+    queue: LatestSaveQueue<AutosavePayload>,
+    job: LatestSaveJob<AutosavePayload>,
+  ): void => {
+    void saveProjectState(job.payload.projectName, job.payload.state)
+      .then(() => {
+        if (saveQueueRef.current !== queue) return;
+
+        const result = finishLatestSave(queue, job);
+        if (result.isLatest) {
+          setSaveStatus('saved');
+        }
+        if (result.next) {
+          runSaveJob(queue, result.next);
+        }
+      })
+      .catch((err: unknown) => {
+        if (saveQueueRef.current !== queue) return;
+
+        const result = finishLatestSave(queue, job);
+        if (result.isLatest) {
+          setSaveStatus('error');
+          logSaveError(err);
+        }
+        if (result.next) {
+          runSaveJob(queue, result.next);
+        }
+      });
+  };
+
+  const startQueuedSave = (): void => {
+    const queue = saveQueueRef.current;
+    if (!queue) return;
+
+    const job = startNextLatestSave(queue);
+    if (!job) return;
+
+    runSaveJob(queue, job);
+  };
+
   /**
    * Resets the studio state when a freshly loaded project state arrives.
    * Project renames update projectName only, so they must not reset the
@@ -261,6 +330,7 @@ const useStudioState = ({
    */
   useEffect(() => {
     const nextState = cloneState(initialState);
+    saveQueueRef.current = createLatestSaveQueue<AutosavePayload>();
     stateRef.current = nextState;
     setStateInternal(nextState);
     setHistory([]);
@@ -270,8 +340,8 @@ const useStudioState = ({
 
   /**
    * Persists the current studio state to the server with a 500ms debounce.
-   * Skips the very first render after a project load by checking dirtyRef,
-   * which is set on subsequent setState calls.
+   * Saves are serialized through a latest-only queue so an older response
+   * cannot overwrite the status of a newer edit.
    */
   useEffect(() => {
     if (!dirtyRef.current) {
@@ -281,19 +351,14 @@ const useStudioState = ({
 
     setSaveStatus('saving');
     const handle = setTimeout(() => {
-      void saveProjectState(projectName, state as unknown as ProjectState)
-        .then(() => setSaveStatus('saved'))
-        .catch((err: unknown) => {
-          setSaveStatus('error');
-          if (err instanceof ApiClientError) {
-            console.error(
-              '[codex-webtoon] failed to save project state:',
-              err.message,
-            );
-          } else {
-            console.error('[codex-webtoon] failed to save project state:', err);
-          }
-        });
+      const queue = saveQueueRef.current;
+      if (!queue) return;
+
+      queueLatestSave(queue, {
+        projectName,
+        state: state as unknown as ProjectState,
+      });
+      startQueuedSave();
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(handle);

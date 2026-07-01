@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import {
@@ -85,21 +85,70 @@ class GenerationTimeoutError extends Error {
   }
 }
 
+class GenerationAbortError extends Error {
+  constructor() {
+    super('Image generation was canceled.');
+    this.name = 'GenerationAbortError';
+  }
+}
+
+const abortWithGenerationCancel = (controller: AbortController): void => {
+  if (controller.signal.aborted) return;
+
+  controller.abort(new GenerationAbortError());
+};
+
+const throwIfGenerationAborted = (signal: AbortSignal): void => {
+  if (!signal.aborted) return;
+
+  if (signal.reason instanceof GenerationAbortError) {
+    throw signal.reason;
+  }
+
+  throw new GenerationAbortError();
+};
+
+const linkAbortSignal = (
+  source: AbortSignal,
+  target: AbortController,
+): (() => void) => {
+  if (source.aborted) {
+    abortWithGenerationCancel(target);
+    return () => undefined;
+  }
+
+  const handleAbort = (): void => abortWithGenerationCancel(target);
+  source.addEventListener('abort', handleAbort, { once: true });
+
+  return () => source.removeEventListener('abort', handleAbort);
+};
+
 const withGenerationTimeout = async <Result>(
   task: (signal: AbortSignal) => Promise<Result>,
+  signal: AbortSignal,
 ): Promise<Result> => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), GENERATION_TIMEOUT_MS);
+  const unlinkAbortSignal = linkAbortSignal(signal, controller);
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort(new GenerationTimeoutError());
+  }, GENERATION_TIMEOUT_MS);
 
   try {
+    throwIfGenerationAborted(signal);
     return await task(controller.signal);
   } catch (err) {
-    if (controller.signal.aborted) {
+    if (signal.aborted) {
+      throw new GenerationAbortError();
+    }
+    if (timedOut && controller.signal.aborted) {
       throw new GenerationTimeoutError();
     }
     throw err;
   } finally {
     clearTimeout(timeout);
+    unlinkAbortSignal();
   }
 };
 
@@ -643,14 +692,17 @@ const readExternalReferenceBody = async (
 
 const fetchExternalReferenceImage = async (
   imageUrl: string,
+  signal: AbortSignal,
 ): Promise<{ buffer: Buffer; mediaType: string }> => {
   const controller = new AbortController();
+  const unlinkAbortSignal = linkAbortSignal(signal, controller);
   const timeout = setTimeout(
     () => controller.abort(),
     EXTERNAL_REFERENCE_FETCH_TIMEOUT_MS,
   );
 
   try {
+    throwIfGenerationAborted(signal);
     const response = await fetchExternalReferenceResponse(
       new URL(imageUrl),
       controller.signal,
@@ -680,6 +732,9 @@ const fetchExternalReferenceImage = async (
     return { buffer, mediaType };
   } catch (err) {
     if (err instanceof GenerateValidationError) throw err;
+    if (signal.aborted) {
+      throw new GenerationAbortError();
+    }
     if (controller.signal.aborted) {
       throw referenceImageValidationError(
         'External reference image request was aborted.',
@@ -693,19 +748,23 @@ const fetchExternalReferenceImage = async (
     );
   } finally {
     clearTimeout(timeout);
+    unlinkAbortSignal();
   }
 };
 
 const readExternalReferenceImage = async (
   reference: ReferenceImageRef,
+  signal: AbortSignal,
 ): Promise<ReferenceImageBuffer> => {
+  throwIfGenerationAborted(signal);
   if (!reference.imageUrl) {
     throw new Error('External reference image is missing imageUrl.');
   }
 
   const dataImage = parseDataReferenceImage(reference.imageUrl);
   const image =
-    dataImage ?? (await fetchExternalReferenceImage(reference.imageUrl));
+    dataImage ??
+    (await fetchExternalReferenceImage(reference.imageUrl, signal));
 
   return {
     reference,
@@ -717,9 +776,11 @@ const readExternalReferenceImage = async (
 const readReferenceImage = async (
   projectDir: string,
   reference: ReferenceImageRef,
+  signal: AbortSignal,
 ): Promise<ReferenceImageBuffer> => {
+  throwIfGenerationAborted(signal);
   if (isExternalReferenceImage(reference)) {
-    return readExternalReferenceImage(reference);
+    return readExternalReferenceImage(reference, signal);
   }
 
   if (!reference.panelId || !reference.candidateId) {
@@ -740,9 +801,12 @@ const readReferenceImage = async (
 const readReferenceImages = async (
   projectDir: string,
   references: ReferenceImageRef[],
+  signal: AbortSignal,
 ): Promise<ReferenceImageBuffer[]> =>
   Promise.all(
-    references.map((reference) => readReferenceImage(projectDir, reference)),
+    references.map((reference) =>
+      readReferenceImage(projectDir, reference, signal),
+    ),
   );
 
 const generatePng = async (
@@ -750,8 +814,9 @@ const generatePng = async (
   prompt: string,
   size: ImageSize,
   referenceImages: ReferenceImageBuffer[],
+  signal: AbortSignal,
 ): Promise<GeneratedPng> =>
-  withGenerationTimeout(async (signal) => {
+  withGenerationTimeout(async (timeoutSignal) => {
     const result = await generateImageViaOAuth({
       oauthUrl: resolved.oauthUrl,
       prompt,
@@ -760,12 +825,22 @@ const generatePng = async (
         (reference) =>
           `data:${reference.mediaType};base64,${reference.buffer.toString('base64')}`,
       ),
-      signal,
+      signal: timeoutSignal,
     });
     return { buffer: Buffer.from(result.b64, 'base64'), model: result.model };
-  });
+  }, signal);
 
 const sendGenerationError = (res: Response, err: unknown): void => {
+  if (err instanceof GenerationAbortError) {
+    if (!res.headersSent && !res.destroyed) {
+      const body: ApiError = {
+        error: 'generation_canceled',
+        message: err.message,
+      };
+      res.status(499).json(body);
+    }
+    return;
+  }
   if (err instanceof GenerateValidationError) {
     const body: ApiError = { error: 'invalid_request', message: err.message };
     res.status(400).json(body);
@@ -794,9 +869,44 @@ const sendGenerationError = (res: Response, err: unknown): void => {
   res.status(502).json(body);
 };
 
+const createRequestAbortController = (
+  req: Request,
+  res: Response,
+): AbortController => {
+  const controller = new AbortController();
+  let responseFinished = false;
+
+  const handleRequestAborted = (): void =>
+    abortWithGenerationCancel(controller);
+  const cleanup = (): void => {
+    req.off('aborted', handleRequestAborted);
+    res.off('finish', handleFinish);
+    res.off('close', handleClose);
+  };
+  const handleFinish = (): void => {
+    responseFinished = true;
+    cleanup();
+  };
+  const handleClose = (): void => {
+    if (!responseFinished) {
+      abortWithGenerationCancel(controller);
+    }
+    cleanup();
+  };
+
+  req.once('aborted', handleRequestAborted);
+  res.once('finish', handleFinish);
+  res.once('close', handleClose);
+
+  return controller;
+};
+
 const generateRouter = Router();
 
 generateRouter.post('/', async (req, res) => {
+  const requestAbortController = createRequestAbortController(req, res);
+  const requestSignal = requestAbortController.signal;
+
   let parsed: ParsedRequest;
   try {
     parsed = parseRequest((req.body ?? {}) as GenerateRequestBody);
@@ -846,17 +956,29 @@ generateRouter.post('/', async (req, res) => {
     referenceImages = await readReferenceImages(
       projectDir,
       parsed.referenceImages,
+      requestSignal,
     );
   } catch (err) {
+    if (requestSignal.aborted) return;
     sendGenerationError(res, err);
     return;
   }
 
+  if (requestSignal.aborted) return;
+
   const outcomes = await Promise.allSettled(
     Array.from({ length: parsed.count }, () =>
-      generatePng(resolved, parsed.prompt, size, referenceImages),
+      generatePng(
+        resolved,
+        parsed.prompt,
+        size,
+        referenceImages,
+        requestSignal,
+      ),
     ),
   );
+
+  if (requestSignal.aborted) return;
 
   const fulfilled = outcomes.filter(
     (outcome): outcome is PromiseFulfilledResult<GeneratedPng> =>
@@ -868,6 +990,7 @@ generateRouter.post('/', async (req, res) => {
   );
 
   if (fulfilled.length === 0) {
+    if (requestSignal.aborted) return;
     sendGenerationError(res, firstRejection?.reason);
     return;
   }
@@ -882,8 +1005,10 @@ generateRouter.post('/', async (req, res) => {
   }
 
   try {
-    const saved = fulfilled.map(({ value: { buffer, model } }) =>
-      saveCandidate({
+    const saved = fulfilled.map(({ value: { buffer, model } }) => {
+      throwIfGenerationAborted(requestSignal);
+
+      return saveCandidate({
         projectName: parsed.projectName,
         projectDir,
         panelId: parsed.panelId,
@@ -896,9 +1021,10 @@ generateRouter.post('/', async (req, res) => {
           size,
           referenceImages: parsed.referenceImages,
         },
-      }),
-    );
+      });
+    });
 
+    throwIfGenerationAborted(requestSignal);
     touchProject(parsed.projectName);
     res.status(201).json(saved);
   } catch (err) {
