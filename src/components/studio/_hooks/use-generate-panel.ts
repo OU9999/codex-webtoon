@@ -7,6 +7,14 @@ import {
   getValidSelectedCandidateId,
   mergeGeneratedCandidates,
 } from '../_lib/generated-candidates';
+import {
+  clearGenerationJob,
+  createGenerationJobRegistry,
+  getActiveGenerationJob,
+  isActiveGenerationJob,
+  startGenerationJob,
+} from '../_lib/generation-job';
+import type { GenerationJobRegistry } from '../_lib/generation-job';
 import type { Candidate, Panel, StudioState } from '../_lib/types';
 
 interface GenerationErrorState {
@@ -33,6 +41,10 @@ const toLocalCandidate = (candidate: ApiCandidate): Candidate => ({
       : 'local-mock',
 });
 
+const getGenerationJobRegistry = (
+  registry: GenerationJobRegistry | null,
+): GenerationJobRegistry => registry ?? createGenerationJobRegistry();
+
 const useGeneratePanel = (
   state: StudioState,
   setState: Dispatch<SetStateAction<StudioState>>,
@@ -46,11 +58,15 @@ const useGeneratePanel = (
   const [generatingPanelId, setGeneratingPanelId] = useState<string | null>(
     null,
   );
-  const generationControllerRef = useRef<AbortController | null>(null);
+  const generationJobRegistryRef = useRef<GenerationJobRegistry | null>(null);
   const [generationError, setGenerationError] =
     useState<GenerationErrorState | null>(null);
   const [latestGeneratedCandidates, setLatestGeneratedCandidates] =
     useState<LatestGeneratedCandidatesState | null>(null);
+
+  generationJobRegistryRef.current = getGenerationJobRegistry(
+    generationJobRegistryRef.current,
+  );
 
   const setPanelGenerationError = (
     panelId: string,
@@ -72,8 +88,14 @@ const useGeneratePanel = (
     }
 
     const targetPanelId = selectedPanel.id;
-    const generationController = new AbortController();
-    generationControllerRef.current = generationController;
+    const generationRegistry = getGenerationJobRegistry(
+      generationJobRegistryRef.current,
+    );
+    generationJobRegistryRef.current = generationRegistry;
+    const generationJob = startGenerationJob(generationRegistry, {
+      panelId: targetPanelId,
+      projectName,
+    });
     setIsGenerating(true);
     setGeneratingPanelId(targetPanelId);
     setGenerationError(null);
@@ -90,9 +112,11 @@ const useGeneratePanel = (
           referenceImages: selectedPanel.referenceImages,
         },
         {
-          signal: generationController.signal,
+          signal: generationJob.controller.signal,
         },
       );
+      if (!isActiveGenerationJob(generationRegistry, generationJob)) return;
+
       const newCandidates = apiCandidates.map(toLocalCandidate);
       if (newCandidates.length === 0) {
         setPanelGenerationError(
@@ -102,27 +126,37 @@ const useGeneratePanel = (
         return;
       }
 
-      setState((current) => ({
-        ...current,
-        panels: current.panels.map((panel) =>
-          panel.id === targetPanelId
-            ? { ...panel, ...mergeGeneratedCandidates(panel, newCandidates) }
-            : panel,
-        ),
-      }));
+      setState((current) => {
+        if (!isActiveGenerationJob(generationRegistry, generationJob)) {
+          return current;
+        }
+
+        return {
+          ...current,
+          panels: current.panels.map((panel) =>
+            panel.id === targetPanelId
+              ? { ...panel, ...mergeGeneratedCandidates(panel, newCandidates) }
+              : panel,
+          ),
+        };
+      });
+      if (!isActiveGenerationJob(generationRegistry, generationJob)) return;
+
       setLatestGeneratedCandidates({
         candidateIds: newCandidates.map((candidate) => candidate.id),
         panelId: targetPanelId,
         preservedCandidateId: getValidSelectedCandidateId(selectedPanel),
       });
     } catch (err) {
+      if (!isActiveGenerationJob(generationRegistry, generationJob)) return;
+
       const message =
         err instanceof ApiClientError
           ? err.message
           : err instanceof Error
             ? err.message
             : t('studioErrors.generateFailed');
-      if (generationController.signal.aborted) {
+      if (generationJob.controller.signal.aborted) {
         setPanelGenerationError(
           targetPanelId,
           t('studioErrors.generationCanceled'),
@@ -133,16 +167,20 @@ const useGeneratePanel = (
 
       setPanelGenerationError(targetPanelId, message);
     } finally {
-      if (generationControllerRef.current === generationController) {
-        generationControllerRef.current = null;
+      if (clearGenerationJob(generationRegistry, generationJob)) {
+        setIsGenerating(false);
+        setGeneratingPanelId(null);
       }
-      setIsGenerating(false);
-      setGeneratingPanelId(null);
     }
   };
 
   const handleCancelGeneration = (): void => {
-    generationControllerRef.current?.abort();
+    const generationRegistry = getGenerationJobRegistry(
+      generationJobRegistryRef.current,
+    );
+    generationJobRegistryRef.current = generationRegistry;
+
+    getActiveGenerationJob(generationRegistry)?.controller.abort();
   };
 
   const dismissGenerationError = (): void => setGenerationError(null);
