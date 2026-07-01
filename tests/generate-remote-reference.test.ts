@@ -376,6 +376,51 @@ test('generate blocks redirects to localhost external reference URLs', async () 
   assert.equal(oauthRequests.length, 0);
 });
 
+test('generate blocks redirects to private IP external reference URLs', async () => {
+  let fetchCount = 0;
+  externalFetch = ({ init }) => {
+    fetchCount += 1;
+    assert.equal(init?.redirect, 'manual');
+
+    return new Response(null, {
+      status: 302,
+      headers: { location: 'http://10.0.0.8/private.png' },
+    });
+  };
+
+  const res = await generateWithExternalReference(
+    `http://${publicReferenceHost}/redirect-private.png`,
+  );
+  const body = await readError(res);
+
+  assert.equal(res.status, 400);
+  assert.equal(body.error, 'invalid_request');
+  assert.match(body.message, /public http\(s\)/);
+  assert.equal(fetchCount, 1);
+  assert.equal(oauthRequests.length, 0);
+});
+
+test('generate blocks unsupported external reference content types', async () => {
+  externalFetch = ({ init }) => {
+    assert.equal(init?.redirect, 'manual');
+
+    return new Response(tinyPngBuffer, {
+      status: 200,
+      headers: { 'content-type': 'text/plain' },
+    });
+  };
+
+  const res = await generateWithExternalReference(
+    `http://${publicReferenceHost}/not-image.txt`,
+  );
+  const body = await readError(res);
+
+  assert.equal(res.status, 400);
+  assert.equal(body.error, 'invalid_request');
+  assert.match(body.message, /png, jpeg, or webp/);
+  assert.equal(oauthRequests.length, 0);
+});
+
 test('generate aborts oversized external reference streams', async () => {
   const state = { aborted: false, canceled: false, pulls: 0 };
   externalFetch = ({ init }) => {
